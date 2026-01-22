@@ -29,6 +29,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 // Chart.js for analytics
 import { NgChartsModule } from 'ng2-charts';
@@ -48,6 +49,10 @@ import { FinancialAnalyticsComponent } from './components/financial-analytics/fi
 import { SystemConfigurationComponent } from './components/system-configuration/system-configuration.component';
 import { AuditLogsComponent } from './components/audit-logs/audit-logs.component';
 import { ReportsComponent } from './components/reports/reports.component';
+import { GlobalAppointmentsComponent } from './components/global-appointments/global-appointments.component';
+import { QueueMonitoringComponent } from './components/queue-monitoring/queue-monitoring.component';
+import { CapacityManagementComponent } from './components/capacity-management/capacity-management.component';
+import { AppointmentAnalyticsComponent } from './components/appointment-analytics/appointment-analytics.component';
 
 // Dialogs
 import { CreateClinicDialogComponent } from './dialogs/create-clinic-dialog/create-clinic-dialog.component';
@@ -64,6 +69,7 @@ import { SubscriptionService } from './services/subscription.service';
 import { AnalyticsService } from './services/analytics.service';
 import { AiMonitoringService } from './services/ai-monitoring.service';
 import { AuditService } from './services/audit.service';
+import { CentralAppointmentService } from './services/appointment.service';
 
 @NgModule({
   declarations: [
@@ -78,6 +84,10 @@ import { AuditService } from './services/audit.service';
     SystemConfigurationComponent,
     AuditLogsComponent,
     ReportsComponent,
+    GlobalAppointmentsComponent,
+    QueueMonitoringComponent,
+    CapacityManagementComponent,
+    AppointmentAnalyticsComponent,
     CreateClinicDialogComponent,
     CreateBranchDialogComponent,
     EditUserDialogComponent,
@@ -116,7 +126,8 @@ import { AuditService } from './services/audit.service';
     MatCheckboxModule,
     MatRadioModule,
     MatBadgeModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressBarModule
   ],
   providers: [
     CentralAdminService,
@@ -126,7 +137,8 @@ import { AuditService } from './services/audit.service';
     SubscriptionService,
     AnalyticsService,
     AiMonitoringService,
-    AuditService
+    AuditService,
+    CentralAppointmentService
   ]
 })
 export class CentralAdminModule { }

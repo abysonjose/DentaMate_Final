@@ -12,6 +12,10 @@ import { FinancialAnalyticsComponent } from './components/financial-analytics/fi
 import { SystemConfigurationComponent } from './components/system-configuration/system-configuration.component';
 import { AuditLogsComponent } from './components/audit-logs/audit-logs.component';
 import { ReportsComponent } from './components/reports/reports.component';
+import { GlobalAppointmentsComponent } from './components/global-appointments/global-appointments.component';
+import { QueueMonitoringComponent } from './components/queue-monitoring/queue-monitoring.component';
+import { CapacityManagementComponent } from './components/capacity-management/capacity-management.component';
+import { AppointmentAnalyticsComponent } from './components/appointment-analytics/appointment-analytics.component';
 
 const routes: Routes = [
   {
@@ -20,8 +24,18 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
       { path: 'overview', component: AnalyticsOverviewComponent },
+      
+      // Appointment Management Routes
+      { path: 'appointments', component: GlobalAppointmentsComponent },
+      { path: 'queue-monitoring', component: QueueMonitoringComponent },
+      { path: 'capacity', component: CapacityManagementComponent },
+      { path: 'appointment-analytics', component: AppointmentAnalyticsComponent },
+      
+      // Organization Management Routes
       { path: 'clinics', component: ClinicManagementComponent },
       { path: 'branches', component: BranchManagementComponent },
+      
+      // System Management Routes
       { path: 'users', component: UserManagementComponent },
       { path: 'subscriptions', component: SubscriptionManagementComponent },
       { path: 'ai-monitoring', component: AiSystemMonitoringComponent },

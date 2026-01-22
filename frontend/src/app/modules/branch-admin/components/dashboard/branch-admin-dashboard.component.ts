@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { BranchAdminService, BranchAlert, BranchProfile } from '../../services/branch-admin.service';
+import { BranchAppointmentService, QueueSummary, AppointmentAnalytics } from '../../services/branch-appointment.service';
 
 interface NavigationItem {
   label: string;
@@ -11,6 +12,17 @@ interface NavigationItem {
   badge?: number;
   children?: NavigationItem[];
   description?: string;
+}
+
+interface BranchDashboardMetrics {
+  totalAppointmentsToday: number;
+  activeAppointments: number;
+  completedAppointments: number;
+  waitingPatients: number;
+  inConsultation: number;
+  averageWaitTime: number;
+  doctorsActive: number;
+  queueLoad: number;
 }
 
 @Component({
@@ -28,12 +40,54 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
   criticalAlertsCount = 0;
   sidenavOpened = true;
   
+  // Dashboard metrics
+  dashboardMetrics: BranchDashboardMetrics = {
+    totalAppointmentsToday: 0,
+    activeAppointments: 0,
+    completedAppointments: 0,
+    waitingPatients: 0,
+    inConsultation: 0,
+    averageWaitTime: 0,
+    doctorsActive: 0,
+    queueLoad: 0
+  };
+  
+  queueSummaries: QueueSummary[] = [];
+  isLoadingMetrics = true;
+  
   navigationItems: NavigationItem[] = [
     {
       label: 'Branch Overview',
       icon: 'dashboard',
       route: '/branch-admin/overview',
       description: 'Daily operations summary and key metrics'
+    },
+    {
+      label: 'Appointment Management',
+      icon: 'event',
+      route: '',
+      children: [
+        {
+          label: 'All Appointments',
+          icon: 'calendar_today',
+          route: '/branch-admin/appointments'
+        },
+        {
+          label: 'Queue Monitoring',
+          icon: 'queue',
+          route: '/branch-admin/queue'
+        },
+        {
+          label: 'Walk-in Patients',
+          icon: 'person_add',
+          route: '/branch-admin/walk-in'
+        },
+        {
+          label: 'Schedule Management',
+          icon: 'schedule',
+          route: '/branch-admin/schedules'
+        }
+      ]
     },
     {
       label: 'Staff Management',
@@ -49,23 +103,6 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
           label: 'Doctor Scheduling',
           icon: 'schedule',
           route: '/branch-admin/doctors'
-        }
-      ]
-    },
-    {
-      label: 'Operations',
-      icon: 'business_center',
-      route: '',
-      children: [
-        {
-          label: 'Appointments',
-          icon: 'event',
-          route: '/branch-admin/appointments'
-        },
-        {
-          label: 'Queue Monitoring',
-          icon: 'queue',
-          route: '/branch-admin/queue'
         }
       ]
     },
@@ -116,12 +153,19 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private branchAdminService: BranchAdminService,
+    private appointmentService: BranchAppointmentService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadBranchAlerts();
+    this.loadDashboardMetrics();
     this.checkUserPermissions();
+    
+    // Refresh metrics every 30 seconds
+    setInterval(() => {
+      this.loadDashboardMetrics();
+    }, 30000);
   }
 
   ngOnDestroy(): void {
@@ -142,19 +186,108 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
+  private loadDashboardMetrics(): void {
+    this.isLoadingMetrics = true;
+    const today = new Date();
+    
+    forkJoin({
+      todayAppointments: this.appointmentService.getAllAppointments(today.toISOString().split('T')[0]),
+      appointmentConflicts: this.appointmentService.getAppointmentConflicts(today),
+      analytics: this.appointmentService.getAppointmentAnalytics(today, today)
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => {
+        const appointments = data.todayAppointments;
+        const analytics = data.analytics;
+        
+        // Calculate metrics
+        this.dashboardMetrics = {
+          totalAppointmentsToday: appointments.length,
+          activeAppointments: appointments.filter(apt => 
+            ['booked', 'confirmed', 'checked_in', 'in_consultation'].includes(apt.status)
+          ).length,
+          completedAppointments: appointments.filter(apt => apt.status === 'completed').length,
+          waitingPatients: appointments.filter(apt => 
+            apt.status === 'checked_in' || (apt.token && apt.token.tokenStatus === 'waiting')
+          ).length,
+          inConsultation: appointments.filter(apt => 
+            apt.status === 'in_consultation' || (apt.token && apt.token.tokenStatus === 'in_progress')
+          ).length,
+          averageWaitTime: analytics.averageWaitTime || 0,
+          doctorsActive: new Set(appointments.map(apt => apt.doctorId)).size,
+          queueLoad: Math.min(100, (this.dashboardMetrics.waitingPatients / Math.max(1, appointments.length)) * 100)
+        };
+        
+        // Load queue summaries for active doctors
+        this.loadQueueSummaries();
+        
+        // Add appointment-related alerts
+        if (data.appointmentConflicts.length > 0) {
+          this.alerts.push({
+            id: `conflicts-${Date.now()}`,
+            type: 'appointment_conflict',
+            title: 'Appointment Conflicts',
+            message: `${data.appointmentConflicts.length} appointment conflicts detected`,
+            severity: 'high',
+            timestamp: new Date(),
+            isRead: false,
+            branchId: '',
+            actionRequired: true
+          });
+        }
+        
+        this.isLoadingMetrics = false;
+      },
+      error: (error) => {
+        console.error('Error loading dashboard metrics:', error);
+        this.isLoadingMetrics = false;
+      }
+    });
+  }
+
+  private loadQueueSummaries(): void {
+    // Get unique doctor IDs from today's appointments
+    const today = new Date();
+    this.appointmentService.getAllAppointments(today.toISOString().split('T')[0])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(appointments => {
+        const doctorIds = [...new Set(appointments.map(apt => apt.doctorId))];
+        
+        // Get queue summary for each doctor
+        const queuePromises = doctorIds.map(doctorId => 
+          this.appointmentService.getQueueSummary(doctorId, today)
+        );
+        
+        forkJoin(queuePromises).subscribe(summaries => {
+          this.queueSummaries = summaries;
+        });
+      });
+  }
+
   private updateNavigationBadges(): void {
     // Update badges based on alerts and system status
-    const queueAlerts = this.alerts.filter(alert => alert.type === 'queue_overload' && !alert.isRead).length;
+    const queueAlerts = this.alerts.filter(alert => 
+      ['queue_overload', 'appointment_conflict'].includes(alert.type) && !alert.isRead
+    ).length;
     const inventoryAlerts = this.alerts.filter(alert => alert.type === 'inventory_low' && !alert.isRead).length;
     
     // Find and update navigation items with badges
     this.navigationItems.forEach(item => {
-      if (item.route === '/branch-admin/queue') {
-        item.badge = queueAlerts > 0 ? queueAlerts : undefined;
-      } else if (item.route === '/branch-admin/inventory') {
-        item.badge = inventoryAlerts > 0 ? inventoryAlerts : undefined;
-      } else if (item.route === '/branch-admin/notifications') {
-        item.badge = this.unreadAlertsCount > 0 ? this.unreadAlertsCount : undefined;
+      if (item.children) {
+        item.children.forEach(child => {
+          if (child.route === '/branch-admin/queue') {
+            child.badge = queueAlerts > 0 ? queueAlerts : undefined;
+          } else if (child.route === '/branch-admin/appointments') {
+            child.badge = this.dashboardMetrics.activeAppointments > 0 ? this.dashboardMetrics.activeAppointments : undefined;
+          }
+        });
+      } else {
+        if (item.route === '/branch-admin/inventory') {
+          item.badge = inventoryAlerts > 0 ? inventoryAlerts : undefined;
+        } else if (item.route === '/branch-admin/notifications') {
+          item.badge = this.unreadAlertsCount > 0 ? this.unreadAlertsCount : undefined;
+        }
       }
     });
   }
@@ -203,6 +336,7 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
         this.router.navigate(['/branch-admin/queue']);
         break;
       case 'appointment_delay':
+      case 'appointment_conflict':
         this.router.navigate(['/branch-admin/appointments']);
         break;
       case 'inventory_low':
@@ -223,6 +357,7 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
       case 'doctor_absence': return 'person_off';
       case 'queue_overload': return 'queue';
       case 'appointment_delay': return 'schedule_problem';
+      case 'appointment_conflict': return 'event_busy';
       case 'system_issue': return 'error';
       case 'inventory_low': return 'inventory_2';
       case 'billing_issue': return 'payment_problem';
@@ -248,6 +383,38 @@ export class BranchAdminDashboardComponent implements OnInit, OnDestroy {
       case 'low': return 'check_circle';
       default: return 'info';
     }
+  }
+
+  getQueueLoadColor(): string {
+    if (this.dashboardMetrics.queueLoad > 80) return 'warn';
+    if (this.dashboardMetrics.queueLoad > 60) return 'accent';
+    return 'primary';
+  }
+
+  getQueueLoadIcon(): string {
+    if (this.dashboardMetrics.queueLoad > 80) return 'error';
+    if (this.dashboardMetrics.queueLoad > 60) return 'warning';
+    return 'check_circle';
+  }
+
+  refreshMetrics(): void {
+    this.loadDashboardMetrics();
+  }
+
+  viewAppointments(): void {
+    this.router.navigate(['/branch-admin/appointments']);
+  }
+
+  viewQueueMonitoring(): void {
+    this.router.navigate(['/branch-admin/queue']);
+  }
+
+  viewScheduleManagement(): void {
+    this.router.navigate(['/branch-admin/schedules']);
+  }
+
+  createWalkInAppointment(): void {
+    this.router.navigate(['/branch-admin/walk-in']);
   }
 
   logout(): void {

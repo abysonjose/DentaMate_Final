@@ -1,5 +1,7 @@
 server:
-  port: 8080
+  port: 8083
+  servlet:
+    context-path: /appointment-service
 
 spring:
   application:
@@ -7,13 +9,17 @@ spring:
   
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/dentamate}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/dentamate_appointments}
       auto-index-creation: true
   
   security:
     jwt:
       secret: ${JWT_SECRET:your-jwt-secret-key}
       expiration: 86400000 # 24 hours
+  
+  jackson:
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
 
 logging:
   level:
@@ -21,12 +27,37 @@ logging:
     org.springframework.data.mongodb: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/appointment-service.log
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
+
+# Custom application properties
+app:
+  scheduling:
+    default-consultation-duration: 30
+    max-appointments-per-day: 50
+    reminder-intervals: 1440,120,30  # 24 hours, 2 hours, 30 minutes
+    no-show-timeout: 30  # minutes after appointment time
+  
+  business-rules:
+    advance-booking-limit: 365  # days
+    cancellation-cutoff: 30     # minutes before appointment
+    reschedule-cutoff: 120      # minutes before appointment
+    walk-in-window: 120         # minutes from now
+  
+  notifications:
+    enabled: true
+    channels: sms,email,whatsapp
+    templates:
+      confirmation: "Your appointment is confirmed for {dateTime}"
+      reminder: "Reminder: You have an appointment in {timeLeft}"
+      cancellation: "Your appointment has been cancelled"

@@ -1,0 +1,234 @@
+<div class="capacity-management-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="title-section">
+      <h2>
+        <mat-icon>assessment</mat-icon>
+        Capacity Management
+      </h2>
+      <p class="subtitle">Monitor and optimize clinic capacity utilization</p>
+    </div>
+    
+    <div class="controls-section">
+      <mat-form-field appearance="outline">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="onDateChange()">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="clinic-filter">
+        <mat-label>Filter by Clinic</mat-label>
+        <mat-select [(value)]="selectedClinic" (selectionChange)="onClinicChange()">
+          <mat-option value="">All Clinics</mat-option>
+          <mat-option *ngFor="let clinic of clinics" [value]="clinic.id">
+            {{clinic.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <button mat-icon-button (click)="clearClinicFilter()" *ngIf="selectedClinic" 
+              matTooltip="Clear filter">
+        <mat-icon>clear</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- System Overview Cards -->
+  <div class="overview-cards" *ngIf="!isLoading">
+    <mat-card class="metric-card">
+      <mat-card-content>
+        <div class="metric-content">
+          <div class="metric-icon">
+            <mat-icon>event_available</mat-icon>
+          </div>
+          <div class="metric-details">
+            <div class="metric-value">{{totalSystemCapacity}}</div>
+            <div class="metric-label">Total Capacity</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="metric-card">
+      <mat-card-content>
+        <div class="metric-content">
+          <div class="metric-icon">
+            <mat-icon>event_busy</mat-icon>
+          </div>
+          <div class="metric-details">
+            <div class="metric-value">{{totalSystemUtilization}}</div>
+            <div class="metric-label">Current Utilization</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="metric-card" [ngClass]="getUtilizationColor(averageUtilizationRate)">
+      <mat-card-content>
+        <div class="metric-content">
+          <div class="metric-icon">
+            <mat-icon>{{getUtilizationIcon(averageUtilizationRate)}}</mat-icon>
+          </div>
+          <div class="metric-details">
+            <div class="metric-value">{{averageUtilizationRate}}%</div>
+            <div class="metric-label">Avg Utilization Rate</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="metric-card warn" *ngIf="overutilizedClinics > 0">
+      <mat-card-content>
+        <div class="metric-content">
+          <div class="metric-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="metric-details">
+            <div class="metric-value">{{overutilizedClinics}}</div>
+            <div class="metric-label">Overutilized Clinics</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading capacity data...</p>
+  </div>
+
+  <!-- Clinic Capacity Cards -->
+  <div class="clinic-capacities" *ngIf="!isLoading">
+    <mat-card *ngFor="let clinic of clinicCapacities" class="clinic-card">
+      <mat-card-header>
+        <div mat-card-avatar class="clinic-avatar">
+          <mat-icon>local_hospital</mat-icon>
+        </div>
+        <mat-card-title>{{clinic.clinicName}}</mat-card-title>
+        <mat-card-subtitle>
+          {{getCapacityStatus(clinic.utilizationPercentage)}} - {{clinic.utilizationPercentage}}% utilized
+        </mat-card-subtitle>
+        <div class="header-actions">
+          <button mat-raised-button color="primary" (click)="optimizeCapacity(clinic)">
+            <mat-icon>tune</mat-icon>
+            Optimize
+          </button>
+          <button mat-stroked-button (click)="addCapacity(clinic)">
+            <mat-icon>add</mat-icon>
+            Add Capacity
+          </button>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Capacity Overview -->
+        <div class="capacity-overview">
+          <div class="capacity-chart">
+            <div class="chart-container">
+              <div class="utilization-circle" [ngClass]="getUtilizationColor(clinic.utilizationPercentage)">
+                <span class="percentage">{{clinic.utilizationPercentage}}%</span>
+                <span class="label">Utilized</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="capacity-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{clinic.totalCapacity}}</span>
+              <span class="stat-label">Total Slots</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{clinic.bookedSlots}}</span>
+              <span class="stat-label">Booked</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{clinic.availableSlots}}</span>
+              <span class="stat-label">Available</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Doctor Capacity Table -->
+        <div class="doctors-section">
+          <h4>Doctor Capacity</h4>
+          <div class="doctors-table">
+            <table mat-table [dataSource]="clinic.doctors" class="capacity-table">
+              <ng-container matColumnDef="doctor">
+                <th mat-header-cell *matHeaderCellDef>Doctor</th>
+                <td mat-cell *matCellDef="let doctor">
+                  <div class="doctor-info">
+                    <span class="doctor-name">{{doctor.doctorName}}</span>
+                    <span class="doctor-specialty">{{doctor.specialty}}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="utilization">
+                <th mat-header-cell *matHeaderCellDef>Utilization</th>
+                <td mat-cell *matCellDef="let doctor">
+                  <div class="utilization-cell">
+                    <mat-progress-bar 
+                      mode="determinate" 
+                      [value]="doctor.utilizationRate"
+                      [color]="getUtilizationColor(doctor.utilizationRate)">
+                    </mat-progress-bar>
+                    <span class="utilization-text">{{doctor.utilizationRate}}%</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="slots">
+                <th mat-header-cell *matHeaderCellDef>Slots</th>
+                <td mat-cell *matCellDef="let doctor">
+                  <span class="slots-info">
+                    {{doctor.bookedSlots}}/{{doctor.totalSlots}}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="nextAvailable">
+                <th mat-header-cell *matHeaderCellDef>Next Available</th>
+                <td mat-cell *matCellDef="let doctor">
+                  <span *ngIf="doctor.nextAvailableSlot; else noSlots">
+                    {{doctor.nextAvailableSlot | date:'short'}}
+                  </span>
+                  <ng-template #noSlots>
+                    <span class="no-slots">No slots</span>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let doctor">
+                  <button mat-icon-button (click)="viewDoctorSchedule(doctor)" 
+                          matTooltip="View Schedule">
+                    <mat-icon>schedule</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['doctor', 'utilization', 'slots', 'nextAvailable', 'actions']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['doctor', 'utilization', 'slots', 'nextAvailable', 'actions'];"></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recommendations-section" *ngIf="clinic.recommendations.length > 0">
+          <h4>Recommendations</h4>
+          <div class="recommendations-list">
+            <mat-chip-list>
+              <mat-chip *ngFor="let recommendation of clinic.recommendations" color="accent" selected>
+                <mat-icon matChipAvatar>lightbulb</mat-icon>
+                {{recommendation}}
+              </mat-chip>
+            </mat-chip-list>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

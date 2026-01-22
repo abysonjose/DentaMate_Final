@@ -1,0 +1,277 @@
+<div class="appointment-analytics-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="title-section">
+      <h2>
+        <mat-icon>analytics</mat-icon>
+        Appointment Analytics
+      </h2>
+      <p class="subtitle">Comprehensive appointment performance insights and trends</p>
+    </div>
+    
+    <div class="controls-section">
+      <mat-form-field appearance="outline">
+        <mat-label>Time Period</mat-label>
+        <mat-select [(value)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+          <mat-option value="7">Last 7 days</mat-option>
+          <mat-option value="30">Last 30 days</mat-option>
+          <mat-option value="90">Last 3 months</mat-option>
+          <mat-option value="365">Last year</mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="clinic-filter">
+        <mat-label>Filter by Clinic</mat-label>
+        <mat-select [(value)]="selectedClinic" (selectionChange)="onClinicChange()">
+          <mat-option value="">All Clinics</mat-option>
+          <mat-option *ngFor="let clinic of clinics" [value]="clinic.id">
+            {{clinic.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <button mat-icon-button (click)="clearClinicFilter()" *ngIf="selectedClinic" 
+              matTooltip="Clear filter">
+        <mat-icon>clear</mat-icon>
+      </button>
+      
+      <button mat-raised-button color="primary" (click)="exportReport()">
+        <mat-icon>download</mat-icon>
+        Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <div *ngIf="!isLoading">
+    <!-- System Overview Metrics -->
+    <div class="overview-metrics">
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-content">
+            <div class="metric-icon">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="metric-details">
+              <div class="metric-value">{{systemMetrics.totalAppointments | number}}</div>
+              <div class="metric-label">Total Appointments</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card" [ngClass]="getMetricColor(systemMetrics.completionRate, 'completion')">
+        <mat-card-content>
+          <div class="metric-content">
+            <div class="metric-icon">
+              <mat-icon>{{getMetricIcon(systemMetrics.completionRate, 'completion')}}</mat-icon>
+            </div>
+            <div class="metric-details">
+              <div class="metric-value">{{systemMetrics.completionRate}}%</div>
+              <div class="metric-label">Completion Rate</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card" [ngClass]="getMetricColor(systemMetrics.cancellationRate, 'cancellation')">
+        <mat-card-content>
+          <div class="metric-content">
+            <div class="metric-icon">
+              <mat-icon>{{getMetricIcon(systemMetrics.cancellationRate, 'cancellation')}}</mat-icon>
+            </div>
+            <div class="metric-details">
+              <div class="metric-value">{{systemMetrics.cancellationRate}}%</div>
+              <div class="metric-label">Cancellation Rate</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-content">
+            <div class="metric-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="metric-details">
+              <div class="metric-value">{{systemMetrics.averageWaitTime}}m</div>
+              <div class="metric-label">Avg Wait Time</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-content">
+            <div class="metric-icon">
+              <mat-icon>star</mat-icon>
+            </div>
+            <div class="metric-details">
+              <div class="metric-value">{{systemMetrics.patientSatisfactionScore}}</div>
+              <div class="metric-label">Patient Satisfaction</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-row">
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Appointment Trends</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                [data]="appointmentTrendsChart.data"
+                [options]="appointmentTrendsChart.options"
+                [type]="appointmentTrendsChart.type">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Status Distribution</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                [data]="appointmentStatusChart.data"
+                [options]="appointmentStatusChart.options"
+                [type]="appointmentStatusChart.type">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="chart-card full-width">
+        <mat-card-header>
+          <mat-card-title>Clinic Performance Comparison</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas baseChart
+              [data]="clinicComparisonChart.data"
+              [options]="clinicComparisonChart.options"
+              [type]="clinicComparisonChart.type">
+            </canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Clinic Performance Details -->
+    <div class="clinic-performance-section">
+      <h3>Clinic Performance Details</h3>
+      
+      <div class="clinic-cards">
+        <mat-card *ngFor="let clinic of clinicPerformances" class="clinic-performance-card">
+          <mat-card-header>
+            <div mat-card-avatar class="clinic-avatar">
+              <mat-icon>local_hospital</mat-icon>
+            </div>
+            <mat-card-title>{{clinic.clinicName}}</mat-card-title>
+            <mat-card-subtitle>
+              {{clinic.metrics.totalAppointments | number}} appointments in selected period
+            </mat-card-subtitle>
+            <div class="header-actions">
+              <button mat-icon-button (click)="viewClinicDetails(clinic)" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <!-- Clinic Metrics Grid -->
+            <div class="clinic-metrics-grid">
+              <div class="metric-item">
+                <div class="metric-icon" [ngClass]="getMetricColor(clinic.metrics.completionRate, 'completion')">
+                  <mat-icon>check_circle</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-value">{{clinic.metrics.completionRate}}%</span>
+                  <span class="metric-label">Completion Rate</span>
+                </div>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-icon" [ngClass]="getMetricColor(clinic.metrics.cancellationRate, 'cancellation')">
+                  <mat-icon>cancel</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-value">{{clinic.metrics.cancellationRate}}%</span>
+                  <span class="metric-label">Cancellation Rate</span>
+                </div>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-icon">
+                  <mat-icon>schedule</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-value">{{clinic.metrics.averageWaitTime}}m</span>
+                  <span class="metric-label">Avg Wait Time</span>
+                </div>
+              </div>
+
+              <div class="metric-item">
+                <div class="metric-icon">
+                  <mat-icon>star</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-value">{{clinic.metrics.patientSatisfactionScore}}</span>
+                  <span class="metric-label">Patient Rating</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Doctors -->
+            <div class="top-doctors-section" *ngIf="clinic.topDoctors.length > 0">
+              <h4>Top Performing Doctors</h4>
+              <div class="doctors-list">
+                <div *ngFor="let doctor of clinic.topDoctors" class="doctor-item">
+                  <div class="doctor-info">
+                    <div class="doctor-details">
+                      <span class="doctor-name">{{doctor.doctorName}}</span>
+                      <span class="doctor-specialty">{{doctor.specialty}}</span>
+                    </div>
+                    <div class="doctor-metrics">
+                      <div class="doctor-metric">
+                        <span class="metric-value">{{doctor.completionRate}}%</span>
+                        <span class="metric-label">Completion</span>
+                      </div>
+                      <div class="doctor-metric">
+                        <span class="metric-value">{{doctor.patientRating}}</span>
+                        <span class="metric-label">Rating</span>
+                      </div>
+                      <div class="doctor-metric">
+                        <span class="metric-value">${{doctor.revenue | number}}</span>
+                        <span class="metric-label">Revenue</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button mat-icon-button (click)="viewDoctorPerformance(doctor)" 
+                          matTooltip="View Performance">
+                    <mat-icon>trending_up</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

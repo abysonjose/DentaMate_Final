@@ -17,6 +17,34 @@
     
     <span class="spacer"></span>
     
+    <!-- Real-time Metrics -->
+    <div class="realtime-metrics" *ngIf="!isLoadingMetrics">
+      <div class="metric-item" matTooltip="Active Appointments">
+        <mat-icon color="primary">event</mat-icon>
+        <span>{{dashboardMetrics.activeAppointments}}</span>
+      </div>
+      <div class="metric-item" matTooltip="Waiting Patients">
+        <mat-icon color="accent">people_outline</mat-icon>
+        <span>{{dashboardMetrics.waitingPatients}}</span>
+      </div>
+      <div class="metric-item" matTooltip="In Consultation">
+        <mat-icon color="warn">medical_services</mat-icon>
+        <span>{{dashboardMetrics.inConsultation}}</span>
+      </div>
+      <div class="metric-item" matTooltip="Queue Load">
+        <mat-icon [color]="getQueueLoadColor()">{{getQueueLoadIcon()}}</mat-icon>
+        <span>{{dashboardMetrics.queueLoad}}%</span>
+      </div>
+    </div>
+    
+    <!-- Loading indicator -->
+    <mat-spinner *ngIf="isLoadingMetrics" diameter="24" class="metrics-spinner"></mat-spinner>
+    
+    <!-- Refresh button -->
+    <button mat-icon-button (click)="refreshMetrics()" matTooltip="Refresh Metrics">
+      <mat-icon>refresh</mat-icon>
+    </button>
+    
     <!-- Critical Alerts Indicator -->
     <button mat-icon-button 
             *ngIf="criticalAlertsCount > 0" 
@@ -197,13 +225,17 @@
       <!-- Quick Actions -->
       <div class="quick-actions">
         <h4>Quick Actions</h4>
-        <button mat-stroked-button class="quick-action-btn" routerLink="/branch-admin/staff">
+        <button mat-stroked-button class="quick-action-btn" (click)="createWalkInAppointment()">
           <mat-icon>person_add</mat-icon>
-          Add Staff
+          Walk-in Patient
         </button>
-        <button mat-stroked-button class="quick-action-btn" routerLink="/branch-admin/appointments">
+        <button mat-stroked-button class="quick-action-btn" (click)="viewAppointments()">
           <mat-icon>event</mat-icon>
           View Appointments
+        </button>
+        <button mat-stroked-button class="quick-action-btn" (click)="viewQueueMonitoring()">
+          <mat-icon>queue</mat-icon>
+          Monitor Queue
         </button>
         <button mat-stroked-button class="quick-action-btn" routerLink="/branch-admin/reports">
           <mat-icon>assessment</mat-icon>
@@ -215,6 +247,192 @@
     <!-- Main Content Area -->
     <mat-sidenav-content class="main-content">
       <div class="content-wrapper">
+        <!-- Dashboard Overview Cards (shown only on overview route) -->
+        <div class="dashboard-overview" *ngIf="router.url === '/branch-admin' || router.url === '/branch-admin/overview'">
+          <div class="overview-header">
+            <h1>Branch Operations Overview</h1>
+            <p>Real-time monitoring and management of branch activities</p>
+          </div>
+          
+          <!-- Quick Stats Cards -->
+          <div class="stats-grid">
+            <mat-card class="stat-card appointment-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>event</mat-icon>
+                  Appointments Today
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{dashboardMetrics.totalAppointmentsToday}}</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Active:</span>
+                    <span class="value">{{dashboardMetrics.activeAppointments}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Completed:</span>
+                    <span class="value">{{dashboardMetrics.completedAppointments}}</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" (click)="viewAppointments()">
+                  Manage Appointments
+                </button>
+              </mat-card-content>
+            </mat-card>
+            
+            <mat-card class="stat-card queue-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>queue</mat-icon>
+                  Queue Status
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{dashboardMetrics.waitingPatients}}</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Waiting:</span>
+                    <span class="value">{{dashboardMetrics.waitingPatients}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">In Consultation:</span>
+                    <span class="value">{{dashboardMetrics.inConsultation}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Avg Wait:</span>
+                    <span class="value">{{dashboardMetrics.averageWaitTime}}min</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" (click)="viewQueueMonitoring()">
+                  Monitor Queue
+                </button>
+              </mat-card-content>
+            </mat-card>
+            
+            <mat-card class="stat-card doctor-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>medical_services</mat-icon>
+                  Doctors Active
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{dashboardMetrics.doctorsActive}}</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Active Today:</span>
+                    <span class="value">{{dashboardMetrics.doctorsActive}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Queue Load:</span>
+                    <span class="value" [class]="getQueueLoadColor()">{{dashboardMetrics.queueLoad}}%</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" (click)="viewScheduleManagement()">
+                  Manage Schedules
+                </button>
+              </mat-card-content>
+            </mat-card>
+            
+            <mat-card class="stat-card performance-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>trending_up</mat-icon>
+                  Performance
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{((dashboardMetrics.completedAppointments / Math.max(1, dashboardMetrics.totalAppointmentsToday)) * 100) | number:'1.0-0'}}%</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Completion Rate:</span>
+                    <span class="value">{{((dashboardMetrics.completedAppointments / Math.max(1, dashboardMetrics.totalAppointmentsToday)) * 100) | number:'1.0-0'}}%</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Efficiency:</span>
+                    <span class="value">{{100 - dashboardMetrics.queueLoad}}%</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" routerLink="/branch-admin/reports">
+                  View Reports
+                </button>
+              </mat-card-content>
+            </mat-card>
+          </div>
+          
+          <!-- Queue Summary by Doctor -->
+          <div class="queue-summary" *ngIf="queueSummaries.length > 0">
+            <h2>Doctor Queue Status</h2>
+            <div class="queue-cards">
+              <mat-card *ngFor="let queue of queueSummaries" class="queue-card">
+                <mat-card-header>
+                  <mat-card-title>Doctor {{queue.doctorId}}</mat-card-title>
+                  <mat-card-subtitle>{{queue.date | date:'shortDate'}}</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="queue-metrics">
+                    <div class="queue-metric">
+                      <span class="metric-label">Waiting:</span>
+                      <span class="metric-value waiting">{{queue.waiting}}</span>
+                    </div>
+                    <div class="queue-metric">
+                      <span class="metric-label">In Progress:</span>
+                      <span class="metric-value in-progress">{{queue.inProgress}}</span>
+                    </div>
+                    <div class="queue-metric">
+                      <span class="metric-label">Completed:</span>
+                      <span class="metric-value completed">{{queue.completed}}</span>
+                    </div>
+                  </div>
+                  <div class="current-token" *ngIf="queue.currentToken">
+                    <span>Current Token: #{{queue.currentToken}}</span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+          
+          <!-- Quick Actions Grid -->
+          <div class="quick-actions-grid">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+              <button mat-raised-button color="primary" (click)="createWalkInAppointment()">
+                <mat-icon>person_add</mat-icon>
+                Add Walk-in Patient
+              </button>
+              <button mat-raised-button color="accent" (click)="viewScheduleManagement()">
+                <mat-icon>schedule</mat-icon>
+                Manage Doctor Schedules
+              </button>
+              <button mat-raised-button color="warn" routerLink="/branch-admin/staff">
+                <mat-icon>people</mat-icon>
+                Manage Staff
+              </button>
+              <button mat-raised-button routerLink="/branch-admin/reports">
+                <mat-icon>assessment</mat-icon>
+                Generate Reports
+              </button>
+            </div>
+          </div>
+          
+          <!-- Recent Alerts -->
+          <div class="recent-alerts" *ngIf="alerts.length > 0">
+            <h2>Recent Alerts</h2>
+            <mat-list>
+              <mat-list-item *ngFor="let alert of alerts.slice(0, 3)" (click)="handleAlertAction(alert)">
+                <mat-icon matListIcon [color]="getAlertColor(alert.severity)">
+                  {{getAlertIcon(alert.type)}}
+                </mat-icon>
+                <div matLine>{{alert.message}}</div>
+                <div matLine class="alert-timestamp">{{alert.timestamp | date:'short'}}</div>
+                <mat-chip *ngIf="alert.actionRequired" color="accent">Action Required</mat-chip>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </div>
+        
+        <!-- Router Outlet for other routes -->
         <router-outlet></router-outlet>
       </div>
     </mat-sidenav-content>

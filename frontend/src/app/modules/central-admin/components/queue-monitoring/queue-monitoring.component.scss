@@ -1,0 +1,318 @@
+.queue-monitoring-container {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .title-section {
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 8px 0;
+        color: #1976d2;
+        font-weight: 500;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+      }
+    }
+
+    .controls-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .clinic-filter {
+        min-width: 200px;
+      }
+    }
+  }
+
+  .overview-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .metric-card {
+      &.waiting {
+        border-left: 4px solid #ff9800;
+      }
+      &.active {
+        border-left: 4px solid #4caf50;
+      }
+      &.wait-time {
+        border-left: 4px solid #2196f3;
+      }
+      &.load {
+        &.primary { border-left: 4px solid #4caf50; }
+        &.accent { border-left: 4px solid #ff9800; }
+        &.warn { border-left: 4px solid #f44336; }
+      }
+
+      .metric-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .metric-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background-color: #f5f5f5;
+
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+          }
+        }
+
+        .metric-details {
+          .metric-value {
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1;
+            margin-bottom: 4px;
+          }
+
+          .metric-label {
+            font-size: 14px;
+            color: #666;
+          }
+        }
+      }
+    }
+  }
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    p {
+      margin-top: 16px;
+      color: #666;
+    }
+  }
+
+  .clinic-queues {
+    display: grid;
+    gap: 24px;
+
+    .clinic-card {
+      .mat-card-header {
+        .clinic-avatar {
+          background-color: #1976d2;
+          color: white;
+        }
+
+        .header-actions {
+          margin-left: auto;
+        }
+      }
+
+      .clinic-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+
+        .summary-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: 12px;
+          background-color: #f8f9fa;
+          border-radius: 8px;
+
+          mat-icon {
+            margin-bottom: 8px;
+          }
+
+          .value {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+          }
+
+          .label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+          }
+        }
+      }
+
+      .load-progress {
+        margin-bottom: 20px;
+
+        .load-text {
+          display: block;
+          text-align: center;
+          margin-top: 8px;
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .doctors-section {
+        h4 {
+          margin: 0 0 16px 0;
+          color: #333;
+          font-weight: 500;
+        }
+
+        .doctors-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 16px;
+
+          .doctor-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            background-color: #fafafa;
+
+            .doctor-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 12px;
+
+              .doctor-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .doctor-name {
+                  font-weight: 500;
+                  margin-right: 8px;
+                }
+              }
+            }
+
+            .doctor-metrics {
+              .metric-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 6px;
+                font-size: 14px;
+
+                .metric-label {
+                  color: #666;
+                }
+
+                .metric-value {
+                  font-weight: 500;
+
+                  &.primary { color: #4caf50; }
+                  &.accent { color: #ff9800; }
+                  &.warn { color: #f44336; }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: #ccc;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+
+    p {
+      margin: 0 0 24px 0;
+      color: #666;
+    }
+  }
+
+  .footer-info {
+    margin-top: 24px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .refresh-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #666;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .queue-monitoring-container {
+    padding: 16px;
+
+    .header-section {
+      flex-direction: column;
+      gap: 16px;
+
+      .controls-section {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+    .overview-cards {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .clinic-queues .clinic-card .doctors-section .doctors-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

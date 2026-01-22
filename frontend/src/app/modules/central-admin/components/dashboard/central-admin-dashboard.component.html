@@ -12,6 +12,34 @@
     
     <span class="spacer"></span>
     
+    <!-- Real-time Metrics -->
+    <div class="realtime-metrics" *ngIf="!isLoadingMetrics">
+      <div class="metric-item" matTooltip="Active Appointments">
+        <mat-icon color="primary">event</mat-icon>
+        <span>{{dashboardMetrics.activeAppointments}}</span>
+      </div>
+      <div class="metric-item" matTooltip="Waiting Patients">
+        <mat-icon color="accent">people_outline</mat-icon>
+        <span>{{dashboardMetrics.waitingPatients}}</span>
+      </div>
+      <div class="metric-item" matTooltip="In Consultation">
+        <mat-icon color="warn">medical_services</mat-icon>
+        <span>{{dashboardMetrics.inConsultation}}</span>
+      </div>
+      <div class="metric-item" matTooltip="System Load">
+        <mat-icon [color]="getSystemHealthColor()">{{getSystemHealthIcon()}}</mat-icon>
+        <span>{{dashboardMetrics.systemLoad}}%</span>
+      </div>
+    </div>
+    
+    <!-- Loading indicator -->
+    <mat-spinner *ngIf="isLoadingMetrics" diameter="24" class="metrics-spinner"></mat-spinner>
+    
+    <!-- Refresh button -->
+    <button mat-icon-button (click)="refreshMetrics()" matTooltip="Refresh Metrics">
+      <mat-icon>refresh</mat-icon>
+    </button>
+    
     <!-- System Alerts -->
     <button mat-icon-button [matMenuTriggerFor]="alertsMenu" class="alerts-button">
       <mat-icon [matBadge]="unreadAlertsCount" [matBadgeHidden]="unreadAlertsCount === 0" matBadgeColor="warn">
@@ -35,7 +63,7 @@
               <mat-icon [color]="getAlertColor(alert.severity)">
                 {{getAlertIcon(alert.type)}}
               </mat-icon>
-              <span class="alert-title">{{alert.title}}</span>
+              <span class="alert-title">{{alert.title || alert.type}}</span>
               <button mat-icon-button (click)="dismissAlert(alert)" class="dismiss-btn">
                 <mat-icon>close</mat-icon>
               </button>
@@ -139,6 +167,161 @@
     <!-- Main Content Area -->
     <mat-sidenav-content class="main-content">
       <div class="content-wrapper">
+        <!-- Dashboard Overview Cards (shown only on overview route) -->
+        <div class="dashboard-overview" *ngIf="router.url === '/central-admin' || router.url === '/central-admin/overview'">
+          <div class="overview-header">
+            <h1>System Overview</h1>
+            <p>Real-time monitoring and management of all clinic operations</p>
+          </div>
+          
+          <!-- Quick Stats Cards -->
+          <div class="stats-grid">
+            <mat-card class="stat-card appointment-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>event</mat-icon>
+                  Appointments Today
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{dashboardMetrics.completedToday + dashboardMetrics.activeAppointments}}</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Active:</span>
+                    <span class="value">{{dashboardMetrics.activeAppointments}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Completed:</span>
+                    <span class="value">{{dashboardMetrics.completedToday}}</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" (click)="viewAppointmentDetails()">
+                  View Details
+                </button>
+              </mat-card-content>
+            </mat-card>
+            
+            <mat-card class="stat-card queue-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>queue</mat-icon>
+                  Queue Status
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{dashboardMetrics.waitingPatients}}</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Waiting:</span>
+                    <span class="value">{{dashboardMetrics.waitingPatients}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">In Consultation:</span>
+                    <span class="value">{{dashboardMetrics.inConsultation}}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Avg Wait:</span>
+                    <span class="value">{{dashboardMetrics.averageWaitTime}}min</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" (click)="viewQueueMonitoring()">
+                  Monitor Queues
+                </button>
+              </mat-card-content>
+            </mat-card>
+            
+            <mat-card class="stat-card system-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon [color]="getSystemHealthColor()">{{getSystemHealthIcon()}}</mat-icon>
+                  System Health
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">{{dashboardMetrics.systemLoad}}%</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Load:</span>
+                    <span class="value">{{dashboardMetrics.systemLoad}}%</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Status:</span>
+                    <span class="value" [class]="getSystemHealthColor()">
+                      {{dashboardMetrics.systemLoad > 90 ? 'Critical' : dashboardMetrics.systemLoad > 70 ? 'Warning' : 'Healthy'}}
+                    </span>
+                  </div>
+                </div>
+                <button mat-button color="primary" routerLink="/central-admin/system-config">
+                  System Config
+                </button>
+              </mat-card-content>
+            </mat-card>
+            
+            <mat-card class="stat-card capacity-stats">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>timeline</mat-icon>
+                  Capacity Management
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="stat-number">85%</div>
+                <div class="stat-details">
+                  <div class="stat-item">
+                    <span class="label">Utilization:</span>
+                    <span class="value">85%</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">Available Slots:</span>
+                    <span class="value">24</span>
+                  </div>
+                </div>
+                <button mat-button color="primary" (click)="viewCapacityManagement()">
+                  Manage Capacity
+                </button>
+              </mat-card-content>
+            </mat-card>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+              <button mat-raised-button color="primary" (click)="viewAppointmentAnalytics()">
+                <mat-icon>insights</mat-icon>
+                Appointment Analytics
+              </button>
+              <button mat-raised-button color="accent" routerLink="/central-admin/clinics">
+                <mat-icon>local_hospital</mat-icon>
+                Manage Clinics
+              </button>
+              <button mat-raised-button color="warn" routerLink="/central-admin/audit-logs">
+                <mat-icon>history</mat-icon>
+                View Audit Logs
+              </button>
+              <button mat-raised-button routerLink="/central-admin/reports">
+                <mat-icon>assessment</mat-icon>
+                Generate Reports
+              </button>
+            </div>
+          </div>
+          
+          <!-- Recent Alerts -->
+          <div class="recent-alerts" *ngIf="alerts.length > 0">
+            <h2>Recent Alerts</h2>
+            <mat-list>
+              <mat-list-item *ngFor="let alert of alerts.slice(0, 3)">
+                <mat-icon matListIcon [color]="getAlertColor(alert.severity)">
+                  {{getAlertIcon(alert.type)}}
+                </mat-icon>
+                <div matLine>{{alert.message}}</div>
+                <div matLine class="alert-timestamp">{{alert.timestamp | date:'short'}}</div>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </div>
+        
+        <!-- Router Outlet for other routes -->
         <router-outlet></router-outlet>
       </div>
     </mat-sidenav-content>

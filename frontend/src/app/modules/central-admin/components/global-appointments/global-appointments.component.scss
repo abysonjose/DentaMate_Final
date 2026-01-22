@@ -1,0 +1,304 @@
+.global-appointments-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+
+    .header-content {
+      h1 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        font-weight: 500;
+        color: #1976d2;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 16px;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 24px;
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      align-items: end;
+
+      .filter-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        button {
+          height: 40px;
+        }
+      }
+    }
+  }
+
+  .table-card {
+    .table-container {
+      position: relative;
+      min-height: 400px;
+
+      .appointments-table {
+        width: 100%;
+
+        .mat-column-appointmentDateTime {
+          width: 140px;
+        }
+
+        .mat-column-patientName {
+          width: 180px;
+        }
+
+        .mat-column-doctorName {
+          width: 180px;
+        }
+
+        .mat-column-clinicName {
+          width: 160px;
+        }
+
+        .mat-column-appointmentType {
+          width: 120px;
+        }
+
+        .mat-column-status {
+          width: 140px;
+        }
+
+        .mat-column-token {
+          width: 120px;
+        }
+
+        .mat-column-actions {
+          width: 80px;
+        }
+
+        .datetime-cell {
+          .date {
+            font-weight: 500;
+            color: #333;
+          }
+
+          .time {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+
+        .patient-cell,
+        .doctor-cell,
+        .clinic-cell {
+          .name {
+            font-weight: 500;
+            color: #333;
+          }
+
+          .id,
+          .department,
+          .branch {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+
+        .token-cell {
+          .token-number {
+            font-weight: 600;
+            color: #1976d2;
+          }
+
+          .token-status {
+            font-size: 12px;
+            color: #666;
+            text-transform: capitalize;
+          }
+
+          .wait-time {
+            font-size: 11px;
+            color: #ff9800;
+          }
+        }
+
+        .no-token {
+          color: #999;
+          font-style: italic;
+          font-size: 12px;
+        }
+
+        mat-chip {
+          font-size: 11px;
+          min-height: 24px;
+
+          mat-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            margin-right: 4px;
+          }
+        }
+      }
+
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+
+        mat-spinner {
+          margin-bottom: 16px;
+        }
+
+        p {
+          color: #666;
+          margin: 0;
+        }
+      }
+
+      .no-data-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+
+        mat-icon {
+          font-size: 64px;
+          width: 64px;
+          height: 64px;
+          color: #ccc;
+          margin-bottom: 16px;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          color: #666;
+        }
+
+        p {
+          margin: 0;
+          color: #999;
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .global-appointments-container {
+    padding: 16px;
+
+    .page-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+
+      .header-actions {
+        justify-content: flex-end;
+      }
+    }
+
+    .filters-card .filters-grid {
+      grid-template-columns: 1fr;
+
+      .filter-actions {
+        justify-content: stretch;
+
+        button {
+          flex: 1;
+        }
+      }
+    }
+
+    .table-container {
+      overflow-x: auto;
+
+      .appointments-table {
+        min-width: 800px;
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .global-appointments-container {
+    .page-header .header-content {
+      h1 {
+        color: #90caf9;
+      }
+
+      p {
+        color: #bbb;
+      }
+    }
+
+    .appointments-table {
+      .datetime-cell .date,
+      .patient-cell .name,
+      .doctor-cell .name,
+      .clinic-cell .name {
+        color: #fff;
+      }
+
+      .datetime-cell .time,
+      .patient-cell .id,
+      .doctor-cell .department,
+      .clinic-cell .branch {
+        color: #bbb;
+      }
+
+      .token-cell .token-number {
+        color: #90caf9;
+      }
+
+      .token-cell .token-status {
+        color: #bbb;
+      }
+    }
+
+    .no-data-container {
+      mat-icon {
+        color: #555;
+      }
+
+      h3 {
+        color: #bbb;
+      }
+
+      p {
+        color: #777;
+      }
+    }
+  }
+}

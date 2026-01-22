@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CentralAdminService, SystemAlert } from '../../services/central-admin.service';
+import { CentralAppointmentService, SystemWideMetrics } from '../../services/appointment.service';
 
 interface NavigationItem {
   label: string;
@@ -10,6 +11,22 @@ interface NavigationItem {
   route: string;
   badge?: number;
   children?: NavigationItem[];
+}
+
+interface DashboardMetrics {
+  totalClinics: number;
+  totalBranches: number;
+  totalUsers: number;
+  activeSubscriptions: number;
+  systemHealth: number;
+  
+  // Appointment metrics
+  activeAppointments: number;
+  waitingPatients: number;
+  inConsultation: number;
+  completedToday: number;
+  averageWaitTime: number;
+  systemLoad: number;
 }
 
 @Component({
@@ -25,11 +42,56 @@ export class CentralAdminDashboardComponent implements OnInit, OnDestroy {
   unreadAlertsCount = 0;
   sidenavOpened = true;
   
+  // Dashboard metrics
+  dashboardMetrics: DashboardMetrics = {
+    totalClinics: 0,
+    totalBranches: 0,
+    totalUsers: 0,
+    activeSubscriptions: 0,
+    systemHealth: 0,
+    activeAppointments: 0,
+    waitingPatients: 0,
+    inConsultation: 0,
+    completedToday: 0,
+    averageWaitTime: 0,
+    systemLoad: 0
+  };
+  
+  systemWideMetrics: SystemWideMetrics | null = null;
+  isLoadingMetrics = true;
+  
   navigationItems: NavigationItem[] = [
     {
       label: 'Overview',
       icon: 'dashboard',
       route: '/central-admin/overview'
+    },
+    {
+      label: 'Appointment Management',
+      icon: 'event',
+      route: '',
+      children: [
+        {
+          label: 'Global Appointments',
+          icon: 'calendar_today',
+          route: '/central-admin/appointments'
+        },
+        {
+          label: 'Queue Monitoring',
+          icon: 'queue',
+          route: '/central-admin/queue-monitoring'
+        },
+        {
+          label: 'Capacity Management',
+          icon: 'timeline',
+          route: '/central-admin/capacity'
+        },
+        {
+          label: 'Appointment Analytics',
+          icon: 'insights',
+          route: '/central-admin/appointment-analytics'
+        }
+      ]
     },
     {
       label: 'Organization Management',
@@ -88,12 +150,19 @@ export class CentralAdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private centralAdminService: CentralAdminService,
+    private appointmentService: CentralAppointmentService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadSystemAlerts();
+    this.loadDashboardMetrics();
     this.checkUserPermissions();
+    
+    // Refresh metrics every 30 seconds
+    setInterval(() => {
+      this.loadDashboardMetrics();
+    }, 30000);
   }
 
   ngOnDestroy(): void {
@@ -108,6 +177,53 @@ export class CentralAdminDashboardComponent implements OnInit, OnDestroy {
         this.alerts = alerts;
         this.unreadAlertsCount = alerts.filter(alert => !alert.isRead).length;
       });
+  }
+
+  private loadDashboardMetrics(): void {
+    this.isLoadingMetrics = true;
+    
+    forkJoin({
+      systemMetrics: this.appointmentService.getSystemWideMetrics(),
+      systemAlerts: this.appointmentService.getSystemAlerts()
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => {
+        this.systemWideMetrics = data.systemMetrics;
+        
+        // Update dashboard metrics
+        this.dashboardMetrics = {
+          ...this.dashboardMetrics,
+          activeAppointments: data.systemMetrics.activeAppointments,
+          waitingPatients: data.systemMetrics.waitingPatients,
+          inConsultation: data.systemMetrics.inConsultation,
+          completedToday: data.systemMetrics.completedToday,
+          averageWaitTime: data.systemMetrics.averageWaitTime,
+          systemLoad: data.systemMetrics.systemLoad
+        };
+        
+        // Merge appointment alerts with system alerts
+        const appointmentAlerts = data.systemAlerts.map(alert => ({
+          id: `apt-${Date.now()}-${Math.random()}`,
+          type: alert.type,
+          message: alert.message,
+          severity: alert.severity,
+          timestamp: alert.timestamp,
+          isRead: false,
+          clinicId: alert.clinicId,
+          appointmentId: alert.appointmentId
+        }));
+        
+        this.alerts = [...this.alerts, ...appointmentAlerts];
+        this.unreadAlertsCount = this.alerts.filter(alert => !alert.isRead).length;
+        
+        this.isLoadingMetrics = false;
+      },
+      error: (error) => {
+        console.error('Error loading dashboard metrics:', error);
+        this.isLoadingMetrics = false;
+      }
+    });
   }
 
   private checkUserPermissions(): void {
@@ -143,9 +259,13 @@ export class CentralAdminDashboardComponent implements OnInit, OnDestroy {
 
   getAlertIcon(type: string): string {
     switch (type) {
-      case 'error': return 'error';
-      case 'warning': return 'warning';
-      case 'info': return 'info';
+      case 'error': 
+      case 'overdue': return 'error';
+      case 'warning': 
+      case 'conflict': return 'warning';
+      case 'info': 
+      case 'capacity': return 'info';
+      case 'system': return 'settings';
       default: return 'notifications';
     }
   }
@@ -158,6 +278,38 @@ export class CentralAdminDashboardComponent implements OnInit, OnDestroy {
       case 'low': return 'primary';
       default: return 'primary';
     }
+  }
+
+  getSystemHealthColor(): string {
+    if (this.dashboardMetrics.systemLoad > 90) return 'warn';
+    if (this.dashboardMetrics.systemLoad > 70) return 'accent';
+    return 'primary';
+  }
+
+  getSystemHealthIcon(): string {
+    if (this.dashboardMetrics.systemLoad > 90) return 'error';
+    if (this.dashboardMetrics.systemLoad > 70) return 'warning';
+    return 'check_circle';
+  }
+
+  refreshMetrics(): void {
+    this.loadDashboardMetrics();
+  }
+
+  viewAppointmentDetails(): void {
+    this.router.navigate(['/central-admin/appointments']);
+  }
+
+  viewQueueMonitoring(): void {
+    this.router.navigate(['/central-admin/queue-monitoring']);
+  }
+
+  viewCapacityManagement(): void {
+    this.router.navigate(['/central-admin/capacity']);
+  }
+
+  viewAppointmentAnalytics(): void {
+    this.router.navigate(['/central-admin/appointment-analytics']);
   }
 
   logout(): void {
