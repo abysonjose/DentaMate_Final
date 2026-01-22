@@ -1,0 +1,377 @@
+.clinic-management {
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  border-radius: 12px;
+  
+  .header-content {
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 600;
+      
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+    }
+    
+    .page-subtitle {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+  }
+  
+  .header-actions {
+    button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Filters Card
+.filters-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  .filters-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    
+    .search-field {
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    mat-form-field {
+      min-width: 150px;
+    }
+    
+    button {
+      margin-top: 8px;
+      
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Bulk Actions
+.bulk-actions {
+  margin-bottom: 24px;
+  
+  mat-card {
+    border-radius: 12px;
+    background: #e3f2fd;
+    border-left: 4px solid #1976d2;
+    
+    .bulk-actions-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .selection-info {
+        font-weight: 500;
+        color: #1976d2;
+      }
+      
+      .bulk-buttons {
+        display: flex;
+        gap: 8px;
+        
+        button {
+          mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Table Card
+.table-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  .table-container {
+    overflow-x: auto;
+    
+    .clinics-table {
+      width: 100%;
+      
+      .clinic-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        
+        &:hover {
+          background-color: #f8f9fa;
+        }
+      }
+      
+      // Column Styling
+      .clinic-info {
+        .clinic-name {
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 4px;
+        }
+        
+        .clinic-domain {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+      
+      .domain-chip {
+        background: #f5f5f5;
+        color: #666;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+      }
+      
+      .usage-info {
+        .usage-text {
+          font-size: 13px;
+          font-weight: 500;
+          color: #333;
+          display: block;
+          margin-bottom: 4px;
+        }
+        
+        mat-progress-bar {
+          height: 6px;
+          border-radius: 3px;
+        }
+      }
+      
+      .activity-info {
+        .activity-date {
+          font-size: 13px;
+          color: #666;
+        }
+      }
+      
+      // Header Styling
+      th.mat-header-cell {
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      
+      // Cell Padding
+      td.mat-cell, th.mat-header-cell {
+        padding: 16px 8px;
+      }
+    }
+  }
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px;
+    
+    p {
+      margin-top: 16px;
+      color: #666;
+    }
+  }
+  
+  .no-data-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px;
+    text-align: center;
+    
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: #ccc;
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      margin: 0 0 8px 0;
+      color: #666;
+    }
+    
+    p {
+      margin: 0 0 24px 0;
+      color: #999;
+    }
+    
+    button mat-icon {
+      margin-right: 8px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+  
+  .table-paginator {
+    border-top: 1px solid #e0e0e0;
+    margin-top: 16px;
+  }
+}
+
+// Chip Colors
+mat-chip {
+  &[color="primary"] {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  &[color="accent"] {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+  
+  &[color="warn"] {
+    background-color: #ffebee;
+    color: #d32f2f;
+  }
+  
+  mat-icon {
+    margin-right: 4px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Menu Styling
+.mat-menu-panel {
+  min-width: 200px;
+  
+  .mat-menu-item {
+    mat-icon {
+      margin-right: 12px;
+      color: #666;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .search-field {
+      min-width: auto;
+    }
+    
+    mat-form-field {
+      min-width: auto;
+    }
+  }
+  
+  .bulk-actions-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    
+    .bulk-buttons {
+      justify-content: center;
+    }
+  }
+  
+  .table-container {
+    .clinics-table {
+      font-size: 14px;
+      
+      td.mat-cell, th.mat-header-cell {
+        padding: 12px 4px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .clinic-management {
+    padding: 0;
+  }
+  
+  .page-header {
+    margin: 0 0 16px 0;
+    border-radius: 0;
+  }
+  
+  .filters-card,
+  .table-card {
+    border-radius: 0;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+  
+  .bulk-actions {
+    margin-left: -16px;
+    margin-right: -16px;
+    
+    mat-card {
+      border-radius: 0;
+    }
+  }
+}
+
+// Animation for row selection
+.clinic-row.mat-row-selected {
+  background-color: #e3f2fd !important;
+}
+
+// Custom scrollbar for table
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

@@ -1,0 +1,90 @@
+services:
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: dentamate-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7.2-alpine
+    container_name: dentamate-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # API Gateway (Node.js)
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: dentamate-api-gateway
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/dentamate?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-jwt-secret-key
+      - FRONTEND_URL=http://localhost:4200
+    depends_on:
+      - mongodb
+      - redis
+
+  # Auth Identity Service
+  auth-service:
+    build: ./backend/auth-identity-service
+    container_name: dentamate-auth-service
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/dentamate?authSource=admin
+      - JWT_SECRET=your-jwt-secret-key
+      - REFRESH_TOKEN_SECRET=your-refresh-secret-key
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      - mongodb
+
+  # AI Diagnosis Service (Python)
+  ai-diagnosis-service:
+    build: ./backend/ai-diagnosis-service
+    container_name: dentamate-ai-service
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/dentamate?authSource=admin
+    depends_on:
+      - mongodb
+
+  # Frontend (Angular) - Development mode
+  frontend-dev:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: dentamate-frontend-dev
+    restart: always
+    ports:
+      - "4200:4200"
+    environment:
+      - NODE_ENV=development
+      - API_BASE_URL=http://localhost:3000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/angular.json:/app/angular.json
+      - ./frontend/package.json:/app/package.json
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongodb_data:

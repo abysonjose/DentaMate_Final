@@ -1,0 +1,396 @@
+.analytics-overview {
+  padding: 0;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  
+  .header-content {
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 600;
+      
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+    }
+    
+    .page-subtitle {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+  }
+  
+  .header-actions {
+    button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  
+  p {
+    margin-top: 16px;
+    color: #666;
+  }
+}
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+// Metrics Grid
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  
+  .metric-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    mat-card-content {
+      padding: 24px;
+      
+      .metric-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+        
+        .metric-icon {
+          width: 48px;
+          height: 48px;
+          font-size: 24px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          &.clinics {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+          }
+          
+          &.branches {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+          }
+          
+          &.users {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+          }
+          
+          &.revenue {
+            background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+            color: white;
+          }
+        }
+        
+        .metric-info {
+          .metric-value {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+          }
+          
+          .metric-label {
+            margin: 4px 0 0 0;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+          }
+        }
+      }
+      
+      .metric-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        .growth-indicator {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 14px;
+          font-weight: 500;
+          
+          &.success {
+            color: #4caf50;
+          }
+          
+          &.warn {
+            color: #ff9800;
+          }
+          
+          &.primary {
+            color: #2196f3;
+          }
+          
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Charts Section
+.charts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  
+  .charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+  }
+  
+  .chart-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    
+    mat-card-header {
+      padding: 24px 24px 0 24px;
+      
+      mat-card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+      
+      mat-card-subtitle {
+        color: #666;
+        margin-top: 4px;
+      }
+    }
+    
+    mat-card-content {
+      padding: 16px 24px 24px 24px;
+      
+      .chart-container {
+        height: 300px;
+        position: relative;
+      }
+      
+      .health-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        
+        .health-metric {
+          .health-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+          }
+          
+          .health-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            
+            &.success {
+              color: #4caf50;
+            }
+          }
+          
+          mat-progress-bar {
+            height: 8px;
+            border-radius: 4px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// AI Statistics Section
+.ai-stats-section {
+  .ai-stats-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    
+    mat-card-header {
+      padding: 24px 24px 0 24px;
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        
+        mat-icon {
+          color: #7b1fa2;
+        }
+      }
+    }
+    
+    mat-card-content {
+      padding: 16px 24px 24px 24px;
+      
+      .ai-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 24px;
+        
+        .ai-stat {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border-left: 4px solid #7b1fa2;
+          
+          .ai-stat-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #7b1fa2, #9c27b0);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            mat-icon {
+              color: white;
+              font-size: 24px;
+            }
+          }
+          
+          .ai-stat-info {
+            h4 {
+              margin: 0;
+              font-size: 24px;
+              font-weight: 700;
+              color: #333;
+            }
+            
+            p {
+              margin: 4px 0 0 0;
+              font-size: 14px;
+              color: #666;
+              font-weight: 500;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Quick Actions Section
+.quick-actions-section {
+  .quick-actions-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    
+    mat-card-content {
+      padding: 24px;
+      
+      .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        
+        button {
+          height: 56px;
+          font-size: 14px;
+          font-weight: 500;
+          border-radius: 8px;
+          
+          mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .ai-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-overview {
+    padding: 0;
+  }
+  
+  .page-header {
+    margin: 0 0 24px 0;
+    border-radius: 0;
+  }
+  
+  .metric-card mat-card-content {
+    padding: 16px;
+  }
+  
+  .chart-card mat-card-content .chart-container {
+    height: 250px;
+  }
+}

@@ -1,0 +1,10 @@
+flask==3.1.0
+flask-cors==5.0.0
+pymongo==4.10.1
+python-dotenv==1.0.1
+pillow==11.0.0
+numpy==2.2.1
+requests==2.32.3
+gunicorn==23.0.0
+python-multipart==0.0.20
+werkzeug==3.1.3

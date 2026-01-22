@@ -1,0 +1,115 @@
+<div class="register-container">
+  <mat-card class="register-card">
+    <mat-card-header class="register-header">
+      <div class="logo-container">
+        <mat-icon class="logo-icon">local_hospital</mat-icon>
+        <h1>DentaMate</h1>
+      </div>
+      <mat-card-subtitle>Create Your Account</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="register-form">
+        <!-- Tenant Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Clinic/Organization</mat-label>
+          <mat-select formControlName="tenantId">
+            <mat-option *ngFor="let tenant of tenants" [value]="tenant.id">
+              {{tenant.name}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="registerForm.get('tenantId')?.invalid && registerForm.get('tenantId')?.touched">
+            {{getErrorMessage('tenantId')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Name Fields -->
+        <div class="name-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>First Name</mat-label>
+            <input matInput formControlName="firstName" autocomplete="given-name">
+            <mat-error *ngIf="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+              {{getErrorMessage('firstName')}}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Last Name</mat-label>
+            <input matInput formControlName="lastName" autocomplete="family-name">
+            <mat-error *ngIf="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+              {{getErrorMessage('lastName')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Email -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email Address</mat-label>
+          <input matInput type="email" formControlName="email" autocomplete="email">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            {{getErrorMessage('email')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Role Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role">
+            <mat-option *ngFor="let role of roles" [value]="role.value">
+              {{role.label}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="registerForm.get('role')?.invalid && registerForm.get('role')?.touched">
+            {{getErrorMessage('role')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Password -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" autocomplete="new-password">
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            {{getErrorMessage('password')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Confirm Password -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirm Password</mat-label>
+          <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="confirmPassword" autocomplete="new-password">
+          <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
+            <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+            {{getErrorMessage('confirmPassword')}}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Register Button -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          type="submit" 
+          class="register-button full-width"
+          [disabled]="isLoading">
+          <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+          <span *ngIf="!isLoading">Create Account</span>
+          <span *ngIf="isLoading">Creating Account...</span>
+        </button>
+
+        <!-- Login Link -->
+        <div class="login-link">
+          <p>Already have an account? 
+            <button mat-button color="primary" type="button" (click)="onLogin()">
+              Sign in here
+            </button>
+          </p>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

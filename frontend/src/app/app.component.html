@@ -1,0 +1,29 @@
+<div class="app-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="!isAuthenticated && authService.isLoading$ | async" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading DentaMate...</p>
+  </div>
+
+  <!-- Authentication Required -->
+  <div *ngIf="!isAuthenticated && !(authService.isLoading$ | async)" class="auth-container">
+    <router-outlet></router-outlet>
+  </div>
+
+  <!-- Main Application -->
+  <div *ngIf="isAuthenticated" class="main-app">
+    <!-- Navigation -->
+    <app-navbar [user]="currentUser"></app-navbar>
+    
+    <!-- Sidebar -->
+    <app-sidebar [userRole]="currentUser?.role"></app-sidebar>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+    
+    <!-- Footer -->
+    <app-footer></app-footer>
+  </div>
+</div>

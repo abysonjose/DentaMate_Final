@@ -1,0 +1,212 @@
+<div class="create-clinic-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>add_business</mat-icon>
+    Create New Clinic
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="clinicForm" class="clinic-form">
+      
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3 class="section-title">Basic Information</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Clinic Name</mat-label>
+            <input matInput formControlName="name" placeholder="Enter clinic name">
+            <mat-error *ngIf="clinicForm.get('name')?.invalid && clinicForm.get('name')?.touched">
+              {{getErrorMessage('name')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Domain</mat-label>
+            <input matInput formControlName="domain" placeholder="clinic-domain">
+            <mat-hint>This will be used for the clinic's unique identifier</mat-hint>
+            <mat-error *ngIf="clinicForm.get('domain')?.invalid && clinicForm.get('domain')?.touched">
+              {{getErrorMessage('domain')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Email Address</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="contact@clinic.com">
+            <mat-error *ngIf="clinicForm.get('email')?.invalid && clinicForm.get('email')?.touched">
+              {{getErrorMessage('email')}}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Phone Number</mat-label>
+            <input matInput formControlName="phone" placeholder="+1-555-0123">
+            <mat-error *ngIf="clinicForm.get('phone')?.invalid && clinicForm.get('phone')?.touched">
+              {{getErrorMessage('phone')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Address Information -->
+      <div class="form-section" formGroupName="address">
+        <h3 class="section-title">Address Information</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Street Address</mat-label>
+            <input matInput formControlName="street" placeholder="123 Main Street">
+            <mat-error *ngIf="clinicForm.get('address.street')?.invalid && clinicForm.get('address.street')?.touched">
+              Street address is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" placeholder="New York">
+            <mat-error *ngIf="clinicForm.get('address.city')?.invalid && clinicForm.get('address.city')?.touched">
+              City is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="quarter-width">
+            <mat-label>State</mat-label>
+            <input matInput formControlName="state" placeholder="NY">
+            <mat-error *ngIf="clinicForm.get('address.state')?.invalid && clinicForm.get('address.state')?.touched">
+              State is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="quarter-width">
+            <mat-label>ZIP Code</mat-label>
+            <input matInput formControlName="zipCode" placeholder="10001">
+            <mat-error *ngIf="clinicForm.get('address.zipCode')?.invalid && clinicForm.get('address.zipCode')?.touched">
+              {{getErrorMessage('zipCode')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Subscription Configuration -->
+      <div class="form-section">
+        <h3 class="section-title">Subscription Configuration</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Subscription Plan</mat-label>
+            <mat-select formControlName="subscriptionPlan">
+              <mat-option *ngFor="let plan of subscriptionPlans" [value]="plan.value">
+                {{plan.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Maximum Users</mat-label>
+            <input matInput type="number" formControlName="maxUsers" min="1" max="1000">
+            <mat-error *ngIf="clinicForm.get('maxUsers')?.invalid && clinicForm.get('maxUsers')?.touched">
+              {{getErrorMessage('maxUsers')}}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Maximum Branches</mat-label>
+            <input matInput type="number" formControlName="maxBranches" min="1" max="50">
+            <mat-error *ngIf="clinicForm.get('maxBranches')?.invalid && clinicForm.get('maxBranches')?.touched">
+              {{getErrorMessage('maxBranches')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Regional Settings -->
+      <div class="form-section">
+        <h3 class="section-title">Regional Settings</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="third-width">
+            <mat-label>Timezone</mat-label>
+            <mat-select formControlName="timezone">
+              <mat-option *ngFor="let tz of timezones" [value]="tz.value">
+                {{tz.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="third-width">
+            <mat-label>Currency</mat-label>
+            <mat-select formControlName="currency">
+              <mat-option *ngFor="let currency of currencies" [value]="currency.value">
+                {{currency.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="third-width">
+            <mat-label>Language</mat-label>
+            <mat-select formControlName="language">
+              <mat-option *ngFor="let lang of languages" [value]="lang.value">
+                {{lang.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Features Selection -->
+      <div class="form-section">
+        <h3 class="section-title">Features & Modules</h3>
+        <p class="section-description">Select the features and modules to enable for this clinic</p>
+        
+        <div class="features-grid">
+          <div *ngFor="let feature of availableFeatures" class="feature-item">
+            <mat-checkbox 
+              [checked]="isFeatureSelected(feature.value)"
+              (change)="toggleFeature(feature.value)"
+              class="feature-checkbox">
+              <div class="feature-content">
+                <div class="feature-title">{{feature.label}}</div>
+                <div class="feature-description">{{feature.description}}</div>
+              </div>
+            </mat-checkbox>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branch Admin -->
+      <div class="form-section">
+        <h3 class="section-title">Branch Administrator (Optional)</h3>
+        <p class="section-description">Assign a branch administrator for this clinic</p>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Branch Admin Email</mat-label>
+            <input matInput type="email" formControlName="branchAdminEmail" placeholder="admin@clinic.com">
+            <mat-hint>If provided, an invitation will be sent to this email address</mat-hint>
+            <mat-error *ngIf="clinicForm.get('branchAdminEmail')?.invalid && clinicForm.get('branchAdminEmail')?.touched">
+              {{getErrorMessage('branchAdminEmail')}}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" type="button">
+      Cancel
+    </button>
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="clinicForm.invalid">
+      <mat-icon>add</mat-icon>
+      Create Clinic
+    </button>
+  </mat-dialog-actions>
+</div>

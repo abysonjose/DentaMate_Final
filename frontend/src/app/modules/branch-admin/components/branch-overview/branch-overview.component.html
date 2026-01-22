@@ -1,0 +1,306 @@
+<div class="branch-overview">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>dashboard</mat-icon>
+        Branch Overview
+      </h1>
+      <p class="page-subtitle">Daily operations summary and key performance indicators</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
+        Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading branch data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && dashboardStats" class="dashboard-content">
+    
+    <!-- Critical Alerts Section -->
+    <div class="alerts-section" *ngIf="alerts.length > 0">
+      <mat-card class="alerts-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="alert-icon">priority_high</mat-icon>
+            Active Alerts
+          </mat-card-title>
+          <mat-card-subtitle>Issues requiring immediate attention</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="alerts-list">
+            <div *ngFor="let alert of alerts" 
+                 class="alert-item" 
+                 [class]="alert.severity"
+                 (click)="handleAlertAction(alert)">
+              <div class="alert-content">
+                <mat-icon [color]="getAlertColor(alert.severity)">
+                  {{getAlertIcon(alert.type)}}
+                </mat-icon>
+                <div class="alert-text">
+                  <h4>{{alert.title}}</h4>
+                  <p>{{alert.message}}</p>
+                </div>
+                <mat-chip [color]="getAlertColor(alert.severity)" class="severity-chip">
+                  {{alert.severity | titlecase}}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div class="metrics-grid">
+      <!-- Today's Appointments -->
+      <mat-card class="metric-card appointments">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">event</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.todayAppointments}}</h3>
+              <p class="metric-label">Today's Appointments</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-detail">{{dashboardStats.completedConsultations}} completed</span>
+            <mat-progress-bar 
+              mode="determinate" 
+              [value]="getUtilizationPercentage(dashboardStats.completedConsultations, dashboardStats.todayAppointments)"
+              color="primary">
+            </mat-progress-bar>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Active Doctors -->
+      <mat-card class="metric-card doctors">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">medical_services</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.activeDoctors}}</h3>
+              <p class="metric-label">Active Doctors</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <mat-chip color="primary">On Duty</mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Queue Status -->
+      <mat-card class="metric-card queue">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">queue</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.queueLength}}</h3>
+              <p class="metric-label">Patients in Queue</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <mat-chip [color]="getStatusColor(dashboardStats.queueLength, 15)">
+              {{dashboardStats.queueLength > 15 ? 'High Load' : 'Normal'}}
+            </mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Staff Status -->
+      <mat-card class="metric-card staff">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">people</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.activeStaff}}/{{dashboardStats.totalStaff}}</h3>
+              <p class="metric-label">Active Staff</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-detail">{{getUtilizationPercentage(dashboardStats.activeStaff, dashboardStats.totalStaff)}}% present</span>
+            <mat-progress-bar 
+              mode="determinate" 
+              [value]="getUtilizationPercentage(dashboardStats.activeStaff, dashboardStats.totalStaff)"
+              color="accent">
+            </mat-progress-bar>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Today's Revenue -->
+      <mat-card class="metric-card revenue">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">attach_money</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{formatCurrency(dashboardStats.todayRevenue)}}</h3>
+              <p class="metric-label">Today's Revenue</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="metric-detail">{{dashboardStats.pendingBills}} pending bills</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Inventory Status -->
+      <mat-card class="metric-card inventory">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">inventory</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.lowStockItems}}</h3>
+              <p class="metric-label">Low Stock Items</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <mat-chip [color]="dashboardStats.lowStockItems > 0 ? 'warn' : 'primary'">
+              {{dashboardStats.lowStockItems > 0 ? 'Reorder Required' : 'Stock OK'}}
+            </mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="charts-row">
+        <!-- Appointment Trends Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Weekly Appointment Trends</mat-card-title>
+            <mat-card-subtitle>Scheduled vs completed appointments</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="appointmentTrendsData"
+                      [options]="appointmentTrendsOptions"
+                      type="line">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Department Utilization Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Department Utilization</mat-card-title>
+            <mat-card-subtitle>Patient distribution by department</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="departmentUtilizationData"
+                      [options]="departmentUtilizationOptions"
+                      type="doughnut">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section">
+      <mat-card class="quick-actions-card">
+        <mat-card-header>
+          <mat-card-title>Quick Actions</mat-card-title>
+          <mat-card-subtitle>Common administrative tasks</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="actions-grid">
+            <button mat-raised-button color="primary" routerLink="/branch-admin/staff">
+              <mat-icon>person_add</mat-icon>
+              Manage Staff
+            </button>
+            
+            <button mat-raised-button color="accent" routerLink="/branch-admin/appointments">
+              <mat-icon>event</mat-icon>
+              View Appointments
+            </button>
+            
+            <button mat-raised-button routerLink="/branch-admin/queue">
+              <mat-icon>queue</mat-icon>
+              Monitor Queue
+            </button>
+            
+            <button mat-raised-button routerLink="/branch-admin/reports">
+              <mat-icon>assessment</mat-icon>
+              Generate Reports
+            </button>
+            
+            <button mat-raised-button routerLink="/branch-admin/inventory">
+              <mat-icon>inventory</mat-icon>
+              Check Inventory
+            </button>
+            
+            <button mat-raised-button routerLink="/branch-admin/billing">
+              <mat-icon>payment</mat-icon>
+              Review Billing
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Branch Status Summary -->
+    <div class="status-summary-section">
+      <mat-card class="status-summary-card">
+        <mat-card-header>
+          <mat-card-title>Branch Status Summary</mat-card-title>
+          <mat-card-subtitle>Current operational status</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="status-grid">
+            <div class="status-item">
+              <mat-icon class="status-icon success">check_circle</mat-icon>
+              <div class="status-text">
+                <h4>Operations</h4>
+                <p>Running smoothly</p>
+              </div>
+            </div>
+            
+            <div class="status-item">
+              <mat-icon class="status-icon" [class]="dashboardStats.queueLength > 15 ? 'warning' : 'success'">
+                {{dashboardStats.queueLength > 15 ? 'warning' : 'check_circle'}}
+              </mat-icon>
+              <div class="status-text">
+                <h4>Queue Management</h4>
+                <p>{{dashboardStats.queueLength > 15 ? 'High load detected' : 'Normal flow'}}</p>
+              </div>
+            </div>
+            
+            <div class="status-item">
+              <mat-icon class="status-icon" [class]="dashboardStats.lowStockItems > 0 ? 'warning' : 'success'">
+                {{dashboardStats.lowStockItems > 0 ? 'warning' : 'check_circle'}}
+              </mat-icon>
+              <div class="status-text">
+                <h4>Inventory</h4>
+                <p>{{dashboardStats.lowStockItems > 0 ? 'Items need reordering' : 'Stock levels good'}}</p>
+              </div>
+            </div>
+            
+            <div class="status-item">
+              <mat-icon class="status-icon success">check_circle</mat-icon>
+              <div class="status-text">
+                <h4>Staff Attendance</h4>
+                <p>{{getUtilizationPercentage(dashboardStats.activeStaff, dashboardStats.totalStaff)}}% present</p>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

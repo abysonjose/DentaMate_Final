@@ -1,0 +1,273 @@
+<div class="analytics-overview">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>dashboard</mat-icon>
+        Analytics Overview
+      </h1>
+      <p class="page-subtitle">Real-time insights and system performance metrics</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
+        Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && dashboardStats" class="dashboard-content">
+    
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon clinics">business</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.totalClinics}}</h3>
+              <p class="metric-label">Total Clinics</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <mat-chip color="primary">Active</mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon branches">account_tree</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.totalBranches}}</h3>
+              <p class="metric-label">Total Branches</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <mat-chip color="accent">Operational</mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon users">people</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{dashboardStats.totalUsers | number}}</h3>
+              <p class="metric-label">Total Users</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="growth-indicator" [class]="getGrowthColor(dashboardStats.monthlyGrowth)">
+              <mat-icon>{{getGrowthIcon(dashboardStats.monthlyGrowth)}}</mat-icon>
+              {{formatPercentage(dashboardStats.monthlyGrowth)}}
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon revenue">attach_money</mat-icon>
+            <div class="metric-info">
+              <h3 class="metric-value">{{formatCurrency(dashboardStats.totalRevenue)}}</h3>
+              <p class="metric-label">Total Revenue</p>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="growth-indicator success">
+              <mat-icon>trending_up</mat-icon>
+              This Month
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="charts-row">
+        <!-- Revenue Trend Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Revenue Trend</mat-card-title>
+            <mat-card-subtitle>Monthly revenue over the last 6 months</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="revenueChartData"
+                      [options]="revenueChartOptions"
+                      type="line">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- User Distribution Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>User Distribution</mat-card-title>
+            <mat-card-subtitle>Active users by role</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="userGrowthChartData"
+                      [options]="userGrowthChartOptions"
+                      type="bar">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <div class="charts-row">
+        <!-- AI Usage Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>AI Module Usage</mat-card-title>
+            <mat-card-subtitle>Distribution of AI feature usage</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="aiUsageChartData"
+                      [options]="aiUsageChartOptions"
+                      type="doughnut">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- System Health -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>System Health</mat-card-title>
+            <mat-card-subtitle>Real-time system performance</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="health-metrics">
+              <div class="health-metric">
+                <div class="health-label">Uptime</div>
+                <div class="health-value success">{{formatPercentage(dashboardStats.systemHealth.uptime)}}</div>
+                <mat-progress-bar mode="determinate" [value]="dashboardStats.systemHealth.uptime" color="primary"></mat-progress-bar>
+              </div>
+              
+              <div class="health-metric">
+                <div class="health-label">Response Time</div>
+                <div class="health-value">{{dashboardStats.systemHealth.responseTime}}ms</div>
+                <mat-progress-bar mode="determinate" [value]="75" color="accent"></mat-progress-bar>
+              </div>
+              
+              <div class="health-metric">
+                <div class="health-label">Error Rate</div>
+                <div class="health-value success">{{formatPercentage(dashboardStats.systemHealth.errorRate)}}</div>
+                <mat-progress-bar mode="determinate" [value]="2" color="warn"></mat-progress-bar>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- AI Statistics Section -->
+    <div class="ai-stats-section">
+      <mat-card class="ai-stats-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>psychology</mat-icon>
+            AI System Statistics
+          </mat-card-title>
+          <mat-card-subtitle>Artificial Intelligence module performance</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="ai-stats-grid">
+            <div class="ai-stat">
+              <div class="ai-stat-icon">
+                <mat-icon>api</mat-icon>
+              </div>
+              <div class="ai-stat-info">
+                <h4>{{dashboardStats.aiUsageStats.totalRequests | number}}</h4>
+                <p>Total AI Requests</p>
+              </div>
+            </div>
+            
+            <div class="ai-stat">
+              <div class="ai-stat-icon">
+                <mat-icon>verified</mat-icon>
+              </div>
+              <div class="ai-stat-info">
+                <h4>{{formatPercentage(dashboardStats.aiUsageStats.accuracy)}}</h4>
+                <p>Average Accuracy</p>
+              </div>
+            </div>
+            
+            <div class="ai-stat">
+              <div class="ai-stat-icon">
+                <mat-icon>extension</mat-icon>
+              </div>
+              <div class="ai-stat-info">
+                <h4>{{dashboardStats.aiUsageStats.activeModules}}</h4>
+                <p>Active Modules</p>
+              </div>
+            </div>
+            
+            <div class="ai-stat">
+              <div class="ai-stat-icon">
+                <mat-icon>speed</mat-icon>
+              </div>
+              <div class="ai-stat-info">
+                <h4>2.3s</h4>
+                <p>Avg Response Time</p>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <mat-card class="quick-actions-card">
+        <mat-card-header>
+          <mat-card-title>Quick Actions</mat-card-title>
+          <mat-card-subtitle>Common administrative tasks</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="actions-grid">
+            <button mat-raised-button color="primary" routerLink="/central-admin/clinics">
+              <mat-icon>add_business</mat-icon>
+              Add New Clinic
+            </button>
+            
+            <button mat-raised-button color="accent" routerLink="/central-admin/users">
+              <mat-icon>person_add</mat-icon>
+              Manage Users
+            </button>
+            
+            <button mat-raised-button routerLink="/central-admin/subscriptions">
+              <mat-icon>payment</mat-icon>
+              View Subscriptions
+            </button>
+            
+            <button mat-raised-button routerLink="/central-admin/reports">
+              <mat-icon>assessment</mat-icon>
+              Generate Reports
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

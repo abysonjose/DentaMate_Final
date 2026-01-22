@@ -1,0 +1,507 @@
+.branch-admin-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 64px;
+  
+  .menu-button {
+    margin-right: 16px;
+  }
+  
+  .app-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .app-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+    
+    .title-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      
+      .main-title {
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+      
+      .branch-name {
+        font-size: 12px;
+        opacity: 0.8;
+        font-weight: 400;
+      }
+    }
+  }
+  
+  .spacer {
+    flex: 1 1 auto;
+  }
+  
+  .critical-alerts-btn {
+    margin-right: 8px;
+    
+    .critical-icon {
+      color: #ff5722;
+      animation: pulse 2s infinite;
+    }
+  }
+  
+  .alerts-button {
+    margin-right: 8px;
+  }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.sidenav-container {
+  flex: 1;
+  margin-top: 64px;
+}
+
+.sidenav {
+  width: 320px;
+  background: #fafafa;
+  border-right: 1px solid #e0e0e0;
+  
+  .branch-info-card {
+    padding: 16px;
+    margin: 16px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    .branch-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      
+      .branch-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: #1976d2;
+      }
+      
+      .branch-details {
+        h3 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+        }
+        
+        p {
+          margin: 2px 0 0 0;
+          font-size: 12px;
+          color: #666;
+          font-family: 'Courier New', monospace;
+        }
+      }
+    }
+    
+    .branch-status {
+      mat-chip {
+        font-size: 11px;
+        height: 24px;
+        
+        mat-icon {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+  
+  .nav-list {
+    padding: 0 8px;
+  }
+  
+  .nav-expansion-panel {
+    box-shadow: none;
+    background: transparent;
+    margin: 4px 0;
+    border-radius: 8px;
+    
+    &.mat-expanded {
+      background: #f5f5f5;
+    }
+    
+    .nav-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .nav-icon {
+        color: #666;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .nav-label {
+        font-weight: 500;
+        color: #333;
+        flex: 1;
+      }
+      
+      .nav-badge {
+        margin-left: auto;
+        font-size: 10px;
+        height: 16px;
+        min-width: 16px;
+      }
+    }
+  }
+  
+  .sub-nav-list {
+    padding-left: 16px;
+    
+    .sub-nav-item {
+      padding-left: 24px;
+      border-radius: 8px;
+      margin: 4px 8px;
+      
+      &.active-link {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        
+        mat-icon {
+          color: #1976d2;
+        }
+      }
+      
+      &:hover {
+        background-color: #f5f5f5;
+      }
+    }
+  }
+  
+  .nav-item {
+    border-radius: 8px;
+    margin: 4px 8px;
+    
+    &.active-link {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      
+      mat-icon {
+        color: #1976d2;
+      }
+    }
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+  
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px;
+    height: 16px;
+    min-width: 16px;
+  }
+  
+  .quick-actions {
+    padding: 16px;
+    margin-top: auto;
+    border-top: 1px solid #e0e0e0;
+    
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+    }
+    
+    .quick-action-btn {
+      width: 100%;
+      margin-bottom: 8px;
+      justify-content: flex-start;
+      
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.main-content {
+  background-color: #f8f9fa;
+  
+  .content-wrapper {
+    padding: 24px;
+    min-height: calc(100vh - 64px);
+  }
+}
+
+// Alerts Menu Styles
+.alerts-menu {
+  width: 420px;
+  max-height: 600px;
+  
+  .alerts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .alerts-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      .alerts-count {
+        font-size: 12px;
+        color: #666;
+        background: #f5f5f5;
+        padding: 4px 8px;
+        border-radius: 12px;
+      }
+    }
+  }
+  
+  .alerts-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .alert-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    
+    &.unread {
+      background-color: #f8f9ff;
+      border-left: 3px solid #1976d2;
+    }
+    
+    &.critical {
+      border-left: 3px solid #f44336;
+      background-color: #fff5f5;
+    }
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .alert-content {
+      .alert-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        
+        .alert-icons {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          
+          .alert-type-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+          
+          .severity-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            
+            &.critical { color: #f44336; }
+            &.high { color: #ff9800; }
+            &.medium { color: #2196f3; }
+            &.low { color: #4caf50; }
+          }
+        }
+        
+        .alert-title {
+          font-weight: 500;
+          font-size: 14px;
+          flex: 1;
+        }
+        
+        .dismiss-btn {
+          width: 20px;
+          height: 20px;
+          line-height: 20px;
+          
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+      
+      .alert-message {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        color: #666;
+        line-height: 1.4;
+      }
+      
+      .alert-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        .alert-time {
+          font-size: 11px;
+          color: #999;
+        }
+        
+        .action-chip {
+          font-size: 10px;
+          height: 18px;
+        }
+      }
+    }
+  }
+  
+  .no-alerts {
+    padding: 32px 16px;
+    text-align: center;
+    color: #666;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #4caf50;
+      margin-bottom: 8px;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// User Menu Styles
+.user-info {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  
+  .user-details {
+    h4 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    p {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    mat-chip {
+      font-size: 11px;
+      height: 20px;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .sidenav {
+    width: 100%;
+  }
+  
+  .alerts-menu {
+    width: 320px;
+  }
+  
+  .main-content .content-wrapper {
+    padding: 16px;
+  }
+  
+  .app-title .title-content {
+    .main-title {
+      font-size: 16px;
+    }
+    
+    .branch-name {
+      font-size: 11px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .branch-info-card {
+    margin: 8px !important;
+    padding: 12px !important;
+    
+    .branch-header {
+      .branch-icon {
+        font-size: 24px !important;
+        width: 24px !important;
+        height: 24px !important;
+      }
+      
+      .branch-details h3 {
+        font-size: 14px;
+      }
+    }
+  }
+  
+  .quick-actions {
+    padding: 12px !important;
+  }
+}
+
+// Dark theme support
+.dark-theme {
+  .sidenav {
+    background: #303030;
+    border-right-color: #424242;
+    
+    .branch-info-card {
+      background: #424242;
+    }
+    
+    .nav-item, .sub-nav-item {
+      &.active-link {
+        background-color: #1976d2;
+        color: white;
+      }
+      
+      &:hover {
+        background-color: #424242;
+      }
+    }
+  }
+  
+  .main-content {
+    background-color: #121212;
+  }
+}

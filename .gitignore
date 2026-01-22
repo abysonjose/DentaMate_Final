@@ -1,0 +1,103 @@
+# Environment variables
+.env
+.env.*
+.env.local
+.env.production
+.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+build/
+target/
+*.jar
+*.war
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Database
+*.db
+*.sqlite
+
+# AI Models
+backend/ai-diagnosis-service/models/*.h5
+backend/ai-diagnosis-service/models/*.pkl
+backend/prescription-ocr-service/models/*.h5
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Angular
+frontend/dist/
+frontend/.angular/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+
+# Documentation and markdown files
+*.md
+
+# Project-specific text files
+read.txt
+chat.txt
+imp.txt
+f:\main kiro\read.txt
+f:\main kiro\chat.txt
+f:\main kiro\imp.txt

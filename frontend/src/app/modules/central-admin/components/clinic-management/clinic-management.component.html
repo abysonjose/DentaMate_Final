@@ -1,0 +1,256 @@
+<div class="clinic-management">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>business</mat-icon>
+        Clinic Management
+      </h1>
+      <p class="page-subtitle">Manage all clinics, subscriptions, and configurations</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="createClinic()">
+        <mat-icon>add</mat-icon>
+        Add New Clinic
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search clinics</mat-label>
+          <input matInput [(ngModel)]="searchQuery" (input)="applyFilter()" placeholder="Search by name, domain, or email">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilter()">
+            <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+              {{status.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Subscription Plan</mat-label>
+          <mat-select [(ngModel)]="planFilter" (selectionChange)="applyFilter()">
+            <mat-option *ngFor="let plan of planOptions" [value]="plan.value">
+              {{plan.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-button (click)="clearFilters()">
+          <mat-icon>clear</mat-icon>
+          Clear Filters
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Bulk Actions -->
+  <div class="bulk-actions" *ngIf="selection.selected.length > 0">
+    <mat-card>
+      <mat-card-content>
+        <div class="bulk-actions-content">
+          <span class="selection-info">
+            {{selection.selected.length}} clinic(s) selected
+          </span>
+          <div class="bulk-buttons">
+            <button mat-button (click)="bulkAction('activate')">
+              <mat-icon>check_circle</mat-icon>
+              Activate
+            </button>
+            <button mat-button (click)="bulkAction('deactivate')">
+              <mat-icon>cancel</mat-icon>
+              Deactivate
+            </button>
+            <button mat-button (click)="exportData()">
+              <mat-icon>download</mat-icon>
+              Export Selected
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Clinics Table -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="clinics-table">
+          
+          <!-- Selection Column -->
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-checkbox (change)="$event ? masterToggle() : null"
+                           [checked]="selection.hasValue() && isAllSelected()"
+                           [indeterminate]="selection.hasValue() && !isAllSelected()">
+              </mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let clinic">
+              <mat-checkbox (click)="$event.stopPropagation()"
+                           (change)="$event ? selection.toggle(clinic) : null"
+                           [checked]="selection.isSelected(clinic)">
+              </mat-checkbox>
+            </td>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Clinic Name</th>
+            <td mat-cell *matCellDef="let clinic">
+              <div class="clinic-info">
+                <div class="clinic-name">{{clinic.name}}</div>
+                <div class="clinic-domain">{{clinic.domain}}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Domain Column -->
+          <ng-container matColumnDef="domain">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Domain</th>
+            <td mat-cell *matCellDef="let clinic">
+              <mat-chip class="domain-chip">{{clinic.domain}}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Subscription Plan Column -->
+          <ng-container matColumnDef="subscriptionPlan">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Plan</th>
+            <td mat-cell *matCellDef="let clinic">
+              <mat-chip [color]="getPlanColor(clinic.subscriptionPlan)">
+                {{clinic.subscriptionPlan | titlecase}}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="subscriptionStatus">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let clinic">
+              <mat-chip [color]="getStatusColor(clinic.subscriptionStatus)">
+                <mat-icon>{{clinic.isActive ? 'check_circle' : 'cancel'}}</mat-icon>
+                {{clinic.subscriptionStatus | titlecase}}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Users Column -->
+          <ng-container matColumnDef="currentUsers">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Users</th>
+            <td mat-cell *matCellDef="let clinic">
+              <div class="usage-info">
+                <span class="usage-text">{{clinic.currentUsers}} / {{clinic.maxUsers}}</span>
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="(clinic.currentUsers / clinic.maxUsers) * 100"
+                  [color]="clinic.currentUsers > clinic.maxUsers * 0.8 ? 'warn' : 'primary'">
+                </mat-progress-bar>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Branches Column -->
+          <ng-container matColumnDef="currentBranches">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Branches</th>
+            <td mat-cell *matCellDef="let clinic">
+              <div class="usage-info">
+                <span class="usage-text">{{clinic.currentBranches}} / {{clinic.maxBranches}}</span>
+                <mat-progress-bar 
+                  mode="determinate" 
+                  [value]="(clinic.currentBranches / clinic.maxBranches) * 100"
+                  [color]="clinic.currentBranches > clinic.maxBranches * 0.8 ? 'warn' : 'primary'">
+                </mat-progress-bar>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Last Activity Column -->
+          <ng-container matColumnDef="lastActivity">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Activity</th>
+            <td mat-cell *matCellDef="let clinic">
+              <div class="activity-info">
+                <span class="activity-date">{{clinic.lastActivity | date:'short'}}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let clinic">
+              <button mat-icon-button [matMenuTriggerFor]="actionsMenu" (click)="$event.stopPropagation()">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              
+              <mat-menu #actionsMenu="matMenu">
+                <button mat-menu-item (click)="viewClinic(clinic)">
+                  <mat-icon>visibility</mat-icon>
+                  View Details
+                </button>
+                <button mat-menu-item (click)="editClinic(clinic)">
+                  <mat-icon>edit</mat-icon>
+                  Edit Clinic
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="toggleClinicStatus(clinic)">
+                  <mat-icon>{{clinic.isActive ? 'pause' : 'play_arrow'}}</mat-icon>
+                  {{clinic.isActive ? 'Deactivate' : 'Activate'}}
+                </button>
+                <button mat-menu-item (click)="suspendClinic(clinic)" *ngIf="clinic.isActive">
+                  <mat-icon>block</mat-icon>
+                  Suspend
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="regenerateLicense(clinic)">
+                  <mat-icon>vpn_key</mat-icon>
+                  Regenerate License
+                </button>
+                <button mat-menu-item>
+                  <mat-icon>analytics</mat-icon>
+                  View Analytics
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let clinic; columns: displayedColumns;" 
+              (click)="viewClinic(clinic)"
+              class="clinic-row">
+          </tr>
+        </table>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading clinics...</p>
+        </div>
+
+        <!-- No Data State -->
+        <div *ngIf="!isLoading && dataSource.data.length === 0" class="no-data-container">
+          <mat-icon>business_center</mat-icon>
+          <h3>No clinics found</h3>
+          <p>Get started by creating your first clinic</p>
+          <button mat-raised-button color="primary" (click)="createClinic()">
+            <mat-icon>add</mat-icon>
+            Create Clinic
+          </button>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        showFirstLastButtons
+        class="table-paginator">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: appointment-scheduling-service
+  
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/dentamate}
+      auto-index-creation: true
+  
+  security:
+    jwt:
+      secret: ${JWT_SECRET:your-jwt-secret-key}
+      expiration: 86400000 # 24 hours
+
+logging:
+  level:
+    com.dentamate: DEBUG
+    org.springframework.data.mongodb: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

@@ -1,0 +1,146 @@
+<div class="central-admin-layout">
+  <!-- Top Navigation Bar -->
+  <mat-toolbar color="primary" class="top-toolbar">
+    <button mat-icon-button (click)="toggleSidenav()" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+    
+    <span class="app-title">
+      <mat-icon class="app-icon">admin_panel_settings</mat-icon>
+      DentaMate Central Admin
+    </span>
+    
+    <span class="spacer"></span>
+    
+    <!-- System Alerts -->
+    <button mat-icon-button [matMenuTriggerFor]="alertsMenu" class="alerts-button">
+      <mat-icon [matBadge]="unreadAlertsCount" [matBadgeHidden]="unreadAlertsCount === 0" matBadgeColor="warn">
+        notifications
+      </mat-icon>
+    </button>
+    
+    <mat-menu #alertsMenu="matMenu" class="alerts-menu">
+      <div class="alerts-header">
+        <h3>System Alerts</h3>
+        <span class="alerts-count">{{unreadAlertsCount}} unread</span>
+      </div>
+      
+      <div class="alerts-list" *ngIf="alerts.length > 0; else noAlerts">
+        <div *ngFor="let alert of alerts.slice(0, 5)" 
+             class="alert-item" 
+             [class.unread]="!alert.isRead"
+             (click)="markAlertAsRead(alert)">
+          <div class="alert-content">
+            <div class="alert-header">
+              <mat-icon [color]="getAlertColor(alert.severity)">
+                {{getAlertIcon(alert.type)}}
+              </mat-icon>
+              <span class="alert-title">{{alert.title}}</span>
+              <button mat-icon-button (click)="dismissAlert(alert)" class="dismiss-btn">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <p class="alert-message">{{alert.message}}</p>
+            <span class="alert-time">{{alert.timestamp | date:'short'}}</span>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #noAlerts>
+        <div class="no-alerts">
+          <mat-icon>check_circle</mat-icon>
+          <p>No alerts at this time</p>
+        </div>
+      </ng-template>
+      
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/central-admin/audit-logs">
+        <mat-icon>history</mat-icon>
+        View All Logs
+      </button>
+    </mat-menu>
+    
+    <!-- User Menu -->
+    <button mat-icon-button [matMenuTriggerFor]="userMenu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    
+    <mat-menu #userMenu="matMenu">
+      <div class="user-info" *ngIf="currentUser$ | async as user">
+        <div class="user-details">
+          <h4>{{user.firstName}} {{user.lastName}}</h4>
+          <p>{{user.email}}</p>
+          <mat-chip color="primary">{{user.role}}</mat-chip>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/profile">
+        <mat-icon>person</mat-icon>
+        Profile Settings
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+
+  <!-- Side Navigation -->
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav 
+      #sidenav 
+      [opened]="sidenavOpened" 
+      mode="side" 
+      class="sidenav"
+      fixedInViewport="true">
+      
+      <mat-nav-list class="nav-list">
+        <ng-container *ngFor="let item of navigationItems">
+          <!-- Items with children -->
+          <mat-expansion-panel *ngIf="item.children" class="nav-expansion-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="nav-panel-title">
+                <mat-icon class="nav-icon">{{item.icon}}</mat-icon>
+                <span class="nav-label">{{item.label}}</span>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <mat-nav-list class="sub-nav-list">
+              <a *ngFor="let child of item.children" 
+                 mat-list-item 
+                 [routerLink]="child.route"
+                 routerLinkActive="active-link"
+                 class="sub-nav-item">
+                <mat-icon matListIcon>{{child.icon}}</mat-icon>
+                <span matLine>{{child.label}}</span>
+                <mat-chip *ngIf="child.badge" color="accent" class="nav-badge">
+                  {{child.badge}}
+                </mat-chip>
+              </a>
+            </mat-nav-list>
+          </mat-expansion-panel>
+          
+          <!-- Items without children -->
+          <a *ngIf="!item.children" 
+             mat-list-item 
+             [routerLink]="item.route"
+             routerLinkActive="active-link"
+             class="nav-item">
+            <mat-icon matListIcon>{{item.icon}}</mat-icon>
+            <span matLine>{{item.label}}</span>
+            <mat-chip *ngIf="item.badge" color="accent" class="nav-badge">
+              {{item.badge}}
+            </mat-chip>
+          </a>
+        </ng-container>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content Area -->
+    <mat-sidenav-content class="main-content">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

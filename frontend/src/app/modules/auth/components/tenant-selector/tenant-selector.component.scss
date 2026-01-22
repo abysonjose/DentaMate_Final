@@ -1,0 +1,20 @@
+.full-width {
+  width: 100%;
+}
+
+.tenant-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  
+  .tenant-name {
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  .tenant-domain {
+    font-size: 12px;
+    color: #666;
+    opacity: 0.8;
+  }
+}

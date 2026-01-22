@@ -1,0 +1,222 @@
+<div class="branch-admin-layout">
+  <!-- Top Navigation Bar -->
+  <mat-toolbar color="primary" class="top-toolbar">
+    <button mat-icon-button (click)="toggleSidenav()" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+    
+    <span class="app-title">
+      <mat-icon class="app-icon">business</mat-icon>
+      <div class="title-content">
+        <span class="main-title">DentaMate Branch Admin</span>
+        <span class="branch-name" *ngIf="currentBranch$ | async as branch">
+          {{getBranchDisplayName(branch)}}
+        </span>
+      </div>
+    </span>
+    
+    <span class="spacer"></span>
+    
+    <!-- Critical Alerts Indicator -->
+    <button mat-icon-button 
+            *ngIf="criticalAlertsCount > 0" 
+            class="critical-alerts-btn"
+            (click)="navigateTo('/branch-admin/overview')"
+            matTooltip="Critical alerts require attention">
+      <mat-icon [matBadge]="criticalAlertsCount" matBadgeColor="warn" class="critical-icon">
+        priority_high
+      </mat-icon>
+    </button>
+    
+    <!-- System Alerts -->
+    <button mat-icon-button [matMenuTriggerFor]="alertsMenu" class="alerts-button">
+      <mat-icon [matBadge]="unreadAlertsCount" [matBadgeHidden]="unreadAlertsCount === 0" matBadgeColor="warn">
+        notifications
+      </mat-icon>
+    </button>
+    
+    <mat-menu #alertsMenu="matMenu" class="alerts-menu">
+      <div class="alerts-header">
+        <h3>Branch Alerts</h3>
+        <div class="alerts-summary">
+          <span class="alerts-count">{{unreadAlertsCount}} unread</span>
+          <button mat-icon-button (click)="refreshAlerts()" matTooltip="Refresh alerts">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <div class="alerts-list" *ngIf="alerts.length > 0; else noAlerts">
+        <div *ngFor="let alert of alerts.slice(0, 5)" 
+             class="alert-item" 
+             [class.unread]="!alert.isRead"
+             [class.critical]="alert.severity === 'critical'"
+             (click)="handleAlertAction(alert)">
+          <div class="alert-content">
+            <div class="alert-header">
+              <div class="alert-icons">
+                <mat-icon [color]="getAlertColor(alert.severity)" class="alert-type-icon">
+                  {{getAlertIcon(alert.type)}}
+                </mat-icon>
+                <mat-icon class="severity-icon" [class]="alert.severity">
+                  {{getSeverityIcon(alert.severity)}}
+                </mat-icon>
+              </div>
+              <span class="alert-title">{{alert.title}}</span>
+              <button mat-icon-button (click)="dismissAlert(alert); $event.stopPropagation()" class="dismiss-btn">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <p class="alert-message">{{alert.message}}</p>
+            <div class="alert-footer">
+              <span class="alert-time">{{alert.timestamp | date:'short'}}</span>
+              <mat-chip *ngIf="alert.actionRequired" color="accent" class="action-chip">
+                Action Required
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #noAlerts>
+        <div class="no-alerts">
+          <mat-icon>check_circle</mat-icon>
+          <p>All clear! No alerts at this time.</p>
+        </div>
+      </ng-template>
+      
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/branch-admin/audit">
+        <mat-icon>history</mat-icon>
+        View All Logs
+      </button>
+    </mat-menu>
+    
+    <!-- User Menu -->
+    <button mat-icon-button [matMenuTriggerFor]="userMenu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    
+    <mat-menu #userMenu="matMenu">
+      <div class="user-info" *ngIf="currentUser$ | async as user">
+        <div class="user-details">
+          <h4>{{user.firstName}} {{user.lastName}}</h4>
+          <p>{{user.email}}</p>
+          <mat-chip color="primary">Branch Administrator</mat-chip>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/profile">
+        <mat-icon>person</mat-icon>
+        Profile Settings
+      </button>
+      <button mat-menu-item routerLink="/branch-admin/settings">
+        <mat-icon>settings</mat-icon>
+        Branch Settings
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+
+  <!-- Side Navigation -->
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav 
+      #sidenav 
+      [opened]="sidenavOpened" 
+      mode="side" 
+      class="sidenav"
+      fixedInViewport="true">
+      
+      <!-- Branch Info Card -->
+      <div class="branch-info-card" *ngIf="currentBranch$ | async as branch">
+        <div class="branch-header">
+          <mat-icon class="branch-icon">business</mat-icon>
+          <div class="branch-details">
+            <h3>{{branch.name}}</h3>
+            <p>{{branch.code}}</p>
+          </div>
+        </div>
+        <div class="branch-status">
+          <mat-chip [color]="branch.isActive ? 'primary' : 'warn'">
+            <mat-icon>{{branch.isActive ? 'check_circle' : 'pause_circle'}}</mat-icon>
+            {{branch.isActive ? 'Active' : 'Inactive'}}
+          </mat-chip>
+        </div>
+      </div>
+      
+      <mat-nav-list class="nav-list">
+        <ng-container *ngFor="let item of navigationItems">
+          <!-- Items with children -->
+          <mat-expansion-panel *ngIf="item.children" class="nav-expansion-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="nav-panel-title">
+                <mat-icon class="nav-icon">{{item.icon}}</mat-icon>
+                <span class="nav-label">{{item.label}}</span>
+                <mat-chip *ngIf="item.badge" color="accent" class="nav-badge">
+                  {{item.badge}}
+                </mat-chip>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <mat-nav-list class="sub-nav-list">
+              <a *ngFor="let child of item.children" 
+                 mat-list-item 
+                 [routerLink]="child.route"
+                 routerLinkActive="active-link"
+                 class="sub-nav-item">
+                <mat-icon matListIcon>{{child.icon}}</mat-icon>
+                <span matLine>{{child.label}}</span>
+                <mat-chip *ngIf="child.badge" color="accent" class="nav-badge">
+                  {{child.badge}}
+                </mat-chip>
+              </a>
+            </mat-nav-list>
+          </mat-expansion-panel>
+          
+          <!-- Items without children -->
+          <a *ngIf="!item.children" 
+             mat-list-item 
+             [routerLink]="item.route"
+             routerLinkActive="active-link"
+             class="nav-item"
+             [matTooltip]="item.description || ''"
+             matTooltipPosition="right">
+            <mat-icon matListIcon>{{item.icon}}</mat-icon>
+            <span matLine>{{item.label}}</span>
+            <mat-chip *ngIf="item.badge" color="accent" class="nav-badge">
+              {{item.badge}}
+            </mat-chip>
+          </a>
+        </ng-container>
+      </mat-nav-list>
+      
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h4>Quick Actions</h4>
+        <button mat-stroked-button class="quick-action-btn" routerLink="/branch-admin/staff">
+          <mat-icon>person_add</mat-icon>
+          Add Staff
+        </button>
+        <button mat-stroked-button class="quick-action-btn" routerLink="/branch-admin/appointments">
+          <mat-icon>event</mat-icon>
+          View Appointments
+        </button>
+        <button mat-stroked-button class="quick-action-btn" routerLink="/branch-admin/reports">
+          <mat-icon>assessment</mat-icon>
+          Generate Report
+        </button>
+      </div>
+    </mat-sidenav>
+
+    <!-- Main Content Area -->
+    <mat-sidenav-content class="main-content">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

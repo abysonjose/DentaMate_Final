@@ -1,0 +1,15 @@
+<mat-form-field appearance="outline" class="full-width">
+  <mat-label>Select Clinic/Organization</mat-label>
+  <mat-select 
+    [value]="selectedTenantId" 
+    (selectionChange)="onTenantChange($event.value)"
+    [disabled]="disabled">
+    <mat-option *ngFor="let tenant of tenants" [value]="tenant.id">
+      <div class="tenant-option">
+        <span class="tenant-name">{{tenant.name}}</span>
+        <span class="tenant-domain">@{{tenant.domain}}</span>
+      </div>
+    </mat-option>
+  </mat-select>
+  <mat-icon matSuffix>business</mat-icon>
+</mat-form-field>
