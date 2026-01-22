@@ -78,6 +78,25 @@ services:
     depends_on:
       - mongodb
 
+  # Token Queue Realtime Service (Node.js)
+  token-queue-service:
+    build: ./backend/token-queue-realtime-service
+    container_name: dentamate-token-queue-service
+    restart: always
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/dentamate_queue?authSource=admin
+      - REDIS_URI=redis://redis:6379
+      - JWT_SECRET=your-jwt-secret-key
+      - FRONTEND_URL=http://localhost:4200
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:8080
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
+    depends_on:
+      - mongodb
+      - redis
+
   # Frontend (Angular)
   frontend:
     build: ./frontend
