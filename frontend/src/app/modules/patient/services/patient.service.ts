@@ -112,7 +112,9 @@ export interface Notification {
   providedIn: 'root'
 })
 export class PatientService {
-  private apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
+  private readonly appointmentServiceUrl = `${environment.apiUrl}/appointments`;
+  private readonly tokenQueueServiceUrl = `${environment.apiUrl}/queue`;
   private currentTokenStatus = new BehaviorSubject<TokenStatus | null>(null);
 
   constructor(private http: HttpClient) {}
@@ -126,48 +128,85 @@ export class PatientService {
     return this.http.put<PatientProfile>(`${this.apiUrl}/patient/profile`, profile);
   }
 
-  // Appointment Management
+  // Appointment Management - Enhanced integration with appointment-scheduling-service
   getAppointments(): Observable<Appointment[]> {
-    return this.http.get<Appointment[]>(`${this.apiUrl}/appointments/patient`);
+    return this.http.get<Appointment[]>(`${this.appointmentServiceUrl}/patient`);
   }
 
   getUpcomingAppointments(): Observable<Appointment[]> {
-    return this.http.get<Appointment[]>(`${this.apiUrl}/appointments/patient/upcoming`);
+    return this.http.get<Appointment[]>(`${this.appointmentServiceUrl}/patient/upcoming`);
   }
 
   bookAppointment(appointmentData: any): Observable<Appointment> {
-    return this.http.post<Appointment>(`${this.apiUrl}/appointments`, appointmentData);
+    return this.http.post<Appointment>(`${this.appointmentServiceUrl}`, appointmentData);
   }
 
   rescheduleAppointment(appointmentId: string, newDateTime: string): Observable<Appointment> {
-    return this.http.put<Appointment>(`${this.apiUrl}/appointments/${appointmentId}/reschedule`, {
+    return this.http.put<Appointment>(`${this.appointmentServiceUrl}/${appointmentId}/reschedule`, {
       newDateTime
     });
   }
 
   cancelAppointment(appointmentId: string, reason?: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/appointments/${appointmentId}`, {
+    return this.http.delete<void>(`${this.appointmentServiceUrl}/${appointmentId}`, {
       body: { reason }
     });
   }
 
   getAvailableSlots(doctorId: string, date: string): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/appointments/available-slots`, {
+    return this.http.get<string[]>(`${this.appointmentServiceUrl}/available-slots`, {
       params: { doctorId, date }
     });
   }
 
-  // Token & Queue Management
+  getAppointmentDetails(appointmentId: string): Observable<Appointment> {
+    return this.http.get<Appointment>(`${this.appointmentServiceUrl}/${appointmentId}`);
+  }
+
+  confirmAppointment(appointmentId: string): Observable<Appointment> {
+    return this.http.put<Appointment>(`${this.appointmentServiceUrl}/${appointmentId}/confirm`, {});
+  }
+
+  // Token & Queue Management - Enhanced integration with token-queue-realtime-service
   getCurrentTokenStatus(): Observable<TokenStatus | null> {
     return this.currentTokenStatus.asObservable();
   }
 
   checkIn(appointmentId: string): Observable<TokenStatus> {
-    return this.http.post<TokenStatus>(`${this.apiUrl}/tokens/checkin`, { appointmentId });
+    return this.http.post<TokenStatus>(`${this.tokenQueueServiceUrl}/tokens/checkin`, { appointmentId });
+  }
+
+  generateWalkInToken(tokenData: any): Observable<TokenStatus> {
+    return this.http.post<TokenStatus>(`${this.tokenQueueServiceUrl}/tokens/generate`, tokenData);
   }
 
   getQueueStatus(tokenId: string): Observable<TokenStatus> {
-    return this.http.get<TokenStatus>(`${this.apiUrl}/tokens/${tokenId}/status`);
+    return this.http.get<TokenStatus>(`${this.tokenQueueServiceUrl}/tokens/${tokenId}/status`);
+  }
+
+  getPatientTokens(patientId: string, branchId?: string): Observable<TokenStatus[]> {
+    const params = branchId ? { branchId } : {};
+    return this.http.get<TokenStatus[]>(`${this.tokenQueueServiceUrl}/tokens/patient/${patientId}`, { params });
+  }
+
+  getQueueInfo(branchId: string, doctorId?: string): Observable<any> {
+    const params = doctorId ? { doctorId } : {};
+    return this.http.get(`${this.tokenQueueServiceUrl}/queue/${branchId}/info`, { params });
+  }
+
+  skipToken(tokenId: string, reason: string): Observable<TokenStatus> {
+    return this.http.patch<TokenStatus>(`${this.tokenQueueServiceUrl}/tokens/${tokenId}/skip`, { reason });
+  }
+
+  updateTokenStatus(tokenId: string, status: string): Observable<TokenStatus> {
+    return this.http.patch<TokenStatus>(`${this.tokenQueueServiceUrl}/tokens/${tokenId}/status`, { status });
+  }
+
+  // Real-time queue updates
+  subscribeToQueueUpdates(tokenId: string): Observable<TokenStatus> {
+    // This would be implemented with WebSocket/Socket.IO
+    // For now, return polling-based updates
+    return this.http.get<TokenStatus>(`${this.tokenQueueServiceUrl}/tokens/${tokenId}/status`);
   }
 
   // Medical Records

@@ -78,6 +78,24 @@ services:
     depends_on:
       - mongodb
 
+  # Tenant Organization Service (Node.js)
+  tenant-organization-service:
+    build: ./backend/tenant-organization-service
+    container_name: dentamate-tenant-org-service
+    restart: always
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/dentamate_tenant_org?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-jwt-secret-key
+      - ENABLE_CACHE=true
+      - LOG_LEVEL=info
+    depends_on:
+      - mongodb
+      - redis
+
   # Token Queue Realtime Service (Node.js)
   token-queue-service:
     build: ./backend/token-queue-realtime-service
@@ -93,9 +111,11 @@ services:
       - FRONTEND_URL=http://localhost:4200
       - APPOINTMENT_SERVICE_URL=http://appointment-service:8080
       - NOTIFICATION_SERVICE_URL=http://notification-service:3006
+      - TENANT_SERVICE_URL=http://tenant-organization-service:3003
     depends_on:
       - mongodb
       - redis
+      - tenant-organization-service
 
   # Frontend (Angular)
   frontend:

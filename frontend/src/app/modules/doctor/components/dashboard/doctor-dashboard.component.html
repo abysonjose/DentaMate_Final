@@ -1,0 +1,245 @@
+<div class="doctor-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Doctor Dashboard</h1>
+      <div class="current-time">
+        {{ currentTime | date:'EEEE, MMMM d, y - h:mm:ss a' }}
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button mat-raised-button color="primary" (click)="callNextPatient()" 
+              [disabled]="queueSnapshot.status === 'paused'">
+        <mat-icon>person_add</mat-icon>
+        Call Next Patient
+      </button>
+      
+      <button mat-raised-button 
+              [color]="queueSnapshot.status === 'paused' ? 'accent' : 'warn'"
+              (click)="queueSnapshot.status === 'paused' ? resumeQueue() : pauseQueue()">
+        <mat-icon>{{ queueSnapshot.status === 'paused' ? 'play_arrow' : 'pause' }}</mat-icon>
+        {{ queueSnapshot.status === 'paused' ? 'Resume' : 'Pause' }} Queue
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="alerts.length > 0">
+    <mat-card *ngFor="let alert of alerts" [class]="'alert-' + alert.type">
+      <mat-card-content>
+        <div class="alert-content">
+          <mat-icon [class]="'alert-icon-' + alert.type">
+            {{ alert.type === 'warning' ? 'warning' : 'info' }}
+          </mat-icon>
+          <span class="alert-message">{{ alert.message }}</span>
+          <button mat-button color="primary">{{ alert.action }}</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon primary">event</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ dashboardStats.todayAppointments }}</div>
+            <div class="stat-label">Today's Appointments</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon success">check_circle</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ dashboardStats.completedConsultations }}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon accent">directions_walk</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ dashboardStats.walkIns }}</div>
+            <div class="stat-label">Walk-ins</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon" [class]="getQueueStatusColor()">queue</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ dashboardStats.currentQueueLength }}</div>
+            <div class="stat-label">Queue Length</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="main-content">
+    <!-- Today's Schedule -->
+    <mat-card class="schedule-card">
+      <mat-card-header>
+        <mat-card-title>Today's Schedule</mat-card-title>
+        <mat-card-subtitle>{{ todaySchedule.length }} appointments scheduled</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="schedule-list" *ngIf="!isLoading; else loadingTemplate">
+          <div class="schedule-item" *ngFor="let appointment of todaySchedule" 
+               [class]="'status-' + appointment.status">
+            <div class="appointment-time">
+              <div class="time">{{ appointment.time }}</div>
+              <div class="token" *ngIf="appointment.tokenNumber">
+                Token: {{ appointment.tokenNumber }}
+              </div>
+            </div>
+            
+            <div class="appointment-details">
+              <div class="patient-name">{{ appointment.patientName }}</div>
+              <div class="appointment-type">{{ appointment.type }}</div>
+            </div>
+            
+            <div class="appointment-status">
+              <mat-chip [color]="getStatusColor(appointment.status)" selected>
+                {{ appointment.status | titlecase }}
+              </mat-chip>
+            </div>
+            
+            <div class="appointment-actions">
+              <button mat-icon-button 
+                      *ngIf="appointment.status === 'scheduled'"
+                      (click)="startConsultation(appointment)"
+                      matTooltip="Start Consultation">
+                <mat-icon>play_arrow</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      *ngIf="appointment.status === 'scheduled'"
+                      (click)="markNoShow(appointment)"
+                      matTooltip="Mark No Show">
+                <mat-icon>person_off</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      routerLink="/doctor/patient/{{ appointment.id }}"
+                      matTooltip="View Patient Profile">
+                <mat-icon>person</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #loadingTemplate>
+          <div class="loading-container">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <p>Loading schedule...</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Queue Snapshot -->
+    <mat-card class="queue-card">
+      <mat-card-header>
+        <mat-card-title>Live Queue Status</mat-card-title>
+        <mat-card-subtitle>
+          <mat-chip [color]="getQueueStatusColor()" selected>
+            {{ queueSnapshot.status | titlecase }}
+          </mat-chip>
+        </mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="queue-info">
+          <div class="current-token">
+            <div class="token-label">Current Token</div>
+            <div class="token-number">{{ queueSnapshot.currentToken || 'None' }}</div>
+          </div>
+          
+          <div class="next-tokens" *ngIf="queueSnapshot.nextTokens.length > 0">
+            <div class="tokens-label">Next in Queue</div>
+            <div class="tokens-list">
+              <mat-chip *ngFor="let token of queueSnapshot.nextTokens.slice(0, 5)" 
+                        class="next-token">
+                {{ token }}
+              </mat-chip>
+              <span *ngIf="queueSnapshot.nextTokens.length > 5" class="more-tokens">
+                +{{ queueSnapshot.nextTokens.length - 5 }} more
+              </span>
+            </div>
+          </div>
+          
+          <div class="wait-time" *ngIf="queueSnapshot.estimatedWaitTime > 0">
+            <mat-icon>schedule</mat-icon>
+            <span>Est. wait: {{ queueSnapshot.estimatedWaitTime }} min</span>
+          </div>
+        </div>
+        
+        <div class="queue-actions">
+          <button mat-raised-button color="primary" 
+                  (click)="callNextPatient()"
+                  [disabled]="queueSnapshot.status === 'paused' || queueSnapshot.nextTokens.length === 0">
+            <mat-icon>call</mat-icon>
+            Call Next
+          </button>
+          
+          <button mat-button routerLink="/doctor/queue">
+            <mat-icon>visibility</mat-icon>
+            View Full Queue
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Quick Navigation -->
+  <div class="quick-nav">
+    <mat-card>
+      <mat-card-content>
+        <div class="nav-buttons">
+          <button mat-raised-button routerLink="/doctor/appointments">
+            <mat-icon>event</mat-icon>
+            Appointments
+          </button>
+          
+          <button mat-raised-button routerLink="/doctor/queue">
+            <mat-icon>queue</mat-icon>
+            Queue Control
+          </button>
+          
+          <button mat-raised-button routerLink="/doctor/prescriptions">
+            <mat-icon>medication</mat-icon>
+            Prescriptions
+          </button>
+          
+          <button mat-raised-button routerLink="/doctor/ai-diagnosis">
+            <mat-icon>psychology</mat-icon>
+            AI Diagnosis
+          </button>
+          
+          <button mat-raised-button routerLink="/doctor/lab-requests">
+            <mat-icon>biotech</mat-icon>
+            Lab Requests
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

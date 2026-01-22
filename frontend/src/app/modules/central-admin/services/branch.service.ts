@@ -54,10 +54,55 @@ export interface Branch {
 })
 export class BranchService {
   private readonly apiUrl = `${environment.apiUrl}/central-admin/branches`;
+  private readonly tenantServiceUrl = `${environment.apiUrl}/tenants`;
 
   constructor(private http: HttpClient) {}
 
+  // Enhanced integration with tenant-organization-service
   getAllBranches(): Observable<Branch[]> {
+    return this.http.get<Branch[]>(`${this.tenantServiceUrl}/branches`);
+  }
+
+  getBranchesByClinic(clinicId: string): Observable<Branch[]> {
+    return this.http.get<Branch[]>(`${this.tenantServiceUrl}/branches/clinic/${clinicId}`);
+  }
+
+  getBranchById(branchId: string): Observable<Branch> {
+    return this.http.get<Branch>(`${this.tenantServiceUrl}/branches/${branchId}`);
+  }
+
+  createBranch(branchData: Partial<Branch>): Observable<Branch> {
+    return this.http.post<Branch>(`${this.tenantServiceUrl}/branches`, branchData);
+  }
+
+  updateBranch(branchId: string, branchData: Partial<Branch>): Observable<Branch> {
+    return this.http.put<Branch>(`${this.tenantServiceUrl}/branches/${branchId}`, branchData);
+  }
+
+  updateBranchStatus(branchId: string, status: string): Observable<Branch> {
+    return this.http.patch<Branch>(`${this.tenantServiceUrl}/branches/${branchId}/status`, { status });
+  }
+
+  deleteBranch(branchId: string): Observable<void> {
+    return this.http.delete<void>(`${this.tenantServiceUrl}/branches/${branchId}`);
+  }
+
+  getBranchAnalytics(branchId: string, dateRange?: { start: string; end: string }): Observable<any> {
+    const params = dateRange ? { startDate: dateRange.start, endDate: dateRange.end } : {};
+    return this.http.get(`${this.tenantServiceUrl}/branches/${branchId}/analytics`, { params });
+  }
+
+  getBranchStaff(branchId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.tenantServiceUrl}/branches/${branchId}/staff`);
+  }
+
+  assignBranchAdmin(branchId: string, adminId: string): Observable<Branch> {
+    return this.http.patch<Branch>(`${this.tenantServiceUrl}/branches/${branchId}/admin`, { adminId });
+  }
+
+  updateBranchSettings(branchId: string, settings: any): Observable<Branch> {
+    return this.http.patch<Branch>(`${this.tenantServiceUrl}/branches/${branchId}/settings`, settings);
+  }
     return this.http.get<Branch[]>(this.apiUrl);
   }
 

@@ -1,0 +1,336 @@
+<div class="queue-control">
+  <!-- Header Section -->
+  <div class="queue-header">
+    <div class="header-content">
+      <h1>Queue Control</h1>
+      <div class="queue-status">
+        <mat-chip [color]="queueSnapshot.status === 'active' ? 'primary' : 'warn'" selected>
+          <mat-icon>{{ queueSnapshot.status === 'active' ? 'play_arrow' : 'pause' }}</mat-icon>
+          {{ queueSnapshot.status | titlecase }}
+        </mat-chip>
+        <span class="last-updated">
+          Last updated: {{ queueSnapshot.lastUpdated | date:'short' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Queue Actions -->
+    <div class="queue-actions">
+      <button mat-raised-button color="primary" 
+              (click)="callNextPatient()"
+              [disabled]="queueSnapshot.status === 'paused' || waitingTokens.length === 0">
+        <mat-icon>call</mat-icon>
+        Call Next Patient
+      </button>
+
+      <button mat-raised-button 
+              [color]="queueSnapshot.status === 'paused' ? 'accent' : 'warn'"
+              (click)="queueSnapshot.status === 'paused' ? resumeQueue() : pauseQueue()">
+        <mat-icon>{{ queueSnapshot.status === 'paused' ? 'play_arrow' : 'pause' }}</mat-icon>
+        {{ queueSnapshot.status === 'paused' ? 'Resume' : 'Pause' }}
+      </button>
+
+      <button mat-raised-button color="warn" (click)="insertEmergencyPatient()">
+        <mat-icon>emergency</mat-icon>
+        Emergency
+      </button>
+
+      <button mat-icon-button (click)="refreshQueue()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Current Patient Section -->
+  <mat-card class="current-patient-card" *ngIf="currentToken">
+    <mat-card-header>
+      <mat-card-title>Current Patient</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="current-patient-info">
+        <div class="patient-details">
+          <div class="token-number">{{ currentToken.tokenNumber }}</div>
+          <div class="patient-name">{{ currentToken.patientName }}</div>
+          <div class="patient-meta">
+            <mat-chip [color]="getPriorityColor(currentToken.priority)" selected>
+              {{ currentToken.priority | titlecase }}
+            </mat-chip>
+            <mat-chip color="primary" selected>
+              <mat-icon>{{ getTypeIcon(currentToken.type) }}</mat-icon>
+              {{ currentToken.type | titlecase }}
+            </mat-chip>
+          </div>
+        </div>
+        
+        <div class="consultation-actions">
+          <button mat-raised-button color="primary" 
+                  *ngIf="currentToken.status === 'called'"
+                  (click)="startConsultation()">
+            <mat-icon>play_arrow</mat-icon>
+            Start Consultation
+          </button>
+          
+          <button mat-raised-button color="accent" 
+                  *ngIf="currentToken.status === 'in-consultation'"
+                  (click)="completeConsultation()">
+            <mat-icon>check</mat-icon>
+            Complete Consultation
+          </button>
+          
+          <button mat-button 
+                  routerLink="/doctor/patient/{{ currentToken.patientId }}">
+            <mat-icon>person</mat-icon>
+            View Profile
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Queue Statistics -->
+  <div class="queue-stats" *ngIf="queueStats">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon">queue</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ queueStats.totalTokensToday }}</div>
+            <div class="stat-label">Total Tokens Today</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon success">check_circle</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ queueStats.completedTokens }}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon accent">hourglass_empty</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ queueStats.currentlyWaiting }}</div>
+            <div class="stat-label">Currently Waiting</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-content">
+          <mat-icon class="stat-icon">schedule</mat-icon>
+          <div class="stat-details">
+            <div class="stat-number">{{ formatWaitTime(queueStats.averageWaitTime) }}</div>
+            <div class="stat-label">Avg Wait Time</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Queue Tabs -->
+  <mat-card class="queue-tabs-card">
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      <!-- Waiting Queue -->
+      <mat-tab label="Waiting Queue" [badge]="waitingTokens.length">
+        <div class="tab-content">
+          <div class="table-container" *ngIf="!isLoading; else loadingTemplate">
+            <table mat-table [dataSource]="waitingTokens" class="queue-table">
+              <!-- Token Number Column -->
+              <ng-container matColumnDef="tokenNumber">
+                <th mat-header-cell *matHeaderCellDef>Token</th>
+                <td mat-cell *matCellDef="let token">
+                  <div class="token-cell">
+                    <span class="token-number">{{ token.tokenNumber }}</span>
+                    <mat-chip *ngIf="token.priority === 'urgent'" color="warn" selected>
+                      <mat-icon>priority_high</mat-icon>
+                    </mat-chip>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Patient Name Column -->
+              <ng-container matColumnDef="patientName">
+                <th mat-header-cell *matHeaderCellDef>Patient</th>
+                <td mat-cell *matCellDef="let token">{{ token.patientName }}</td>
+              </ng-container>
+
+              <!-- Type Column -->
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let token">
+                  <mat-chip color="primary" selected>
+                    <mat-icon>{{ getTypeIcon(token.type) }}</mat-icon>
+                    {{ token.type | titlecase }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Priority Column -->
+              <ng-container matColumnDef="priority">
+                <th mat-header-cell *matHeaderCellDef>Priority</th>
+                <td mat-cell *matCellDef="let token">
+                  <mat-chip [color]="getPriorityColor(token.priority)" selected>
+                    {{ token.priority | titlecase }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Wait Time Column -->
+              <ng-container matColumnDef="waitTime">
+                <th mat-header-cell *matHeaderCellDef>Wait Time</th>
+                <td mat-cell *matCellDef="let token">
+                  {{ formatWaitTime(token.estimatedWaitTime) }}
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let token">
+                  <button mat-icon-button (click)="callSpecificToken(token)" 
+                          matTooltip="Call Patient">
+                    <mat-icon>call</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="skipToken(token)" 
+                          matTooltip="Skip Patient">
+                    <mat-icon>skip_next</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="markNoShow(token)" 
+                          matTooltip="Mark No Show">
+                    <mat-icon>person_off</mat-icon>
+                  </button>
+                  <button mat-icon-button 
+                          routerLink="/doctor/patient/{{ token.patientId }}"
+                          matTooltip="View Profile">
+                    <mat-icon>person</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div class="no-data" *ngIf="waitingTokens.length === 0">
+              <mat-icon>queue</mat-icon>
+              <p>No patients waiting in queue</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Skipped Tokens -->
+      <mat-tab label="Skipped" [badge]="skippedTokens.length">
+        <div class="tab-content">
+          <div class="table-container">
+            <table mat-table [dataSource]="skippedTokens" class="queue-table">
+              <!-- Token Number Column -->
+              <ng-container matColumnDef="tokenNumber">
+                <th mat-header-cell *matHeaderCellDef>Token</th>
+                <td mat-cell *matCellDef="let token">{{ token.tokenNumber }}</td>
+              </ng-container>
+
+              <!-- Patient Name Column -->
+              <ng-container matColumnDef="patientName">
+                <th mat-header-cell *matHeaderCellDef>Patient</th>
+                <td mat-cell *matCellDef="let token">{{ token.patientName }}</td>
+              </ng-container>
+
+              <!-- Skip Reason Column -->
+              <ng-container matColumnDef="skipReason">
+                <th mat-header-cell *matHeaderCellDef>Reason</th>
+                <td mat-cell *matCellDef="let token">{{ token.skipReason }}</td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let token">
+                  <button mat-raised-button color="primary" 
+                          (click)="recallSkippedToken(token)">
+                    <mat-icon>undo</mat-icon>
+                    Recall
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="skippedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: skippedColumns;"></tr>
+            </table>
+
+            <div class="no-data" *ngIf="skippedTokens.length === 0">
+              <mat-icon>skip_next</mat-icon>
+              <p>No skipped patients</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Completed Tokens -->
+      <mat-tab label="Completed Today" [badge]="completedTokens.length">
+        <div class="tab-content">
+          <div class="table-container">
+            <table mat-table [dataSource]="completedTokens" class="queue-table">
+              <!-- Token Number Column -->
+              <ng-container matColumnDef="tokenNumber">
+                <th mat-header-cell *matHeaderCellDef>Token</th>
+                <td mat-cell *matCellDef="let token">{{ token.tokenNumber }}</td>
+              </ng-container>
+
+              <!-- Patient Name Column -->
+              <ng-container matColumnDef="patientName">
+                <th mat-header-cell *matHeaderCellDef>Patient</th>
+                <td mat-cell *matCellDef="let token">{{ token.patientName }}</td>
+              </ng-container>
+
+              <!-- Consultation Time Column -->
+              <ng-container matColumnDef="consultationTime">
+                <th mat-header-cell *matHeaderCellDef>Completed At</th>
+                <td mat-cell *matCellDef="let token">
+                  {{ token.consultationEndTime | date:'short' }}
+                </td>
+              </ng-container>
+
+              <!-- Duration Column -->
+              <ng-container matColumnDef="duration">
+                <th mat-header-cell *matHeaderCellDef>Duration</th>
+                <td mat-cell *matCellDef="let token">
+                  <span *ngIf="token.consultationStartTime && token.consultationEndTime">
+                    {{ formatDuration(token.consultationStartTime, token.consultationEndTime) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="completedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: completedColumns;"></tr>
+            </table>
+
+            <div class="no-data" *ngIf="completedTokens.length === 0">
+              <mat-icon>check_circle</mat-icon>
+              <p>No completed consultations today</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+
+  <!-- Loading Template -->
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Loading queue data...</p>
+    </div>
+  </ng-template>
+</div>

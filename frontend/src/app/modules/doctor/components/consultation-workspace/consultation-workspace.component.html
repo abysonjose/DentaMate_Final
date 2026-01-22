@@ -1,0 +1,312 @@
+<div class="consultation-workspace" *ngIf="!isLoading; else loadingTemplate">
+  <!-- Header Section -->
+  <div class="consultation-header">
+    <div class="patient-info">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      
+      <div class="patient-details" *ngIf="patient">
+        <h1>{{ getPatientFullName() }}</h1>
+        <div class="patient-meta">
+          <span class="age">{{ getPatientAge() }} years old</span>
+          <span class="gender">{{ patient.personalInfo.gender | titlecase }}</span>
+          <span class="patient-id">ID: {{ patient.id }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="consultation-actions">
+      <button mat-raised-button color="primary" 
+              *ngIf="!consultationStarted && currentAppointment"
+              (click)="startConsultation()">
+        <mat-icon>play_arrow</mat-icon>
+        Start Consultation
+      </button>
+
+      <button mat-raised-button color="accent" 
+              *ngIf="consultationStarted && !consultationCompleted"
+              (click)="saveConsultationNotes()"
+              [disabled]="isSaving">
+        <mat-icon>save</mat-icon>
+        {{ isSaving ? 'Saving...' : 'Save Notes' }}
+      </button>
+
+      <button mat-raised-button color="success" 
+              *ngIf="consultationStarted && !consultationCompleted"
+              (click)="completeConsultation()"
+              [disabled]="isSaving">
+        <mat-icon>check</mat-icon>
+        Complete Consultation
+      </button>
+
+      <button mat-button (click)="goToPatientProfile()">
+        <mat-icon>person</mat-icon>
+        View Full Profile
+      </button>
+    </div>
+  </div>
+
+  <!-- Patient Summary Cards -->
+  <div class="patient-summary">
+    <!-- Allergies Card -->
+    <mat-card class="summary-card allergies-card" *ngIf="patient?.medicalInfo.allergies.length">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="warning-icon">warning</mat-icon>
+          Allergies
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-chip-listbox>
+          <mat-chip-option *ngFor="let allergy of patient.medicalInfo.allergies" 
+                          color="warn" selected>
+            {{ allergy }}
+          </mat-chip-option>
+        </mat-chip-listbox>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Current Medications Card -->
+    <mat-card class="summary-card medications-card" *ngIf="activePrescriptions.length">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>medication</mat-icon>
+          Current Medications
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="medication-list">
+          <div *ngFor="let prescription of activePrescriptions" class="medication-item">
+            <div *ngFor="let med of prescription.medications" class="medication">
+              <span class="med-name">{{ med.medicationName }}</span>
+              <span class="med-dosage">{{ med.dosage }} - {{ med.frequency }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent History Card -->
+    <mat-card class="summary-card history-card" *ngIf="medicalHistory.length">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Recent Visits
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="history-list">
+          <div *ngFor="let record of medicalHistory.slice(0, 3)" class="history-item">
+            <div class="visit-date">{{ formatDate(record.visitDate) }}</div>
+            <div class="visit-diagnosis">{{ record.diagnosis }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Consultation Form -->
+  <div class="consultation-form" *ngIf="consultationStarted">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Consultation Notes</mat-card-title>
+        <mat-card-subtitle>Document the patient's visit</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <form class="consultation-form-content">
+          <!-- Chief Complaint -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Chief Complaint</mat-label>
+            <textarea matInput 
+                      [(ngModel)]="consultationData.chiefComplaint"
+                      name="chiefComplaint"
+                      placeholder="What brings the patient in today?"
+                      rows="2"></textarea>
+          </mat-form-field>
+
+          <!-- Symptoms -->
+          <div class="symptoms-section">
+            <h3>Symptoms</h3>
+            <div class="symptoms-chips">
+              <mat-chip-listbox>
+                <mat-chip-option *ngFor="let symptom of availableSymptoms"
+                                (click)="addSymptom(symptom)"
+                                [selected]="consultationData.symptoms.includes(symptom)">
+                  {{ symptom }}
+                </mat-chip-option>
+              </mat-chip-listbox>
+            </div>
+            
+            <div class="selected-symptoms" *ngIf="consultationData.symptoms.length">
+              <h4>Selected Symptoms:</h4>
+              <mat-chip-listbox>
+                <mat-chip-option *ngFor="let symptom of consultationData.symptoms" 
+                                color="primary" selected>
+                  {{ symptom }}
+                  <button matChipRemove (click)="removeSymptom(symptom)">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip-option>
+              </mat-chip-listbox>
+            </div>
+
+            <mat-form-field appearance="outline" class="custom-symptom">
+              <mat-label>Add Custom Symptom</mat-label>
+              <input matInput #customSymptom 
+                     (keyup.enter)="addCustomSymptom(customSymptom.value); customSymptom.value = ''"
+                     placeholder="Type and press Enter">
+            </mat-form-field>
+          </div>
+
+          <!-- Clinical Findings -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Clinical Findings</mat-label>
+            <textarea matInput 
+                      [(ngModel)]="consultationData.clinicalFindings"
+                      name="clinicalFindings"
+                      placeholder="Examination findings, observations..."
+                      rows="3"></textarea>
+          </mat-form-field>
+
+          <!-- Diagnosis -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Diagnosis</mat-label>
+            <textarea matInput 
+                      [(ngModel)]="consultationData.diagnosis"
+                      name="diagnosis"
+                      placeholder="Primary and secondary diagnoses"
+                      rows="2"></textarea>
+          </mat-form-field>
+
+          <!-- Treatment Plan -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Treatment Plan</mat-label>
+            <textarea matInput 
+                      [(ngModel)]="consultationData.treatmentPlan"
+                      name="treatmentPlan"
+                      placeholder="Recommended treatments, procedures..."
+                      rows="3"></textarea>
+          </mat-form-field>
+
+          <!-- Additional Notes -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Additional Notes</mat-label>
+            <textarea matInput 
+                      [(ngModel)]="consultationData.notes"
+                      name="notes"
+                      placeholder="Any additional observations or instructions"
+                      rows="4"></textarea>
+          </mat-form-field>
+
+          <!-- Follow-up Section -->
+          <div class="followup-section">
+            <mat-checkbox [(ngModel)]="consultationData.followUpRequired" 
+                          name="followUpRequired">
+              Follow-up required
+            </mat-checkbox>
+            
+            <mat-form-field appearance="outline" 
+                            *ngIf="consultationData.followUpRequired"
+                            class="followup-date">
+              <mat-label>Follow-up Date</mat-label>
+              <input matInput 
+                     [matDatepicker]="followUpPicker"
+                     [(ngModel)]="consultationData.followUpDate"
+                     name="followUpDate">
+              <mat-datepicker-toggle matIconSuffix [for]="followUpPicker"></mat-datepicker-toggle>
+              <mat-datepicker #followUpPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button mat-raised-button color="primary" 
+                    type="button"
+                    (click)="openPrescriptionDialog()">
+              <mat-icon>medication</mat-icon>
+              Add Prescription
+            </button>
+
+            <button mat-raised-button color="accent" 
+                    type="button"
+                    (click)="openLabRequestDialog()">
+              <mat-icon>biotech</mat-icon>
+              Request Lab Tests
+            </button>
+
+            <button mat-button 
+                    type="button"
+                    routerLink="/doctor/ai-diagnosis"
+                    [queryParams]="{ patientId: patientId }">
+              <mat-icon>psychology</mat-icon>
+              AI Diagnosis
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Consultation Not Started Message -->
+  <div class="consultation-not-started" *ngIf="!consultationStarted && currentAppointment">
+    <mat-card>
+      <mat-card-content>
+        <div class="message-content">
+          <mat-icon class="large-icon">event_available</mat-icon>
+          <h2>Ready to Start Consultation</h2>
+          <p>Click "Start Consultation" to begin documenting this patient visit.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- No Appointment Message -->
+  <div class="no-appointment" *ngIf="!currentAppointment">
+    <mat-card>
+      <mat-card-content>
+        <div class="message-content">
+          <mat-icon class="large-icon">event_busy</mat-icon>
+          <h2>No Active Appointment</h2>
+          <p>This patient doesn't have an active appointment. You can still view their profile and medical history.</p>
+          <button mat-raised-button color="primary" (click)="goToPatientProfile()">
+            <mat-icon>person</mat-icon>
+            View Patient Profile
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Consultation Completed Message -->
+  <div class="consultation-completed" *ngIf="consultationCompleted">
+    <mat-card>
+      <mat-card-content>
+        <div class="message-content">
+          <mat-icon class="large-icon success">check_circle</mat-icon>
+          <h2>Consultation Completed</h2>
+          <p>The consultation has been successfully completed and documented.</p>
+          <div class="completion-actions">
+            <button mat-raised-button color="primary" (click)="goBack()">
+              <mat-icon>dashboard</mat-icon>
+              Back to Dashboard
+            </button>
+            <button mat-button (click)="goToPatientProfile()">
+              <mat-icon>person</mat-icon>
+              View Patient Profile
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading Template -->
+<ng-template #loadingTemplate>
+  <div class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading patient data...</p>
+  </div>
+</ng-template>

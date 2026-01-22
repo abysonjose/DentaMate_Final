@@ -2,11 +2,12 @@ const axios = require('axios');
 
 const serviceRoutes = {
   '/api/auth': 'http://auth-service:3001',
-  '/api/tenants': 'http://tenant-service:3002',
+  '/api/tenants': 'http://tenant-organization-service:3003',
   '/api/users': 'http://user-service:3003',
   '/api/clinics': 'http://clinic-service:3004',
-  '/api/appointments': 'http://appointment-service:8080',
-  '/api/queue': 'http://queue-service:3006',
+  '/api/appointments': 'http://appointment-scheduling-service:8083',
+  '/api/queue': 'http://token-queue-realtime-service:3005',
+  '/api/tokens': 'http://token-queue-realtime-service:3005',
   '/api/nursing': 'http://nursing-service:3007',
   '/api/orthodontic': 'http://orthodontic-service:3008',
   '/api/lab': 'http://lab-service:3009',

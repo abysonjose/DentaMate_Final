@@ -66,41 +66,64 @@ export interface CreateClinicRequest {
 })
 export class ClinicService {
   private readonly apiUrl = `${environment.apiUrl}/central-admin/clinics`;
+  private readonly tenantServiceUrl = `${environment.apiUrl}/tenants`;
 
   constructor(private http: HttpClient) {}
 
-  // CRUD Operations
+  // Enhanced integration with tenant-organization-service
   getAllClinics(): Observable<Clinic[]> {
-    return this.http.get<Clinic[]>(this.apiUrl);
+    return this.http.get<Clinic[]>(`${this.tenantServiceUrl}/clinics`);
   }
 
   getClinicById(id: string): Observable<Clinic> {
-    return this.http.get<Clinic>(`${this.apiUrl}/${id}`);
+    return this.http.get<Clinic>(`${this.tenantServiceUrl}/clinics/${id}`);
   }
 
   createClinic(clinic: CreateClinicRequest): Observable<Clinic> {
-    return this.http.post<Clinic>(this.apiUrl, clinic);
+    return this.http.post<Clinic>(`${this.tenantServiceUrl}/create`, clinic);
   }
 
   updateClinic(id: string, clinic: Partial<Clinic>): Observable<Clinic> {
-    return this.http.put<Clinic>(`${this.apiUrl}/${id}`, clinic);
+    return this.http.put<Clinic>(`${this.tenantServiceUrl}/clinics/${id}`, clinic);
   }
 
   deleteClinic(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.tenantServiceUrl}/clinics/${id}`);
   }
 
-  // Status Management
+  // Status Management - Enhanced with tenant service integration
   activateClinic(id: string): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http.patch<void>(`${this.tenantServiceUrl}/clinics/${id}/activate`, {});
   }
 
   deactivateClinic(id: string): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http.patch<void>(`${this.tenantServiceUrl}/clinics/${id}/deactivate`, {});
   }
 
   suspendClinic(id: string, reason: string): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/${id}/suspend`, { reason });
+    return this.http.patch<void>(`${this.tenantServiceUrl}/clinics/${id}/suspend`, { reason });
+  }
+
+  // Tenant-specific operations
+  getTenantConfiguration(tenantId: string): Observable<any> {
+    return this.http.get(`${this.tenantServiceUrl}/${tenantId}/configuration`);
+  }
+
+  updateTenantConfiguration(tenantId: string, config: any): Observable<any> {
+    return this.http.put(`${this.tenantServiceUrl}/${tenantId}/configuration`, config);
+  }
+
+  getTenantLimits(tenantId: string): Observable<any> {
+    return this.http.get(`${this.tenantServiceUrl}/${tenantId}/limits`);
+  }
+
+  updateTenantLimits(tenantId: string, limits: any): Observable<any> {
+    return this.http.put(`${this.tenantServiceUrl}/${tenantId}/limits`, limits);
+  }
+
+  getTenantAuditLogs(tenantId: string, filters?: any): Observable<any[]> {
+    const params = filters ? { ...filters } : {};
+    return this.http.get<any[]>(`${this.tenantServiceUrl}/${tenantId}/audit-logs`, { params });
   }
 
   // License Management

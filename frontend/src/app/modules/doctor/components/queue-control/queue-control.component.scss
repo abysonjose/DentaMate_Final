@@ -1,0 +1,277 @@
+.queue-control {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .header-content {
+      h1 {
+        margin: 0;
+        color: #1976d2;
+        font-weight: 500;
+      }
+
+      .queue-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+
+        mat-chip {
+          mat-icon {
+            margin-right: 4px;
+          }
+        }
+
+        .last-updated {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+
+    .queue-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  .current-patient-card {
+    margin-bottom: 20px;
+    border-left: 4px solid #4caf50;
+
+    .current-patient-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .patient-details {
+        .token-number {
+          font-size: 24px;
+          font-weight: 600;
+          color: #1976d2;
+          margin-bottom: 8px;
+        }
+
+        .patient-name {
+          font-size: 18px;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 8px;
+        }
+
+        .patient-meta {
+          display: flex;
+          gap: 8px;
+
+          mat-chip {
+            mat-icon {
+              margin-right: 4px;
+            }
+          }
+        }
+      }
+
+      .consultation-actions {
+        display: flex;
+        gap: 12px;
+
+        button {
+          mat-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+  }
+
+  .queue-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .stat-card {
+      .stat-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .stat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+          color: #1976d2;
+
+          &.success { color: #4caf50; }
+          &.accent { color: #ff9800; }
+        }
+
+        .stat-details {
+          .stat-number {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+          }
+        }
+      }
+    }
+  }
+
+  .queue-tabs-card {
+    .tab-content {
+      padding: 20px 0;
+
+      .table-container {
+        .queue-table {
+          width: 100%;
+          background: white;
+
+          .token-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .token-number {
+              font-weight: 600;
+              color: #1976d2;
+            }
+          }
+
+          mat-chip {
+            mat-icon {
+              margin-right: 4px;
+            }
+          }
+
+          .mat-column-actions {
+            width: 200px;
+            text-align: center;
+          }
+        }
+
+        .no-data {
+          text-align: center;
+          padding: 40px;
+          color: #666;
+
+          mat-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+          }
+
+          p {
+            margin: 0;
+            font-size: 16px;
+          }
+        }
+      }
+
+      .loading-container {
+        text-align: center;
+        padding: 40px;
+
+        p {
+          margin-top: 16px;
+          color: #666;
+        }
+      }
+    }
+  }
+}
+
+// Tab badges
+::ng-deep .mat-tab-label {
+  .mat-badge {
+    .mat-badge-content {
+      background-color: #1976d2;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .queue-control {
+    padding: 12px;
+
+    .queue-header {
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+
+      .queue-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+    }
+
+    .current-patient-info {
+      flex-direction: column !important;
+      gap: 16px;
+      text-align: center;
+
+      .consultation-actions {
+        justify-content: center;
+      }
+    }
+
+    .queue-stats {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .queue-table {
+      .mat-column-actions {
+        width: 120px;
+      }
+    }
+  }
+}
+
+// Priority colors
+.priority-urgent {
+  color: #f44336 !important;
+  background-color: #ffebee !important;
+}
+
+.priority-high {
+  color: #ff9800 !important;
+  background-color: #fff3e0 !important;
+}
+
+.priority-medium {
+  color: #2196f3 !important;
+  background-color: #e3f2fd !important;
+}
+
+.priority-low {
+  color: #4caf50 !important;
+  background-color: #e8f5e8 !important;
+}

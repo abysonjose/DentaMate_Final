@@ -1,0 +1,224 @@
+<div class="prescription-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>medication</mat-icon>
+    Create Prescription for {{ data.patientName }}
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="prescriptionForm" class="prescription-form">
+      
+      <!-- Alerts Section -->
+      <div class="alerts-section" *ngIf="drugInteractions.length || allergyAlerts.length">
+        <!-- Drug Interactions -->
+        <mat-card class="alert-card interaction-alert" *ngIf="drugInteractions.length">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="warning-icon">warning</mat-icon>
+              Drug Interactions Found
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngFor="let interaction of drugInteractions" class="interaction-item">
+              <mat-chip [color]="getInteractionSeverityColor(interaction.severity)" selected>
+                {{ interaction.severity | titlecase }}
+              </mat-chip>
+              <div class="interaction-details">
+                <div class="interaction-description">{{ interaction.description }}</div>
+                <div class="interaction-management">{{ interaction.management }}</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Allergy Alerts -->
+        <mat-card class="alert-card allergy-alert" *ngIf="allergyAlerts.length">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="error-icon">error</mat-icon>
+              Allergy Alerts
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngFor="let alert of allergyAlerts" class="allergy-item">
+              <mat-chip [color]="getAllergySeverityColor(alert.severity)" selected>
+                {{ alert.severity | titlecase }}
+              </mat-chip>
+              <div class="allergy-details">
+                <div class="allergy-medication">{{ alert.medicationName }}</div>
+                <div class="allergy-reaction">{{ alert.reaction }}</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Medications Section -->
+      <div class="medications-section">
+        <h3>Medications</h3>
+        
+        <div formArrayName="medications">
+          <div *ngFor="let medication of medications.controls; let i = index" 
+               [formGroupName]="i" 
+               class="medication-form">
+            
+            <mat-card class="medication-card">
+              <mat-card-header>
+                <mat-card-title>Medication {{ i + 1 }}</mat-card-title>
+                <button mat-icon-button 
+                        type="button"
+                        (click)="removeMedication(i)"
+                        *ngIf="medications.length > 1"
+                        class="remove-medication">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-card-header>
+              
+              <mat-card-content>
+                <div class="medication-fields">
+                  <!-- Medication Search -->
+                  <mat-form-field appearance="outline" class="medication-search">
+                    <mat-label>Search Medication</mat-label>
+                    <input matInput 
+                           formControlName="medicationName"
+                           placeholder="Type medication name..."
+                           [matAutocomplete]="medicationAuto">
+                    <mat-autocomplete #medicationAuto="matAutocomplete">
+                      <mat-option *ngFor="let med of searchResults" 
+                                  (onSelectionChange)="selectMedication(med, i)">
+                        <div class="medication-option">
+                          <div class="med-name">{{ med.name }}</div>
+                          <div class="med-generic" *ngIf="med.genericName">{{ med.genericName }}</div>
+                          <div class="med-category">{{ med.category }}</div>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+
+                  <!-- Dosage -->
+                  <mat-form-field appearance="outline">
+                    <mat-label>Dosage</mat-label>
+                    <input matInput 
+                           formControlName="dosage"
+                           placeholder="e.g., 500mg">
+                  </mat-form-field>
+
+                  <!-- Frequency -->
+                  <mat-form-field appearance="outline">
+                    <mat-label>Frequency</mat-label>
+                    <mat-select formControlName="frequency">
+                      <mat-option *ngFor="let freq of frequencyOptions" [value]="freq">
+                        {{ freq }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <!-- Duration -->
+                  <mat-form-field appearance="outline">
+                    <mat-label>Duration</mat-label>
+                    <mat-select formControlName="duration">
+                      <mat-option *ngFor="let dur of durationOptions" [value]="dur">
+                        {{ dur }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <!-- Quantity -->
+                  <mat-form-field appearance="outline">
+                    <mat-label>Quantity</mat-label>
+                    <input matInput 
+                           type="number"
+                           formControlName="quantity"
+                           min="1">
+                  </mat-form-field>
+
+                  <!-- Refills -->
+                  <mat-form-field appearance="outline">
+                    <mat-label>Refills Allowed</mat-label>
+                    <input matInput 
+                           type="number"
+                           formControlName="refillsAllowed"
+                           min="0"
+                           max="5">
+                  </mat-form-field>
+
+                  <!-- Instructions -->
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Instructions</mat-label>
+                    <textarea matInput 
+                              formControlName="instructions"
+                              placeholder="Special instructions for this medication"
+                              rows="2"></textarea>
+                  </mat-form-field>
+
+                  <!-- Substitution Allowed -->
+                  <mat-checkbox formControlName="substitutionAllowed">
+                    Generic substitution allowed
+                  </mat-checkbox>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+
+        <button mat-button 
+                type="button"
+                (click)="addMedication()"
+                class="add-medication">
+          <mat-icon>add</mat-icon>
+          Add Another Medication
+        </button>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="additional-info">
+        <h3>Additional Information</h3>
+        
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Prescription Notes</mat-label>
+          <textarea matInput 
+                    formControlName="notes"
+                    placeholder="General notes about this prescription"
+                    rows="3"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Pharmacy Instructions</mat-label>
+          <textarea matInput 
+                    formControlName="pharmacyInstructions"
+                    placeholder="Special instructions for the pharmacy"
+                    rows="2"></textarea>
+        </mat-form-field>
+
+        <!-- Follow-up -->
+        <div class="followup-section">
+          <mat-checkbox formControlName="followUpRequired">
+            Follow-up required for this prescription
+          </mat-checkbox>
+          
+          <mat-form-field appearance="outline" 
+                          *ngIf="prescriptionForm.get('followUpRequired')?.value"
+                          class="followup-date">
+            <mat-label>Follow-up Date</mat-label>
+            <input matInput 
+                   [matDatepicker]="followUpPicker"
+                   formControlName="followUpDate">
+            <mat-datepicker-toggle matIconSuffix [for]="followUpPicker"></mat-datepicker-toggle>
+            <mat-datepicker #followUpPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button 
+            color="primary" 
+            (click)="onSave()"
+            [disabled]="isSaving || prescriptionForm.invalid">
+      <mat-icon *ngIf="isSaving">hourglass_empty</mat-icon>
+      <mat-icon *ngIf="!isSaving">save</mat-icon>
+      {{ isSaving ? 'Saving...' : 'Create Prescription' }}
+    </button>
+  </mat-dialog-actions>
+</div>

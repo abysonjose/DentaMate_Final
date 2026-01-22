@@ -122,9 +122,10 @@ export interface SystemWideMetrics {
   providedIn: 'root'
 })
 export class CentralAppointmentService {
-  private readonly appointmentApiUrl = `${environment.apiUrl}/appointment-service/api/v1/appointments`;
-  private readonly scheduleApiUrl = `${environment.apiUrl}/appointment-service/api/v1/schedules`;
-  private readonly tokenApiUrl = `${environment.apiUrl}/appointment-service/api/v1/tokens`;
+  private readonly appointmentApiUrl = `${environment.apiUrl}/appointments`;
+  private readonly scheduleApiUrl = `${environment.apiUrl}/appointments/schedules`;
+  private readonly tokenApiUrl = `${environment.apiUrl}/queue/tokens`;
+  private readonly tenantApiUrl = `${environment.apiUrl}/tenants`;
 
   constructor(private http: HttpClient) {}
 
