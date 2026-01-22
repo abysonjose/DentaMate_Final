@@ -3,7 +3,7 @@
 .env.*
 .env.local
 .env.production
-.env.example
+!.env.example
 
 # Logs
 logs/
