@@ -1,0 +1,199 @@
+<div class="medical-records">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Medical Records</h1>
+      <p class="subtitle">Your complete dental health history</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading your medical records...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="records-content">
+    
+    <!-- Search Bar -->
+    <mat-card class="search-card">
+      <mat-card-content>
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search records</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" 
+                 placeholder="Search by doctor, department, diagnosis...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredRecords.length === 0 && !loading" class="empty-state">
+      <mat-card class="empty-state-card">
+        <mat-card-content>
+          <mat-icon>folder_open</mat-icon>
+          <h3 *ngIf="!searchTerm">No medical records found</h3>
+          <h3 *ngIf="searchTerm">No records match your search</h3>
+          <p *ngIf="!searchTerm">Your medical records will appear here after your visits.</p>
+          <p *ngIf="searchTerm">Try searching with different keywords.</p>
+          <button *ngIf="searchTerm" mat-button (click)="searchTerm = ''; onSearch()">
+            Clear Search
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Records List -->
+    <div *ngIf="filteredRecords.length > 0" class="records-list">
+      <mat-card *ngFor="let record of filteredRecords" class="record-card">
+        <mat-card-header>
+          <div mat-card-avatar class="record-avatar">
+            <mat-icon>medical_services</mat-icon>
+          </div>
+          <mat-card-title>{{formatDate(record.visitDate)}}</mat-card-title>
+          <mat-card-subtitle>Dr. {{record.doctorName}} - {{record.department}}</mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="record-summary">
+            <div class="diagnosis-section">
+              <h4>Diagnosis</h4>
+              <p>{{record.diagnosis}}</p>
+            </div>
+            
+            <div class="treatment-section" *ngIf="record.treatmentNotes">
+              <h4>Treatment Notes</h4>
+              <p>{{record.treatmentNotes | slice:0:150}}<span *ngIf="record.treatmentNotes.length > 150">...</span></p>
+            </div>
+            
+            <!-- Prescriptions -->
+            <div class="prescriptions-section" *ngIf="record.prescriptions.length > 0">
+              <h4>Prescriptions</h4>
+              <div class="prescription-chips">
+                <mat-chip *ngFor="let prescription of record.prescriptions | slice:0:3" 
+                         color="primary" selected>
+                  {{prescription}}
+                </mat-chip>
+                <mat-chip *ngIf="record.prescriptions.length > 3" 
+                         color="accent" selected>
+                  +{{record.prescriptions.length - 3}} more
+                </mat-chip>
+              </div>
+            </div>
+            
+            <!-- Attachments -->
+            <div class="attachments-section" *ngIf="record.attachments.length > 0">
+              <h4>Attachments</h4>
+              <div class="attachment-list">
+                <div *ngFor="let attachment of record.attachments" 
+                     class="attachment-item"
+                     (click)="downloadAttachment(record, attachment)">
+                  <mat-icon [color]="getAttachmentColor(attachment.type)">
+                    {{getAttachmentIcon(attachment.type)}}
+                  </mat-icon>
+                  <div class="attachment-info">
+                    <span class="attachment-name">{{attachment.filename}}</span>
+                    <span class="attachment-type">{{attachment.type}}</span>
+                  </div>
+                  <mat-icon class="download-icon">download</mat-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+        
+        <mat-card-actions>
+          <button mat-button (click)="viewRecord(record)">
+            <mat-icon>visibility</mat-icon>
+            View Details
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+  </div>
+
+  <!-- Record Detail Modal -->
+  <div *ngIf="selectedRecord" class="record-modal-overlay" (click)="closeRecordView()">
+    <div class="record-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Medical Record Details</h2>
+        <button mat-icon-button (click)="closeRecordView()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      
+      <div class="modal-content">
+        <div class="record-details">
+          
+          <!-- Visit Information -->
+          <div class="detail-section">
+            <h3>Visit Information</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="label">Date:</span>
+                <span class="value">{{formatDate(selectedRecord.visitDate)}}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Doctor:</span>
+                <span class="value">Dr. {{selectedRecord.doctorName}}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Department:</span>
+                <span class="value">{{selectedRecord.department}}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnosis -->
+          <div class="detail-section">
+            <h3>Diagnosis</h3>
+            <p class="diagnosis-text">{{selectedRecord.diagnosis}}</p>
+          </div>
+
+          <!-- Treatment Notes -->
+          <div class="detail-section" *ngIf="selectedRecord.treatmentNotes">
+            <h3>Treatment Notes</h3>
+            <p class="treatment-text">{{selectedRecord.treatmentNotes}}</p>
+          </div>
+
+          <!-- Prescriptions -->
+          <div class="detail-section" *ngIf="selectedRecord.prescriptions.length > 0">
+            <h3>Prescriptions</h3>
+            <div class="prescription-list">
+              <mat-chip *ngFor="let prescription of selectedRecord.prescriptions" 
+                       color="primary" selected class="prescription-chip">
+                {{prescription}}
+              </mat-chip>
+            </div>
+          </div>
+
+          <!-- Attachments -->
+          <div class="detail-section" *ngIf="selectedRecord.attachments.length > 0">
+            <h3>Attachments</h3>
+            <div class="attachment-grid">
+              <div *ngFor="let attachment of selectedRecord.attachments" 
+                   class="attachment-card"
+                   (click)="downloadAttachment(selectedRecord, attachment)">
+                <div class="attachment-icon">
+                  <mat-icon [color]="getAttachmentColor(attachment.type)">
+                    {{getAttachmentIcon(attachment.type)}}
+                  </mat-icon>
+                </div>
+                <div class="attachment-details">
+                  <span class="attachment-filename">{{attachment.filename}}</span>
+                  <span class="attachment-type-label">{{attachment.type}}</span>
+                  <span class="attachment-date">{{formatDate(attachment.uploadedAt)}}</span>
+                </div>
+                <mat-icon class="download-action">download</mat-icon>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

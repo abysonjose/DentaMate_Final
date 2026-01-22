@@ -1,0 +1,247 @@
+<div class="patient-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="welcome-section">
+      <h1>Welcome back!</h1>
+      <p class="subtitle">Here's your health summary for today</p>
+    </div>
+    
+    <div class="notification-badge" *ngIf="unreadNotificationCount > 0">
+      <button mat-icon-button (click)="navigateToNotifications()" [matBadge]="unreadNotificationCount" matBadgeColor="warn">
+        <mat-icon>notifications</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading your dashboard...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="dashboard-content">
+    
+    <!-- Today's Status Cards -->
+    <div class="status-cards">
+      
+      <!-- Upcoming Appointment Card -->
+      <mat-card class="status-card appointment-card" *ngIf="upcomingAppointment">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>event</mat-icon>
+          <mat-card-title>Next Appointment</mat-card-title>
+          <mat-card-subtitle>{{upcomingAppointment.appointmentDate | date:'mediumDate'}}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="appointment-details">
+            <div class="detail-row">
+              <mat-icon>schedule</mat-icon>
+              <span>{{upcomingAppointment.appointmentTime}}</span>
+            </div>
+            <div class="detail-row">
+              <mat-icon>person</mat-icon>
+              <span>Dr. {{upcomingAppointment.doctorName}}</span>
+            </div>
+            <div class="detail-row">
+              <mat-icon>local_hospital</mat-icon>
+              <span>{{upcomingAppointment.department}}</span>
+            </div>
+            <div class="detail-row">
+              <mat-icon>location_on</mat-icon>
+              <span>{{upcomingAppointment.branch}}</span>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="checkInForAppointment()">
+            <mat-icon>check_circle</mat-icon>
+            Check In
+          </button>
+          <button mat-button (click)="navigateToAppointments()">View Details</button>
+        </mat-card-actions>
+      </mat-card>
+
+      <!-- No Upcoming Appointment Card -->
+      <mat-card class="status-card no-appointment-card" *ngIf="!upcomingAppointment">
+        <mat-card-content>
+          <div class="empty-state">
+            <mat-icon>event_available</mat-icon>
+            <h3>No upcoming appointments</h3>
+            <p>Schedule your next visit with us</p>
+            <button mat-raised-button color="primary" (click)="navigateToAppointments()">
+              <mat-icon>add</mat-icon>
+              Book Appointment
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Current Token Status Card -->
+      <mat-card class="status-card token-card" *ngIf="currentTokenStatus">
+        <mat-card-header>
+          <mat-icon mat-card-avatar [color]="getStatusColor(currentTokenStatus.status)">confirmation_number</mat-icon>
+          <mat-card-title>Your Token</mat-card-title>
+          <mat-card-subtitle>Queue Status</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="token-details">
+            <div class="token-number">
+              <span class="label">Token Number</span>
+              <span class="value">{{currentTokenStatus.tokenNumber}}</span>
+            </div>
+            <div class="queue-position">
+              <span class="label">Position in Queue</span>
+              <span class="value">{{currentTokenStatus.queuePosition}}</span>
+            </div>
+            <div class="wait-time">
+              <span class="label">Estimated Wait</span>
+              <span class="value">{{getEstimatedWaitTimeText()}}</span>
+            </div>
+            <div class="status-indicator">
+              <mat-chip [color]="getStatusColor(currentTokenStatus.status)" selected>
+                {{currentTokenStatus.status | titlecase}}
+              </mat-chip>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button (click)="navigateToQueueStatus()">View Queue</button>
+        </mat-card-actions>
+      </mat-card>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <h2>Quick Actions</h2>
+      <div class="quick-actions-grid">
+        <mat-card 
+          *ngFor="let action of quickActions" 
+          class="quick-action-card"
+          (click)="action.action()"
+          [class]="'action-' + action.color">
+          <mat-card-content>
+            <mat-icon [color]="action.color">{{action.icon}}</mat-icon>
+            <h3>{{action.title}}</h3>
+            <p>{{action.description}}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity-section">
+      <div class="activity-columns">
+        
+        <!-- Pending Bills -->
+        <div class="activity-column" *ngIf="pendingBills.length > 0">
+          <mat-card class="activity-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar color="warn">payment</mat-icon>
+              <mat-card-title>Pending Bills</mat-card-title>
+              <mat-card-subtitle>{{pendingBills.length}} bill(s) pending</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="bill-list">
+                <div *ngFor="let bill of pendingBills" class="bill-item">
+                  <div class="bill-info">
+                    <span class="bill-date">{{bill.billDate | date:'shortDate'}}</span>
+                    <span class="bill-amount">{{formatCurrency(bill.totalAmount)}}</span>
+                  </div>
+                  <button mat-icon-button color="primary" (click)="payBill(bill)">
+                    <mat-icon>payment</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-button (click)="navigateToBilling()">View All Bills</button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+
+        <!-- Recent Notifications -->
+        <div class="activity-column" *ngIf="recentNotifications.length > 0">
+          <mat-card class="activity-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar color="accent">notifications</mat-icon>
+              <mat-card-title>Recent Notifications</mat-card-title>
+              <mat-card-subtitle>Latest updates</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="notification-list">
+                <div *ngFor="let notification of recentNotifications" class="notification-item" [class.unread]="!notification.isRead">
+                  <div class="notification-content">
+                    <h4>{{notification.title}}</h4>
+                    <p>{{notification.message}}</p>
+                    <span class="notification-time">{{getTimeAgo(notification.createdAt)}}</span>
+                  </div>
+                  <mat-icon *ngIf="!notification.isRead" class="unread-indicator">fiber_manual_record</mat-icon>
+                </div>
+              </div>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-button (click)="navigateToNotifications()">View All Notifications</button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Health Summary Stats -->
+    <div class="health-stats-section" *ngIf="dashboardData.healthStats">
+      <h2>Your Health Summary</h2>
+      <div class="stats-grid">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon color="primary">event</mat-icon>
+              <div class="stat-info">
+                <span class="stat-value">{{dashboardData.healthStats.totalAppointments || 0}}</span>
+                <span class="stat-label">Total Visits</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon color="accent">receipt</mat-icon>
+              <div class="stat-info">
+                <span class="stat-value">{{dashboardData.healthStats.activePrescriptions || 0}}</span>
+                <span class="stat-label">Active Prescriptions</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon color="warn">medical_services</mat-icon>
+              <div class="stat-info">
+                <span class="stat-value">{{dashboardData.healthStats.medicalRecords || 0}}</span>
+                <span class="stat-label">Medical Records</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon color="primary">schedule</mat-icon>
+              <div class="stat-info">
+                <span class="stat-value">{{dashboardData.healthStats.nextFollowUp || 'None'}}</span>
+                <span class="stat-label">Next Follow-up</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+  </div>
+</div>

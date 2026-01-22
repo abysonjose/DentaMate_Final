@@ -1,0 +1,231 @@
+<div class="token-queue-status">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Queue Status</h1>
+      <p class="subtitle">Real-time queue monitoring</p>
+    </div>
+    <button mat-icon-button (click)="refreshStatus()" class="refresh-button" matTooltip="Refresh Status">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading your queue status...</p>
+  </div>
+
+  <!-- No Token State -->
+  <div *ngIf="!loading && !tokenStatus" class="no-token-state">
+    <mat-card class="empty-state-card">
+      <mat-card-content>
+        <div class="empty-state">
+          <mat-icon>confirmation_number</mat-icon>
+          <h2>No Active Token</h2>
+          <p>You don't have an active token in the queue.</p>
+          <p>Please check in for your appointment to get a token.</p>
+          <button mat-raised-button color="primary" routerLink="/patient/appointments">
+            <mat-icon>event</mat-icon>
+            View Appointments
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Token Status Content -->
+  <div *ngIf="!loading && tokenStatus" class="token-content">
+    
+    <!-- Call Animation Overlay -->
+    <div *ngIf="shouldShowCallAnimation()" class="call-animation-overlay">
+      <div class="call-animation">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring delay-1"></div>
+        <div class="pulse-ring delay-2"></div>
+        <mat-icon class="call-icon">notification_important</mat-icon>
+        <h2>Your Token is Called!</h2>
+        <p>Please proceed to the consultation room</p>
+      </div>
+    </div>
+
+    <!-- Main Token Card -->
+    <mat-card class="token-card" [class.pulse]="shouldPulse()">
+      <mat-card-header>
+        <div mat-card-avatar class="token-avatar" [ngClass]="'avatar-' + getStatusColor()">
+          <mat-icon [class.animate-icon]="tokenStatus.status === 'CALLED'">{{getStatusIcon()}}</mat-icon>
+        </div>
+        <mat-card-title>Token #{{tokenStatus.tokenNumber}}</mat-card-title>
+        <mat-card-subtitle>{{tokenStatus.status | titlecase}}</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <!-- Status Message -->
+        <div class="status-message" [ngClass]="'status-' + tokenStatus.status.toLowerCase()">
+          <p>{{getStatusMessage()}}</p>
+        </div>
+
+        <!-- Queue Information -->
+        <div class="queue-info">
+          <div class="info-grid">
+            
+            <!-- Queue Position -->
+            <div class="info-item">
+              <div class="info-icon">
+                <mat-icon color="primary">people</mat-icon>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Position in Queue</span>
+                <span class="info-value">{{getQueuePositionText()}}</span>
+              </div>
+            </div>
+
+            <!-- Estimated Wait Time -->
+            <div class="info-item">
+              <div class="info-icon">
+                <mat-icon color="accent">schedule</mat-icon>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Estimated Wait</span>
+                <span class="info-value">{{estimatedWaitTime}}</span>
+              </div>
+            </div>
+
+            <!-- Check-in Time -->
+            <div class="info-item">
+              <div class="info-icon">
+                <mat-icon color="primary">access_time</mat-icon>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Checked In At</span>
+                <span class="info-value">{{formatTime(tokenStatus.checkedInAt)}}</span>
+              </div>
+            </div>
+
+            <!-- Last Updated -->
+            <div class="info-item">
+              <div class="info-icon">
+                <mat-icon color="accent">update</mat-icon>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Last Updated</span>
+                <span class="info-value">{{getLastUpdatedText()}}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-section" *ngIf="tokenStatus.status === 'WAITING'">
+          <div class="progress-header">
+            <span class="progress-label">Queue Progress</span>
+            <span class="progress-percentage">{{queueProgress | number:'1.0-0'}}%</span>
+          </div>
+          <mat-progress-bar 
+            [value]="queueProgress" 
+            [color]="getProgressColor()"
+            class="queue-progress-bar">
+          </mat-progress-bar>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Status Timeline -->
+    <mat-card class="timeline-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>timeline</mat-icon>
+        <mat-card-title>Status Timeline</mat-card-title>
+        <mat-card-subtitle>Track your queue journey</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="timeline">
+          
+          <!-- Checked In -->
+          <div class="timeline-item completed">
+            <div class="timeline-icon">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h4>Checked In</h4>
+              <p>{{formatTime(tokenStatus.checkedInAt)}}</p>
+            </div>
+          </div>
+
+          <!-- Waiting -->
+          <div class="timeline-item" [class.completed]="tokenStatus.status !== 'WAITING'" [class.active]="tokenStatus.status === 'WAITING'">
+            <div class="timeline-icon">
+              <mat-icon>hourglass_empty</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h4>Waiting in Queue</h4>
+              <p *ngIf="tokenStatus.status === 'WAITING'">Currently waiting - {{getQueuePositionText()}}</p>
+              <p *ngIf="tokenStatus.status !== 'WAITING'">Completed</p>
+            </div>
+          </div>
+
+          <!-- Called -->
+          <div class="timeline-item" [class.completed]="tokenStatus.status === 'IN_CONSULTATION' || tokenStatus.status === 'COMPLETED'" [class.active]="tokenStatus.status === 'CALLED'">
+            <div class="timeline-icon">
+              <mat-icon>notification_important</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h4>Token Called</h4>
+              <p *ngIf="tokenStatus.status === 'CALLED'">Your turn! Please proceed to consultation room</p>
+              <p *ngIf="tokenStatus.status === 'IN_CONSULTATION' || tokenStatus.status === 'COMPLETED'">Completed</p>
+              <p *ngIf="tokenStatus.status === 'WAITING'">Pending</p>
+            </div>
+          </div>
+
+          <!-- In Consultation -->
+          <div class="timeline-item" [class.completed]="tokenStatus.status === 'COMPLETED'" [class.active]="tokenStatus.status === 'IN_CONSULTATION'">
+            <div class="timeline-icon">
+              <mat-icon>medical_services</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h4>In Consultation</h4>
+              <p *ngIf="tokenStatus.status === 'IN_CONSULTATION'">Currently with the doctor</p>
+              <p *ngIf="tokenStatus.status === 'COMPLETED'">Completed</p>
+              <p *ngIf="tokenStatus.status !== 'IN_CONSULTATION' && tokenStatus.status !== 'COMPLETED'">Pending</p>
+            </div>
+          </div>
+
+          <!-- Completed -->
+          <div class="timeline-item" [class.completed]="tokenStatus.status === 'COMPLETED'">
+            <div class="timeline-icon">
+              <mat-icon>done_all</mat-icon>
+            </div>
+            <div class="timeline-content">
+              <h4>Consultation Complete</h4>
+              <p *ngIf="tokenStatus.status === 'COMPLETED'">Thank you for your visit!</p>
+              <p *ngIf="tokenStatus.status !== 'COMPLETED'">Pending</p>
+            </div>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions" *ngIf="tokenStatus.status === 'WAITING' || tokenStatus.status === 'CALLED'">
+      <mat-card class="actions-card">
+        <mat-card-content>
+          <h3>Need Help?</h3>
+          <div class="action-buttons">
+            <button mat-raised-button color="primary" routerLink="/patient/support">
+              <mat-icon>help</mat-icon>
+              Contact Support
+            </button>
+            <button mat-button (click)="refreshStatus()">
+              <mat-icon>refresh</mat-icon>
+              Refresh Status
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </div>
+</div>

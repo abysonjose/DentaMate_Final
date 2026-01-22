@@ -1,0 +1,220 @@
+<div class="appointment-management">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>My Appointments</h1>
+      <p class="subtitle">Manage your dental appointments</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="bookNewAppointment()" class="book-button">
+      <mat-icon>add</mat-icon>
+      Book New Appointment
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading your appointments...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="appointments-content">
+    
+    <!-- Tabs -->
+    <mat-card class="tabs-card">
+      <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="onTabChange($event)" class="appointment-tabs">
+        <mat-tab *ngFor="let tab of tabs" [label]="tab.label">
+          
+          <!-- Empty State -->
+          <div *ngIf="filteredAppointments.length === 0" class="empty-state">
+            <mat-icon>event_available</mat-icon>
+            <h3>No {{tab.label.toLowerCase()}} found</h3>
+            <p *ngIf="tab.filter === 'upcoming'">You don't have any upcoming appointments. Book one now!</p>
+            <p *ngIf="tab.filter === 'past'">You haven't had any appointments yet.</p>
+            <p *ngIf="tab.filter === 'cancelled'">You haven't cancelled any appointments.</p>
+            <p *ngIf="tab.filter === 'all'">You don't have any appointments yet. Book your first appointment!</p>
+            
+            <button *ngIf="tab.filter === 'upcoming' || tab.filter === 'all'" 
+                    mat-raised-button color="primary" 
+                    (click)="bookNewAppointment()">
+              <mat-icon>add</mat-icon>
+              Book Appointment
+            </button>
+          </div>
+
+          <!-- Appointments List -->
+          <div *ngIf="filteredAppointments.length > 0" class="appointments-list">
+            
+            <!-- Mobile View -->
+            <div class="mobile-appointments" *ngIf="filteredAppointments.length > 0">
+              <mat-card *ngFor="let appointment of filteredAppointments" class="appointment-card mobile-card">
+                <mat-card-header>
+                  <div mat-card-avatar class="appointment-avatar" [ngClass]="'avatar-' + getStatusColor(appointment.status)">
+                    <mat-icon>{{getStatusIcon(appointment.status)}}</mat-icon>
+                  </div>
+                  <mat-card-title>{{formatDate(appointment.appointmentDate)}}</mat-card-title>
+                  <mat-card-subtitle>{{formatTime(appointment.appointmentTime)}}</mat-card-subtitle>
+                </mat-card-header>
+                
+                <mat-card-content>
+                  <div class="appointment-details">
+                    <div class="detail-row">
+                      <mat-icon>person</mat-icon>
+                      <span>Dr. {{appointment.doctorName}}</span>
+                    </div>
+                    <div class="detail-row">
+                      <mat-icon>local_hospital</mat-icon>
+                      <span>{{appointment.department}}</span>
+                    </div>
+                    <div class="detail-row">
+                      <mat-icon>location_on</mat-icon>
+                      <span>{{appointment.branch}}</span>
+                    </div>
+                    <div class="detail-row">
+                      <mat-icon>category</mat-icon>
+                      <mat-chip [color]="getAppointmentTypeColor(appointment.type)" selected>
+                        {{appointment.type | titlecase}}
+                      </mat-chip>
+                    </div>
+                    <div class="detail-row">
+                      <mat-icon>info</mat-icon>
+                      <mat-chip [color]="getStatusColor(appointment.status)" selected>
+                        {{appointment.status | titlecase}}
+                      </mat-chip>
+                    </div>
+                  </div>
+                </mat-card-content>
+                
+                <mat-card-actions>
+                  <button *ngIf="canCheckIn(appointment)" 
+                          mat-raised-button color="primary" 
+                          (click)="checkIn(appointment)">
+                    <mat-icon>check_circle</mat-icon>
+                    Check In
+                  </button>
+                  
+                  <button *ngIf="canReschedule(appointment)" 
+                          mat-button color="accent" 
+                          (click)="rescheduleAppointment(appointment)">
+                    <mat-icon>schedule</mat-icon>
+                    Reschedule
+                  </button>
+                  
+                  <button *ngIf="canCancel(appointment)" 
+                          mat-button color="warn" 
+                          (click)="cancelAppointment(appointment)">
+                    <mat-icon>cancel</mat-icon>
+                    Cancel
+                  </button>
+                </mat-card-actions>
+              </mat-card>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="desktop-table">
+              <table mat-table [dataSource]="filteredAppointments" class="appointments-table">
+                
+                <!-- Date Column -->
+                <ng-container matColumnDef="date">
+                  <th mat-header-cell *matHeaderCellDef>Date</th>
+                  <td mat-cell *matCellDef="let appointment">
+                    <div class="date-cell">
+                      <span class="date">{{formatDate(appointment.appointmentDate)}}</span>
+                      <span class="day" [class.upcoming]="isUpcoming(appointment)" [class.past]="isPast(appointment)">
+                        {{appointment.appointmentDate | date:'EEEE'}}
+                      </span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Time Column -->
+                <ng-container matColumnDef="time">
+                  <th mat-header-cell *matHeaderCellDef>Time</th>
+                  <td mat-cell *matCellDef="let appointment">
+                    <div class="time-cell">
+                      <mat-icon>schedule</mat-icon>
+                      <span>{{formatTime(appointment.appointmentTime)}}</span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Doctor Column -->
+                <ng-container matColumnDef="doctor">
+                  <th mat-header-cell *matHeaderCellDef>Doctor</th>
+                  <td mat-cell *matCellDef="let appointment">
+                    <div class="doctor-cell">
+                      <mat-icon>person</mat-icon>
+                      <div class="doctor-info">
+                        <span class="doctor-name">Dr. {{appointment.doctorName}}</span>
+                        <span class="department">{{appointment.department}}</span>
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Department Column -->
+                <ng-container matColumnDef="department">
+                  <th mat-header-cell *matHeaderCellDef>Type</th>
+                  <td mat-cell *matCellDef="let appointment">
+                    <mat-chip [color]="getAppointmentTypeColor(appointment.type)" selected>
+                      {{appointment.type | titlecase}}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <!-- Status Column -->
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let appointment">
+                    <div class="status-cell">
+                      <mat-icon [color]="getStatusColor(appointment.status)">{{getStatusIcon(appointment.status)}}</mat-icon>
+                      <mat-chip [color]="getStatusColor(appointment.status)" selected>
+                        {{appointment.status | titlecase}}
+                      </mat-chip>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let appointment">
+                    <div class="actions-cell">
+                      <button *ngIf="canCheckIn(appointment)" 
+                              mat-mini-fab color="primary" 
+                              (click)="checkIn(appointment)"
+                              matTooltip="Check In">
+                        <mat-icon>check_circle</mat-icon>
+                      </button>
+                      
+                      <button *ngIf="canReschedule(appointment)" 
+                              mat-mini-fab color="accent" 
+                              (click)="rescheduleAppointment(appointment)"
+                              matTooltip="Reschedule">
+                        <mat-icon>schedule</mat-icon>
+                      </button>
+                      
+                      <button *ngIf="canCancel(appointment)" 
+                              mat-mini-fab color="warn" 
+                              (click)="cancelAppointment(appointment)"
+                              matTooltip="Cancel">
+                        <mat-icon>cancel</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+                    [class.upcoming-row]="isUpcoming(row)"
+                    [class.past-row]="isPast(row)"></tr>
+              </table>
+            </div>
+
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+
+  </div>
+</div>

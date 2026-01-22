@@ -1,0 +1,392 @@
+.appointment-management {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .header-content {
+    h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: 300;
+      
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
+    }
+
+    .subtitle {
+      margin: 8px 0 0 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+  }
+
+  .book-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  
+  p {
+    margin-top: 20px;
+    color: #666;
+    font-size: 1.1rem;
+  }
+}
+
+.appointments-content {
+  .tabs-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+}
+
+.appointment-tabs {
+  .mat-tab-header {
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .mat-tab-body-wrapper {
+    padding: 0;
+  }
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  
+  .mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #ccc;
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-weight: 400;
+  }
+  
+  p {
+    margin: 0 0 30px 0;
+    color: #666;
+    font-size: 1rem;
+  }
+}
+
+// Mobile Appointments
+.mobile-appointments {
+  display: none;
+  padding: 20px;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.mobile-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  .appointment-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    
+    &.avatar-primary {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+    
+    &.avatar-accent {
+      background-color: #fce4ec;
+      color: #c2185b;
+    }
+    
+    &.avatar-warn {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+  }
+
+  .appointment-details {
+    .detail-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      
+      .mat-icon {
+        margin-right: 12px;
+        color: #666;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      span {
+        font-size: 0.95rem;
+        color: #333;
+      }
+    }
+  }
+
+  .mat-card-actions {
+    padding: 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    
+    button {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+}
+
+// Desktop Table
+.desktop-table {
+  display: block;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.appointments-table {
+  width: 100%;
+  background: white;
+
+  .mat-header-cell {
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e0e0e0;
+  }
+
+  .mat-cell {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 8px;
+  }
+
+  .mat-row {
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+    
+    &.upcoming-row {
+      border-left: 4px solid #4caf50;
+    }
+    
+    &.past-row {
+      opacity: 0.8;
+      border-left: 4px solid #9e9e9e;
+    }
+  }
+}
+
+// Table Cell Styles
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  
+  .date {
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95rem;
+  }
+  
+  .day {
+    font-size: 0.8rem;
+    color: #666;
+    
+    &.upcoming {
+      color: #4caf50;
+      font-weight: 500;
+    }
+    
+    &.past {
+      color: #9e9e9e;
+    }
+  }
+}
+
+.time-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .mat-icon {
+    color: #666;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  span {
+    font-weight: 500;
+    color: #333;
+  }
+}
+
+.doctor-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .mat-icon {
+    color: #666;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .doctor-info {
+    display: flex;
+    flex-direction: column;
+    
+    .doctor-name {
+      font-weight: 500;
+      color: #333;
+      font-size: 0.95rem;
+    }
+    
+    .department {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 2px;
+    }
+  }
+}
+
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  
+  .mat-mini-fab {
+    width: 36px;
+    height: 36px;
+    
+    .mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// Material Design Overrides
+.mat-card {
+  border-radius: 12px !important;
+}
+
+.mat-raised-button, .mat-mini-fab {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.mat-button {
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.mat-chip {
+  border-radius: 16px !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+}
+
+.mat-tab-group {
+  .mat-tab-header {
+    .mat-tab-label {
+      font-weight: 500;
+      text-transform: none;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .page-header {
+    padding: 20px;
+    
+    .header-content h1 {
+      font-size: 1.8rem;
+    }
+  }
+
+  .appointments-content {
+    .tabs-card {
+      margin: 0 -10px;
+      border-radius: 0;
+    }
+  }
+}
+
+// Success snackbar styling
+::ng-deep .success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}

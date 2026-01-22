@@ -1,0 +1,358 @@
+.profile-management {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
+}
+
+.page-header {
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+
+  .header-content {
+    h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: 300;
+      
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
+    }
+
+    .subtitle {
+      margin: 8px 0 0 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  
+  p {
+    margin-top: 20px;
+    color: #666;
+    font-size: 1.1rem;
+  }
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// Common Card Styles
+.profile-card,
+.emergency-contact-card,
+.account-info-card,
+.privacy-settings-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  .mat-card-header {
+    .mat-card-avatar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+  }
+}
+
+// Profile Card
+.profile-card {
+  border-left: 4px solid #2196f3;
+
+  .profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 0;
+    
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  .mat-card-actions {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    
+    @media (max-width: 480px) {
+      flex-direction: column-reverse;
+    }
+  }
+}
+
+// Emergency Contact Card
+.emergency-contact-card {
+  border-left: 4px solid #ff9800;
+
+  .mat-card-header .mat-card-avatar {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+
+  .emergency-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 0;
+    
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  .mat-card-actions {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    
+    @media (max-width: 480px) {
+      flex-direction: column-reverse;
+    }
+  }
+}
+
+// Account Info Card
+.account-info-card {
+  border-left: 4px solid #4caf50;
+
+  .mat-card-header .mat-card-avatar {
+    background-color: #e8f5e8;
+    color: #388e3c;
+  }
+
+  .account-info {
+    padding: 20px 0;
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .label {
+        font-weight: 500;
+        color: #666;
+      }
+      
+      .value {
+        font-weight: 500;
+        color: #333;
+      }
+    }
+  }
+}
+
+// Privacy Settings Card
+.privacy-settings-card {
+  border-left: 4px solid #9c27b0;
+
+  .mat-card-header .mat-card-avatar {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+  }
+
+  .privacy-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 0;
+    
+    .mat-checkbox {
+      .mat-checkbox-label {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: #333;
+      }
+    }
+  }
+
+  .mat-card-actions {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+// Form Field Customizations
+.mat-form-field {
+  .mat-icon {
+    color: #666;
+  }
+  
+  &.mat-focused .mat-icon {
+    color: #2196f3;
+  }
+}
+
+// Button Styles
+.mat-raised-button {
+  min-width: 140px;
+  
+  .mat-spinner {
+    margin-right: 8px;
+  }
+  
+  .mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.mat-button {
+  .mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Material Design Overrides
+.mat-card {
+  border-radius: 12px !important;
+}
+
+.mat-raised-button {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.mat-button {
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+.mat-chip {
+  border-radius: 16px !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+}
+
+.mat-form-field-appearance-outline {
+  .mat-form-field-outline {
+    border-radius: 8px !important;
+  }
+}
+
+.mat-checkbox {
+  .mat-checkbox-frame {
+    border-radius: 4px !important;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .profile-card,
+  .emergency-contact-card {
+    .mat-card-actions {
+      padding: 16px;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+  
+  .account-info-card {
+    .account-info {
+      .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  }
+}
+
+// Success snackbar styling
+::ng-deep .success-snackbar {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+// Loading and Saving States
+.mat-raised-button[disabled] {
+  opacity: 0.7;
+}
+
+.mat-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+// Form Validation
+.mat-form-field.mat-form-field-invalid {
+  .mat-form-field-outline-thick {
+    color: #f44336;
+  }
+}
+
+.mat-error {
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+// Privacy Checkboxes
+.privacy-options {
+  .mat-checkbox {
+    margin-bottom: 8px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  .mat-checkbox-checked {
+    .mat-checkbox-background {
+      background-color: #9c27b0;
+    }
+  }
+}
+
+// Card Header Avatars
+.mat-card-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  
+  .mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
