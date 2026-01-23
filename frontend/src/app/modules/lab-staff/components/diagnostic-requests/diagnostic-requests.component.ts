@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { LabStaffService, DiagnosticRequest } from '../../services/lab-staff.service';
 import { PatientVerifyDialogComponent } from '../../dialogs/patient-verify-dialog/patient-verify-dialog.component';
 
@@ -15,10 +14,10 @@ import { PatientVerifyDialogComponent } from '../../dialogs/patient-verify-dialo
   styleUrls: ['./diagnostic-requests.component.scss']
 })
 export class DiagnosticRequestsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-
-  private destroy$ = new Subject<void>();
 
   // Table configuration
   displayedColumns: string[] = [
@@ -27,39 +26,38 @@ export class DiagnosticRequestsComponent implements OnInit, OnDestroy {
     'testType',
     'priority',
     'status',
-    'doctorName',
     'requestedAt',
+    'doctorName',
     'actions'
   ];
-
+  
   dataSource = new MatTableDataSource<DiagnosticRequest>();
-  loading = true;
-  totalRequests = 0;
-
+  
   // Filters
-  statusFilter = 'all';
-  priorityFilter = 'all';
-  testTypeFilter = 'all';
-  dateFilter = 'today';
-
+  statusFilter = '';
+  priorityFilter = '';
+  testTypeFilter = '';
+  searchTerm = '';
+  
+  // Filter options
   statusOptions = [
-    { value: 'all', label: 'All Status' },
+    { value: '', label: 'All Status' },
     { value: 'received', label: 'Received' },
     { value: 'in_progress', label: 'In Progress' },
     { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'on_hold', label: 'On Hold' }
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'cancelled', label: 'Cancelled' }
   ];
-
+  
   priorityOptions = [
-    { value: 'all', label: 'All Priorities' },
+    { value: '', label: 'All Priorities' },
     { value: 'routine', label: 'Routine' },
     { value: 'urgent', label: 'Urgent' },
     { value: 'emergency', label: 'Emergency' }
   ];
-
+  
   testTypeOptions = [
-    { value: 'all', label: 'All Tests' },
+    { value: '', label: 'All Test Types' },
     { value: 'xray', label: 'X-Ray' },
     { value: 'cbct', label: 'CBCT' },
     { value: 'mri', label: 'MRI' },
@@ -70,12 +68,9 @@ export class DiagnosticRequestsComponent implements OnInit, OnDestroy {
     { value: 'biopsy', label: 'Biopsy' }
   ];
 
-  dateOptions = [
-    { value: 'today', label: 'Today' },
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' },
-    { value: 'all', label: 'All Time' }
-  ];
+  // UI state
+  isLoading = false;
+  selectedRequests: DiagnosticRequest[] = [];
 
   constructor(
     private labStaffService: LabStaffService,
@@ -85,7 +80,7 @@ export class DiagnosticRequestsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadRequests();
-    this.setupRealTimeUpdates();
+    this.setupTableFiltering();
   }
 
   ngOnDestroy(): void {
@@ -93,149 +88,204 @@ export class DiagnosticRequestsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-  }
-
   private loadRequests(): void {
-    this.loading = true;
-
-    const filters = this.buildFilters();
+    this.isLoading = true;
+    
+    const filters = {
+      status: this.statusFilter,
+      priority: this.priorityFilter,
+      testType: this.testTypeFilter,
+      search: this.searchTerm
+    };
 
     this.labStaffService.getDiagnosticRequests(filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (requests) => {
           this.dataSource.data = requests;
-          this.totalRequests = requests.length;
-          this.loading = false;
+          this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading diagnostic requests:', error);
-          this.snackBar.open('Error loading requests', 'Close', { duration: 3000 });
-          this.loading = false;
+          console.error('Error loading requests:', error);
+          this.snackBar.open('Error loading diagnostic requests', 'Close', {
+            duration: 3000
+          });
+          this.isLoading = false;
         }
       });
   }
 
-  private buildFilters(): any {
-    const filters: any = {};
-
-    if (this.statusFilter !== 'all') {
-      filters.status = this.statusFilter;
-    }
-
-    if (this.priorityFilter !== 'all') {
-      filters.priority = this.priorityFilter;
-    }
-
-    if (this.testTypeFilter !== 'all') {
-      filters.testType = this.testTypeFilter;
-    }
-
-    if (this.dateFilter !== 'all') {
-      const today = new Date();
-      switch (this.dateFilter) {
-        case 'today':
-          filters.dateFrom = today.toISOString().split('T')[0];
-          break;
-        case 'week':
-          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-          filters.dateFrom = weekAgo.toISOString().split('T')[0];
-          break;
-        case 'month':
-          const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-          filters.dateFrom = monthAgo.toISOString().split('T')[0];
-          break;
-      }
-    }
-
-    return filters;
+  private setupTableFiltering(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    
+    // Custom filter predicate
+    this.dataSource.filterPredicate = (data: DiagnosticRequest, filter: string) => {
+      const searchStr = (
+        data.requestId +
+        data.patientName +
+        data.testType +
+        data.doctorName +
+        data.priority +
+        data.status
+      ).toLowerCase();
+      
+      return searchStr.includes(filter.toLowerCase());
+    };
   }
 
-  private setupRealTimeUpdates(): void {
-    // Refresh data every 30 seconds
-    setInterval(() => {
-      this.loadRequests();
-    }, 30000);
-  }
-
+  // Event handlers
   onFilterChange(): void {
     this.loadRequests();
   }
 
-  applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+  onSearchChange(): void {
+    this.dataSource.filter = this.searchTerm.trim();
   }
 
-  clearFilters(): void {
-    this.statusFilter = 'all';
-    this.priorityFilter = 'all';
-    this.testTypeFilter = 'all';
-    this.dateFilter = 'today';
+  onClearFilters(): void {
+    this.statusFilter = '';
+    this.priorityFilter = '';
+    this.testTypeFilter = '';
+    this.searchTerm = '';
+    this.dataSource.filter = '';
     this.loadRequests();
   }
 
-  // Request Actions
-  assignToSelf(request: DiagnosticRequest): void {
-    this.labStaffService.assignRequestToSelf(request.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updatedRequest) => {
-          this.snackBar.open('Request assigned to you', 'Close', { duration: 3000 });
-          this.loadRequests();
-        },
-        error: (error) => {
-          console.error('Error assigning request:', error);
-          this.snackBar.open('Error assigning request', 'Close', { duration: 3000 });
-        }
-      });
-  }
-
-  updateStatus(request: DiagnosticRequest, newStatus: string): void {
-    this.labStaffService.updateRequestStatus(request.id, newStatus)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updatedRequest) => {
-          this.snackBar.open(`Status updated to ${newStatus}`, 'Close', { duration: 3000 });
-          this.loadRequests();
-        },
-        error: (error) => {
-          console.error('Error updating status:', error);
-          this.snackBar.open('Error updating status', 'Close', { duration: 3000 });
-        }
-      });
-  }
-
-  verifyPatient(request: DiagnosticRequest): void {
+  onStartProcessing(request: DiagnosticRequest): void {
+    // First verify patient
     const dialogRef = this.dialog.open(PatientVerifyDialogComponent, {
-      width: '600px',
+      width: '500px',
       data: {
         patientId: request.patientId,
         patientName: request.patientName,
-        appointmentId: request.appointmentId,
-        requestId: request.id
+        requestId: request.requestId,
+        appointmentId: request.appointmentId
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.verified) {
-        this.snackBar.open('Patient verified successfully', 'Close', { duration: 3000 });
-        // Automatically update status to in_progress after verification
-        this.updateStatus(request, 'in_progress');
+        this.updateRequestStatus(request.id, 'in_progress', 'Processing started after patient verification');
+        
+        // Notify doctor about status update
+        this.labStaffService.notifyDoctorStatusUpdate(
+          request.id, 
+          'in_progress', 
+          'Lab processing has started for your patient'
+        ).subscribe();
       }
     });
   }
 
-  viewRequestDetails(request: DiagnosticRequest): void {
+  onCompleteRequest(request: DiagnosticRequest): void {
+    this.updateRequestStatus(request.id, 'completed', 'Request completed');
+    
+    // Notify doctor that results are ready
+    this.labStaffService.notifyDoctorResultsReady(
+      request.id,
+      { status: 'completed', message: 'Lab results are now available' }
+    ).subscribe();
+  }
+
+  onSendMessageToDoctor(request: DiagnosticRequest): void {
+    const message = prompt('Send message to doctor:');
+    if (message) {
+      this.labStaffService.sendMessageToDoctor(
+        request.doctorId,
+        request.id,
+        message,
+        'medium'
+      ).subscribe({
+        next: () => {
+          this.snackBar.open('Message sent to doctor', 'Close', {
+            duration: 3000
+          });
+        },
+        error: (error) => {
+          console.error('Error sending message:', error);
+          this.snackBar.open('Error sending message', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+    }
+  }
+
+  onRequestClarification(request: DiagnosticRequest): void {
+    const question = prompt('What clarification do you need from the doctor?');
+    if (question) {
+      this.labStaffService.requestDoctorClarification(
+        request.id,
+        question,
+        'high'
+      ).subscribe({
+        next: () => {
+          this.snackBar.open('Clarification request sent to doctor', 'Close', {
+            duration: 3000
+          });
+        },
+        error: (error) => {
+          console.error('Error requesting clarification:', error);
+          this.snackBar.open('Error sending clarification request', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+    }
+  }
+
+  onHoldRequest(request: DiagnosticRequest): void {
+    // Could open a dialog to get hold reason
+    this.updateRequestStatus(request.id, 'on_hold', 'Request put on hold');
+  }
+
+  onCancelRequest(request: DiagnosticRequest): void {
+    if (confirm('Are you sure you want to cancel this request?')) {
+      this.updateRequestStatus(request.id, 'cancelled', 'Request cancelled');
+    }
+  }
+
+  onViewDetails(request: DiagnosticRequest): void {
     // Navigate to detailed view or open dialog
-    console.log('View details for request:', request);
+    console.log('View details for request:', request.id);
+  }
+
+  onBulkAction(action: string): void {
+    if (this.selectedRequests.length === 0) {
+      this.snackBar.open('Please select requests first', 'Close', {
+        duration: 3000
+      });
+      return;
+    }
+
+    // Handle bulk actions
+    console.log('Bulk action:', action, 'for requests:', this.selectedRequests);
+  }
+
+  private updateRequestStatus(requestId: string, status: string, notes?: string): void {
+    this.labStaffService.updateRequestStatus(requestId, status, notes)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedRequest) => {
+          // Update the request in the table
+          const index = this.dataSource.data.findIndex(r => r.id === requestId);
+          if (index !== -1) {
+            this.dataSource.data[index] = updatedRequest;
+            this.dataSource._updateChangeSubscription();
+          }
+          
+          this.snackBar.open(`Request status updated to ${status}`, 'Close', {
+            duration: 3000
+          });
+        },
+        error: (error) => {
+          console.error('Error updating request status:', error);
+          this.snackBar.open('Error updating request status', 'Close', {
+            duration: 3000
+          });
+        }
+      });
   }
 
   // Utility methods
@@ -250,47 +300,43 @@ export class DiagnosticRequestsComponent implements OnInit, OnDestroy {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'completed': return 'success';
-      case 'in_progress': return 'primary';
-      case 'received': return 'accent';
-      case 'cancelled': return 'warn';
+      case 'completed': return 'primary';
+      case 'in_progress': return 'accent';
       case 'on_hold': return 'warn';
+      case 'cancelled': return 'warn';
+      case 'received': return '';
       default: return '';
     }
   }
 
-  getTestTypeIcon(testType: string): string {
-    switch (testType) {
-      case 'xray': return 'medical_services';
-      case 'cbct': return 'scanner';
-      case 'mri': return 'mri';
-      case 'ct_scan': return 'scanner';
-      case 'ultrasound': return 'waves';
-      case 'blood_test': return 'bloodtype';
-      case 'urine_test': return 'science';
-      case 'biopsy': return 'biotech';
-      default: return 'medical_services';
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'received': return 'inbox';
+      case 'in_progress': return 'hourglass_empty';
+      case 'completed': return 'check_circle';
+      case 'on_hold': return 'pause_circle';
+      case 'cancelled': return 'cancel';
+      default: return 'help';
     }
   }
 
-  canAssign(request: DiagnosticRequest): boolean {
-    return request.status === 'received' && !request.assignedTo;
+  canStartProcessing(request: DiagnosticRequest): boolean {
+    return request.status === 'received';
   }
 
-  canUpdateStatus(request: DiagnosticRequest): boolean {
+  canComplete(request: DiagnosticRequest): boolean {
+    return request.status === 'in_progress';
+  }
+
+  canHold(request: DiagnosticRequest): boolean {
+    return request.status === 'received' || request.status === 'in_progress';
+  }
+
+  canCancel(request: DiagnosticRequest): boolean {
     return request.status !== 'completed' && request.status !== 'cancelled';
   }
 
-  getAvailableStatuses(currentStatus: string): string[] {
-    switch (currentStatus) {
-      case 'received':
-        return ['in_progress', 'on_hold'];
-      case 'in_progress':
-        return ['completed', 'on_hold'];
-      case 'on_hold':
-        return ['in_progress', 'cancelled'];
-      default:
-        return [];
-    }
+  formatTestType(testType: string): string {
+    return testType.replace('_', ' ').toUpperCase();
   }
 }

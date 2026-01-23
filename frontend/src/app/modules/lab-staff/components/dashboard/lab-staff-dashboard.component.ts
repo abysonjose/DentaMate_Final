@@ -1,27 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
 import { Subject, takeUntil, interval } from 'rxjs';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { LabStaffService, LabStaffProfile, LabAlert } from '../../services/lab-staff.service';
-import { DiagnosticService, DiagnosticRequest } from '../../services/diagnostic.service';
-
-interface NavigationItem {
-  label: string;
-  icon: string;
-  route: string;
-  badge?: number;
-  description?: string;
-}
-
-interface LabDashboardMetrics {
-  pendingRequests: number;
-  inProgressTests: number;
-  completedToday: number;
-  urgentRequests: number;
-  delayedUploads: number;
-  aiProcessingQueue: number;
-  averageProcessingTime: number;
-}
+import { LabStaffService, LabStaffProfile, LabStaffMetrics, LabStaffAlert, WorklistItem } from '../../services/lab-staff.service';
 
 @Component({
   selector: 'app-lab-staff-dashboard',
@@ -30,83 +9,29 @@ interface LabDashboardMetrics {
 })
 export class LabStaffDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
-  currentUser$ = this.authService.currentUser$;
-  currentProfile$ = this.labStaffService.getLabStaffProfile();
-  alerts: LabAlert[] = [];
-  unreadAlertsCount = 0;
-  urgentAlertsCount = 0;
-  sidenavOpened = true;
-  
-  // Dashboard metrics
-  dashboardMetrics: LabDashboardMetrics = {
-    pendingRequests: 0,
-    inProgressTests: 0,
-    completedToday: 0,
-    urgentRequests: 0,
-    delayedUploads: 0,
-    aiProcessingQueue: 0,
-    averageProcessingTime: 0
-  };
-  
-  recentRequests: DiagnosticRequest[] = [];
-  isLoadingMetrics = true;
-  
-  navigationItems: NavigationItem[] = [
-    {
-      label: 'Worklist Overview',
-      icon: 'assignment',
-      route: '/lab-staff/worklist',
-      description: 'Today\'s diagnostic workload and pending requests'
-    },
-    {
-      label: 'Diagnostic Requests',
-      icon: 'medical_services',
-      route: '/lab-staff/requests',
-      description: 'View and manage lab requests from doctors'
-    },
-    {
-      label: 'Report Upload',
-      icon: 'cloud_upload',
-      route: '/lab-staff/upload',
-      description: 'Upload diagnostic files and reports'
-    },
-    {
-      label: 'Patient Verification',
-      icon: 'verified_user',
-      route: '/lab-staff/verification',
-      description: 'Verify patient identity before diagnostics'
-    },
-    {
-      label: 'AI Processing Status',
-      icon: 'psychology',
-      route: '/lab-staff/ai-status',
-      description: 'Monitor AI analysis processing'
-    },
-    {
-      label: 'Diagnostic History',
-      icon: 'history',
-      route: '/lab-staff/history',
-      description: 'View past uploaded reports and records'
-    },
-    {
-      label: 'Compliance & Audit',
-      icon: 'security',
-      route: '/lab-staff/compliance',
-      description: 'Audit logs and compliance monitoring'
-    }
-  ];
 
-  constructor(
-    private authService: AuthService,
-    private labStaffService: LabStaffService,
-    private diagnosticService: DiagnosticService,
-    private router: Router
-  ) {}
+  // Dashboard data
+  profile: LabStaffProfile | null = null;
+  metrics: LabStaffMetrics | null = null;
+  alerts: LabStaffAlert[] = [];
+  todayWorklist: WorklistItem[] = [];
+  
+  // UI state
+  isLoading = true;
+  selectedTab = 0;
+  
+  // Quick stats for cards
+  quickStats = {
+    pendingRequests: 0,
+    urgentRequests: 0,
+    completedToday: 0,
+    aiProcessingQueue: 0
+  };
+
+  constructor(private labStaffService: LabStaffService) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
-    this.loadAlerts();
     this.setupRealTimeUpdates();
   }
 
@@ -116,141 +41,130 @@ export class LabStaffDashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadDashboardData(): void {
-    this.isLoadingMetrics = true;
-    
-    this.labStaffService.getDashboardMetrics()
+    this.isLoading = true;
+
+    // Load profile
+    this.labStaffService.profile$
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (metrics) => {
-          this.dashboardMetrics = metrics;
-          this.updateNavigationBadges();
-          this.isLoadingMetrics = false;
-        },
-        error: (error) => {
-          console.error('Error loading dashboard metrics:', error);
-          this.isLoadingMetrics = false;
-        }
+      .subscribe(profile => {
+        this.profile = profile;
       });
 
-    this.diagnosticService.getRecentRequests(5)
+    // Load metrics
+    this.labStaffService.metrics$
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (requests) => {
-          this.recentRequests = requests;
-        },
-        error: (error) => {
-          console.error('Error loading recent requests:', error);
+      .subscribe(metrics => {
+        this.metrics = metrics;
+        if (metrics) {
+          this.updateQuickStats(metrics);
         }
+        this.isLoading = false;
       });
-  }
 
-  private loadAlerts(): void {
-    this.labStaffService.getAlerts()
+    // Load alerts
+    this.labStaffService.alerts$
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (alerts) => {
-          this.alerts = alerts;
-          this.unreadAlertsCount = alerts.filter(a => !a.read).length;
-          this.urgentAlertsCount = alerts.filter(a => a.priority === 'urgent' && !a.read).length;
-        },
-        error: (error) => {
-          console.error('Error loading alerts:', error);
-        }
+      .subscribe(alerts => {
+        this.alerts = alerts.filter(alert => !alert.isRead).slice(0, 5); // Show only unread, max 5
+      });
+
+    // Load today's worklist
+    this.labStaffService.worklist$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(worklist => {
+        this.todayWorklist = worklist.slice(0, 10); // Show first 10 items
       });
   }
 
   private setupRealTimeUpdates(): void {
-    // Refresh dashboard metrics every 30 seconds
+    // Refresh data every 30 seconds
     interval(30000)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        this.loadDashboardData();
-        this.loadAlerts();
+        this.labStaffService.refreshData();
       });
   }
 
-  private updateNavigationBadges(): void {
-    // Update navigation badges based on metrics
-    this.navigationItems.forEach(item => {
-      switch (item.route) {
-        case '/lab-staff/worklist':
-          item.badge = this.dashboardMetrics.pendingRequests;
-          break;
-        case '/lab-staff/requests':
-          item.badge = this.dashboardMetrics.urgentRequests;
-          break;
-        case '/lab-staff/upload':
-          item.badge = this.dashboardMetrics.delayedUploads;
-          break;
-        case '/lab-staff/ai-status':
-          item.badge = this.dashboardMetrics.aiProcessingQueue;
-          break;
-        default:
-          item.badge = undefined;
-      }
-    });
+  private updateQuickStats(metrics: LabStaffMetrics): void {
+    this.quickStats = {
+      pendingRequests: metrics.todayRequests - metrics.completedReports,
+      urgentRequests: metrics.urgentRequests,
+      completedToday: metrics.completedReports,
+      aiProcessingQueue: metrics.aiProcessingQueue
+    };
   }
 
-  navigateTo(route: string): void {
-    this.router.navigate([route]);
+  // Event handlers
+  onTabChange(index: number): void {
+    this.selectedTab = index;
   }
 
-  dismissAlert(alertId: string): void {
-    this.labStaffService.dismissAlert(alertId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.alerts = this.alerts.filter(a => a.id !== alertId);
-          this.unreadAlertsCount = this.alerts.filter(a => !a.read).length;
-          this.urgentAlertsCount = this.alerts.filter(a => a.priority === 'urgent' && !a.read).length;
-        },
-        error: (error) => {
-          console.error('Error dismissing alert:', error);
-        }
-      });
+  onAlertClick(alert: LabStaffAlert): void {
+    // Mark alert as read
+    this.labStaffService.markAlertAsRead(alert.id).subscribe();
+    
+    // Navigate to related entity if applicable
+    if (alert.relatedEntity) {
+      // Handle navigation based on entity type
+      console.log('Navigate to:', alert.relatedEntity);
+    }
   }
 
-  markAllAlertsAsRead(): void {
-    this.labStaffService.markAllAlertsAsRead()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.alerts.forEach(alert => alert.read = true);
-          this.unreadAlertsCount = 0;
-          this.urgentAlertsCount = 0;
-        },
-        error: (error) => {
-          console.error('Error marking alerts as read:', error);
-        }
-      });
+  onWorklistItemClick(item: WorklistItem): void {
+    // Navigate to diagnostic request details
+    console.log('Navigate to request:', item.requestId);
   }
 
+  onRefreshData(): void {
+    this.labStaffService.refreshData();
+  }
+
+  // Utility methods
   getAlertIcon(type: string): string {
     switch (type) {
       case 'urgent_request': return 'priority_high';
       case 'delayed_upload': return 'schedule';
-      case 'ai_processing': return 'psychology';
-      case 'compliance': return 'security';
-      case 'system': return 'info';
-      default: return 'notifications';
+      case 'ai_processing_error': return 'error';
+      case 'system_issue': return 'warning';
+      case 'quality_issue': return 'report_problem';
+      default: return 'info';
     }
   }
 
-  getAlertColor(priority: string): string {
-    switch (priority) {
-      case 'urgent': return 'warn';
+  getAlertColor(severity: string): string {
+    switch (severity) {
+      case 'critical': return 'warn';
       case 'high': return 'accent';
       case 'medium': return 'primary';
+      case 'low': return '';
       default: return '';
     }
   }
 
-  toggleSidenav(): void {
-    this.sidenavOpened = !this.sidenavOpened;
+  getPriorityColor(priority: string): string {
+    switch (priority) {
+      case 'emergency': return 'warn';
+      case 'urgent': return 'accent';
+      case 'routine': return 'primary';
+      default: return '';
+    }
   }
 
-  refreshDashboard(): void {
-    this.loadDashboardData();
-    this.loadAlerts();
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'completed': return 'primary';
+      case 'in_progress': return 'accent';
+      case 'received': return '';
+      default: return '';
+    }
+  }
+
+  formatDuration(minutes: number): string {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   }
 }

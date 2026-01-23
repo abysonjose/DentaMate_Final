@@ -98,6 +98,234 @@ export interface WorklistItem {
   requestId: string;
   patientName: string;
   testType: string;
+  priority: 'routine' | 'urgent' | 'emergency';
+  status: 'received' | 'in_progress' | 'completed';
+  scheduledAt?: Date;
+  estimatedDuration: number;
+  assignedTo?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class LabStaffService {
+  private readonly apiUrl = `${environment.apiUrl}/lab-staff`;
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json'
+    })
+  };
+
+  // State management
+  private profileSubject = new BehaviorSubject<LabStaffProfile | null>(null);
+  private metricsSubject = new BehaviorSubject<LabStaffMetrics | null>(null);
+  private alertsSubject = new BehaviorSubject<LabStaffAlert[]>([]);
+  private worklistSubject = new BehaviorSubject<WorklistItem[]>([]);
+
+  // Public observables
+  public profile$ = this.profileSubject.asObservable();
+  public metrics$ = this.metricsSubject.asObservable();
+  public alerts$ = this.alertsSubject.asObservable();
+  public worklist$ = this.worklistSubject.asObservable();
+
+  constructor(private http: HttpClient) {
+    this.loadInitialData();
+  }
+
+  // Profile Management
+  getProfile(): Observable<LabStaffProfile> {
+    return this.http.get<LabStaffProfile>(`${this.apiUrl}/profile`);
+  }
+
+  updateProfile(profile: Partial<LabStaffProfile>): Observable<LabStaffProfile> {
+    return this.http.put<LabStaffProfile>(`${this.apiUrl}/profile`, profile, this.httpOptions);
+  }
+
+  // Metrics and Dashboard
+  getMetrics(): Observable<LabStaffMetrics> {
+    return this.http.get<LabStaffMetrics>(`${this.apiUrl}/metrics`);
+  }
+
+  // Diagnostic Requests
+  getDiagnosticRequests(filters?: any): Observable<DiagnosticRequest[]> {
+    const params = filters ? { params: filters } : {};
+    return this.http.get<DiagnosticRequest[]>(`${this.apiUrl}/requests`, params);
+  }
+
+  updateRequestStatus(requestId: string, status: string, notes?: string): Observable<DiagnosticRequest> {
+    return this.http.put<DiagnosticRequest>(`${this.apiUrl}/requests/${requestId}/status`, {
+      status,
+      notes
+    }, this.httpOptions);
+  }
+
+  // Report Management
+  uploadReport(requestId: string, files: File[], labRemarks: string): Observable<DiagnosticReport> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    formData.append('requestId', requestId);
+    formData.append('labRemarks', labRemarks);
+
+    return this.http.post<DiagnosticReport>(`${this.apiUrl}/reports/upload`, formData);
+  }
+
+  getReports(filters?: any): Observable<DiagnosticReport[]> {
+    const params = filters ? { params: filters } : {};
+    return this.http.get<DiagnosticReport[]>(`${this.apiUrl}/reports`, params);
+  }
+
+  validateReport(reportId: string, validationData: any): Observable<DiagnosticReport> {
+    return this.http.put<DiagnosticReport>(`${this.apiUrl}/reports/${reportId}/validate`, validationData, this.httpOptions);
+  }
+
+  // Patient Verification
+  verifyPatient(patientId: string, appointmentId?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/verify-patient`, {
+      patientId,
+      appointmentId
+    }, this.httpOptions);
+  }
+
+  // AI Integration
+  triggerAiAnalysis(reportId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/ai/analyze/${reportId}`, {}, this.httpOptions);
+  }
+
+  getAiResults(reportId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/ai/results/${reportId}`);
+  }
+
+  // Alerts and Notifications
+  getAlerts(): Observable<LabStaffAlert[]> {
+    return this.http.get<LabStaffAlert[]>(`${this.apiUrl}/alerts`);
+  }
+
+  markAlertAsRead(alertId: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/alerts/${alertId}/read`, {}, this.httpOptions);
+  }
+
+  // Worklist Management
+  getWorklist(): Observable<WorklistItem[]> {
+    return this.http.get<WorklistItem[]>(`${this.apiUrl}/worklist`);
+  }
+
+  // Compliance and Audit
+  getAuditLogs(filters?: any): Observable<any[]> {
+    const params = filters ? { params: filters } : {};
+    return this.http.get<any[]>(`${this.apiUrl}/audit-logs`, params);
+  }
+
+  // Error Handling and Rework
+  requestRework(reportId: string, reason: string, notes: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reports/${reportId}/rework`, {
+      reason,
+      notes
+    }, this.httpOptions);
+  }
+
+  // Private methods
+  private loadInitialData(): void {
+    // Load profile
+    this.getProfile().subscribe({
+      next: (profile) => this.profileSubject.next(profile),
+      error: (error) => console.error('Error loading profile:', error)
+    });
+
+    // Load metrics
+    this.getMetrics().subscribe({
+      next: (metrics) => this.metricsSubject.next(metrics),
+      error: (error) => console.error('Error loading metrics:', error)
+    });
+
+    // Load alerts
+    this.getAlerts().subscribe({
+      next: (alerts) => this.alertsSubject.next(alerts),
+      error: (error) => console.error('Error loading alerts:', error)
+    });
+
+    // Load worklist
+    this.getWorklist().subscribe({
+      next: (worklist) => this.worklistSubject.next(worklist),
+      error: (error) => console.error('Error loading worklist:', error)
+    });
+  }
+
+  // Doctor Integration Methods
+  notifyDoctorStatusUpdate(requestId: string, status: string, notes?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/notify-doctor/status-update`, {
+      requestId,
+      status,
+      notes
+    }, this.httpOptions);
+  }
+
+  notifyDoctorResultsReady(requestId: string, resultSummary: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/notify-doctor/results-ready`, {
+      requestId,
+      resultSummary
+    }, this.httpOptions);
+  }
+
+  notifyDoctorCriticalResult(requestId: string, criticalFindings: string[], urgencyLevel: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/notify-doctor/critical-result`, {
+      requestId,
+      criticalFindings,
+      urgencyLevel
+    }, this.httpOptions);
+  }
+
+  requestDoctorClarification(requestId: string, question: string, priority: string = 'medium'): Observable<any> {
+    return this.http.post(`${this.apiUrl}/request-clarification`, {
+      requestId,
+      question,
+      priority
+    }, this.httpOptions);
+  }
+
+  sendMessageToDoctor(doctorId: string, requestId: string, message: string, priority: string = 'medium'): Observable<any> {
+    return this.http.post(`${this.apiUrl}/messages/to-doctor`, {
+      doctorId,
+      requestId,
+      message,
+      priority
+    }, this.httpOptions);
+  }
+
+  // Integration with Doctor's Lab Requests
+  getDoctorRequestDetails(requestId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/doctor-requests/${requestId}`);
+  }
+
+  updateDoctorRequestStatus(requestId: string, status: string, progress: number, notes?: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/doctor-requests/${requestId}/status`, {
+      status,
+      progress,
+      notes
+    }, this.httpOptions);
+  }
+
+  // Real-time Communication
+  subscribeToDoctorupdates(): Observable<any> {
+    // WebSocket implementation for doctor communications
+    return new Observable(observer => {
+      // WebSocket connection logic for doctor updates
+    });
+  }
+
+  // Utility methods
+  refreshData(): void {
+    this.loadInitialData();
+  }
+
+  getCurrentProfile(): LabStaffProfile | null {
+    return this.profileSubject.value;
+  }
+
+  getCurrentMetrics(): LabStaffMetrics | null {
+    return this.metricsSubject.value;
+  }
+}
+}
   priority: string;
   status: string;
   requestedAt: Date;

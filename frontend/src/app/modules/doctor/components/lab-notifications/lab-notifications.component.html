@@ -1,0 +1,186 @@
+<div class="lab-notifications">
+  <!-- Header -->
+  <div class="notifications-header">
+    <h3>
+      <mat-icon>science</mat-icon>
+      Lab Notifications
+      <mat-chip *ngIf="hasUnreadNotifications()" [color]="'accent'" selected>
+        {{ getUnreadCount() }}
+      </mat-chip>
+      <mat-chip *ngIf="hasCriticalNotifications()" [color]="'warn'" selected>
+        {{ getCriticalCount() }} Critical
+      </mat-chip>
+    </h3>
+    
+    <div class="header-actions">
+      <button mat-icon-button 
+              *ngIf="hasUnreadNotifications()"
+              (click)="onMarkAllAsRead()"
+              matTooltip="Mark all as read">
+        <mat-icon>done_all</mat-icon>
+      </button>
+      
+      <button mat-icon-button 
+              [matMenuTriggerFor]="actionsMenu"
+              matTooltip="More actions">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      
+      <mat-menu #actionsMenu="matMenu">
+        <button mat-menu-item (click)="onMarkAllAsRead()">
+          <mat-icon>done_all</mat-icon>
+          <span>Mark all as read</span>
+        </button>
+        <button mat-menu-item (click)="onClearAll()">
+          <mat-icon>clear_all</mat-icon>
+          <span>Clear all</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Filter Options -->
+  <div class="filter-section">
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-label>Filter notifications</mat-label>
+      <mat-select [(ngModel)]="selectedFilter" (selectionChange)="onFilterChange()">
+        <mat-option *ngFor="let option of filterOptions" [value]="option.value">
+          {{ option.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading notifications...</p>
+  </div>
+
+  <!-- Notifications List -->
+  <div *ngIf="!isLoading" class="notifications-list">
+    <!-- No Notifications State -->
+    <div *ngIf="getFilteredNotifications().length === 0" class="no-notifications">
+      <mat-icon>notifications_off</mat-icon>
+      <h4>No notifications</h4>
+      <p>You're all caught up! No lab notifications at the moment.</p>
+    </div>
+
+    <!-- Notification Items -->
+    <div *ngFor="let notification of getFilteredNotifications()" 
+         class="notification-item"
+         [class.unread]="!notification.read"
+         [class.critical]="notification.priority === 'critical'"
+         (click)="onNotificationClick(notification)">
+      
+      <div class="notification-icon">
+        <mat-icon [color]="getNotificationColor(notification.priority)">
+          {{ getNotificationIcon(notification.type) }}
+        </mat-icon>
+      </div>
+      
+      <div class="notification-content">
+        <div class="notification-header">
+          <h4>{{ notification.title }}</h4>
+          <div class="notification-meta">
+            <span class="timestamp">{{ formatTimestamp(notification.timestamp) }}</span>
+            <mat-chip *ngIf="notification.priority === 'critical'" 
+                     [color]="'warn'" 
+                     selected 
+                     class="priority-chip">
+              Critical
+            </mat-chip>
+          </div>
+        </div>
+        
+        <p class="notification-message">{{ notification.message }}</p>
+        
+        <div class="notification-details" *ngIf="notification.patientName">
+          <div class="patient-info">
+            <mat-icon>person</mat-icon>
+            <span>{{ notification.patientName }}</span>
+          </div>
+          
+          <div class="lab-staff-info" *ngIf="notification.labStaffName">
+            <mat-icon>science</mat-icon>
+            <span>{{ notification.labStaffName }}</span>
+          </div>
+        </div>
+        
+        <div class="notification-actions" *ngIf="!notification.acknowledged && notification.priority === 'critical'">
+          <button mat-stroked-button 
+                  color="primary"
+                  (click)="onAcknowledgeNotification(notification, $event)">
+            <mat-icon>check</mat-icon>
+            Acknowledge
+          </button>
+        </div>
+      </div>
+      
+      <div class="notification-status">
+        <mat-icon *ngIf="!notification.read" class="unread-indicator" color="primary">
+          fiber_manual_record
+        </mat-icon>
+        <mat-icon *ngIf="notification.acknowledged" class="acknowledged-indicator" color="primary">
+          verified
+        </mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Status Updates -->
+  <div class="status-updates-section" *ngIf="requestStatuses.length > 0">
+    <h4>
+      <mat-icon>update</mat-icon>
+      Recent Status Updates
+    </h4>
+    
+    <div class="status-updates-list">
+      <div *ngFor="let status of requestStatuses.slice(0, 5)" 
+           class="status-update-item">
+        <div class="status-icon">
+          <mat-icon [color]="getStatusColor(status.status)">
+            {{ status.status === 'completed' ? 'check_circle' : 
+               status.status === 'in_progress' ? 'hourglass_empty' : 
+               status.status === 'on_hold' ? 'pause_circle' : 'schedule' }}
+          </mat-icon>
+        </div>
+        
+        <div class="status-content">
+          <div class="status-header">
+            <strong>{{ status.patientName }}</strong>
+            <mat-chip [color]="getStatusColor(status.status)" selected>
+              {{ status.status | titlecase }}
+            </mat-chip>
+          </div>
+          
+          <div class="status-details">
+            <div class="test-types">
+              {{ status.testTypes.join(', ') }}
+            </div>
+            
+            <div class="progress-info" *ngIf="status.progress > 0">
+              <mat-progress-bar mode="determinate" [value]="status.progress"></mat-progress-bar>
+              <span class="progress-text">{{ status.progress }}% complete</span>
+            </div>
+            
+            <div class="assigned-staff" *ngIf="status.assignedLabStaffName">
+              <mat-icon>person</mat-icon>
+              <span>{{ status.assignedLabStaffName }}</span>
+            </div>
+            
+            <div class="last-updated">
+              <mat-icon>schedule</mat-icon>
+              <span>Updated {{ formatTimestamp(status.lastUpdated) }}</span>
+            </div>
+          </div>
+          
+          <div class="status-notes" *ngIf="status.notes">
+            <mat-icon>note</mat-icon>
+            <span>{{ status.notes }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

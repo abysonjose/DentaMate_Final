@@ -3,12 +3,19 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LabStaffService } from '../../services/lab-staff.service';
-import { DiagnosticService } from '../../services/diagnostic.service';
 
 export interface PatientVerifyDialogData {
   patientId: string;
   patientName: string;
-  appointmentId: string;
+  requestId: string;
+  appointmentId?: string;
+}
+
+export interface PatientVerificationResult {
+  verified: boolean;
+  patientData?: any;
+  verificationMethod: 'manual' | 'appointment' | 'id_check';
+  notes?: string;
 }
 
 @Component({
@@ -18,224 +25,189 @@ export interface PatientVerifyDialogData {
 })
 export class PatientVerifyDialogComponent implements OnInit {
   verificationForm: FormGroup;
-  patientDetails: any = null;
   isLoading = false;
-  isVerifying = false;
-  verificationMethods = [
-    { value: 'ID_CARD', label: 'Government ID Card', icon: 'badge' },
-    { value: 'INSURANCE_CARD', label: 'Insurance Card', icon: 'credit_card' },
-    { value: 'APPOINTMENT_CONFIRMATION', label: 'Appointment Confirmation', icon: 'confirmation_number' },
-    { value: 'BIOMETRIC', label: 'Biometric Verification', icon: 'fingerprint' },
-    { value: 'VERBAL_CONFIRMATION', label: 'Verbal Confirmation', icon: 'record_voice_over' }
-  ];
+  verificationStep = 1;
+  maxSteps = 3;
+  
+  // Patient data from verification
+  patientData: any = null;
+  verificationChecks = {
+    nameMatch: false,
+    idMatch: false,
+    appointmentMatch: false,
+    consentGiven: false
+  };
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<PatientVerifyDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: PatientVerifyDialogData,
     private labStaffService: LabStaffService,
-    private diagnosticService: DiagnosticService,
     private snackBar: MatSnackBar
   ) {
-    this.verificationForm = this.fb.group({
-      verificationMethod: ['', Validators.required],
-      idNumber: [''],
-      dateOfBirth: [''],
-      phoneNumber: [''],
-      address: [''],
-      emergencyContact: [''],
-      verificationNotes: ['', [Validators.required, Validators.minLength(10)]],
-      confirmIdentity: [false, Validators.requiredTrue],
-      confirmAppointment: [false, Validators.requiredTrue]
-    });
+    this.verificationForm = this.createForm();
   }
 
   ngOnInit(): void {
-    this.loadPatientDetails();
-    this.setupFormValidation();
+    this.loadPatientData();
   }
 
-  private loadPatientDetails(): void {
+  private createForm(): FormGroup {
+    return this.fb.group({
+      // Step 1: Basic verification
+      patientIdConfirm: ['', [Validators.required]],
+      patientNameConfirm: ['', [Validators.required]],
+      
+      // Step 2: Additional checks
+      dateOfBirth: [''],
+      phoneNumber: [''],
+      appointmentConfirm: [false],
+      
+      // Step 3: Final verification
+      identityVerified: [false, [Validators.requiredTrue]],
+      consentGiven: [false, [Validators.requiredTrue]],
+      verificationNotes: ['']
+    });
+  }
+
+  private loadPatientData(): void {
     this.isLoading = true;
-    this.labStaffService.getPatientDetails(this.data.patientId)
+    
+    this.labStaffService.verifyPatient(this.data.patientId, this.data.appointmentId)
       .subscribe({
-        next: (details) => {
-          this.patientDetails = details;
-          this.prefillForm(details);
+        next: (response) => {
+          this.patientData = response.patientData;
           this.isLoading = false;
+          
+          // Pre-fill known data
+          this.verificationForm.patchValue({
+            patientIdConfirm: this.data.patientId,
+            patientNameConfirm: this.data.patientName
+          });
         },
         error: (error) => {
-          console.error('Error loading patient details:', error);
-          this.snackBar.open('Error loading patient details', 'Close', { duration: 3000 });
+          console.error('Error loading patient data:', error);
+          this.snackBar.open('Error loading patient data', 'Close', {
+            duration: 3000
+          });
           this.isLoading = false;
         }
       });
   }
 
-  private prefillForm(details: any): void {
-    // Pre-fill form with known patient information for verification
-    this.verificationForm.patchValue({
-      dateOfBirth: details.dateOfBirth ? new Date(details.dateOfBirth) : null,
-      phoneNumber: details.phoneNumber || '',
-      address: details.address || '',
-      emergencyContact: details.emergencyContact || ''
-    });
-  }
-
-  private setupFormValidation(): void {
-    // Dynamic validation based on verification method
-    this.verificationForm.get('verificationMethod')?.valueChanges.subscribe(method => {
-      this.updateValidationRules(method);
-    });
-  }
-
-  private updateValidationRules(method: string): void {
-    const idNumberControl = this.verificationForm.get('idNumber');
-    const dobControl = this.verificationForm.get('dateOfBirth');
-    const phoneControl = this.verificationForm.get('phoneNumber');
-
-    // Clear existing validators
-    idNumberControl?.clearValidators();
-    dobControl?.clearValidators();
-    phoneControl?.clearValidators();
-
-    // Set validators based on verification method
-    switch (method) {
-      case 'ID_CARD':
-        idNumberControl?.setValidators([Validators.required, Validators.minLength(5)]);
-        dobControl?.setValidators([Validators.required]);
-        break;
-      case 'INSURANCE_CARD':
-        idNumberControl?.setValidators([Validators.required]);
-        dobControl?.setValidators([Validators.required]);
-        break;
-      case 'APPOINTMENT_CONFIRMATION':
-        phoneControl?.setValidators([Validators.required, Validators.pattern(/^\+?[\d\s\-\(\)]+$/)]);
-        break;
-      case 'VERBAL_CONFIRMATION':
-        dobControl?.setValidators([Validators.required]);
-        phoneControl?.setValidators([Validators.required]);
-        break;
+  onNextStep(): void {
+    if (this.verificationStep < this.maxSteps) {
+      if (this.validateCurrentStep()) {
+        this.verificationStep++;
+        this.updateVerificationChecks();
+      }
     }
-
-    // Update form validation
-    idNumberControl?.updateValueAndValidity();
-    dobControl?.updateValueAndValidity();
-    phoneControl?.updateValueAndValidity();
   }
 
-  verifyPatient(): void {
-    if (this.verificationForm.invalid) {
-      this.markFormGroupTouched();
-      return;
+  onPreviousStep(): void {
+    if (this.verificationStep > 1) {
+      this.verificationStep--;
     }
+  }
 
-    this.isVerifying = true;
+  onVerifyPatient(): void {
+    if (this.verificationForm.valid && this.allChecksPass()) {
+      const result: PatientVerificationResult = {
+        verified: true,
+        patientData: this.patientData,
+        verificationMethod: this.getVerificationMethod(),
+        notes: this.verificationForm.get('verificationNotes')?.value
+      };
+      
+      this.dialogRef.close(result);
+    } else {
+      this.snackBar.open('Please complete all verification steps', 'Close', {
+        duration: 3000
+      });
+    }
+  }
+
+  onCancel(): void {
+    this.dialogRef.close({ verified: false });
+  }
+
+  private validateCurrentStep(): boolean {
+    switch (this.verificationStep) {
+      case 1:
+        return this.verificationForm.get('patientIdConfirm')?.valid && 
+               this.verificationForm.get('patientNameConfirm')?.valid;
+      case 2:
+        return true; // Optional fields
+      case 3:
+        return this.verificationForm.get('identityVerified')?.valid && 
+               this.verificationForm.get('consentGiven')?.valid;
+      default:
+        return false;
+    }
+  }
+
+  private updateVerificationChecks(): void {
     const formValue = this.verificationForm.value;
-
-    const verificationData = {
-      method: formValue.verificationMethod,
-      idNumber: formValue.idNumber,
-      dateOfBirth: formValue.dateOfBirth,
-      phoneNumber: formValue.phoneNumber,
-      address: formValue.address,
-      emergencyContact: formValue.emergencyContact,
-      notes: formValue.verificationNotes,
-      appointmentId: this.data.appointmentId,
-      verifiedAt: new Date()
-    };
-
-    this.diagnosticService.verifyPatientIdentity(this.data.patientId, verificationData)
-      .subscribe({
-        next: (result) => {
-          if (result.verified) {
-            this.snackBar.open('Patient verified successfully', 'Close', { duration: 3000 });
-            this.dialogRef.close({
-              verified: true,
-              verificationData: verificationData
-            });
-          } else {
-            this.snackBar.open('Patient verification failed', 'Close', { duration: 3000 });
-            this.isVerifying = false;
-          }
-        },
-        error: (error) => {
-          console.error('Verification error:', error);
-          this.snackBar.open('Verification failed. Please try again.', 'Close', { duration: 3000 });
-          this.isVerifying = false;
-        }
-      });
-  }
-
-  private markFormGroupTouched(): void {
-    Object.keys(this.verificationForm.controls).forEach(key => {
-      const control = this.verificationForm.get(key);
-      control?.markAsTouched();
-    });
-  }
-
-  cancel(): void {
-    this.dialogRef.close(null);
-  }
-
-  getVerificationMethodIcon(method: string): string {
-    const methodObj = this.verificationMethods.find(m => m.value === method);
-    return methodObj?.icon || 'verified_user';
-  }
-
-  isFieldRequired(fieldName: string): boolean {
-    const control = this.verificationForm.get(fieldName);
-    return control?.hasError('required') && control?.touched || false;
-  }
-
-  formatPatientInfo(info: any): string {
-    if (!info) return 'N/A';
-    if (typeof info === 'string') return info;
-    if (info instanceof Date) return info.toLocaleDateString();
-    return JSON.stringify(info);
-  }
-
-  // Security check for sensitive operations
-  performSecurityCheck(): void {
-    // Additional security verification if needed
-    // This could include biometric verification, supervisor approval, etc.
-  }
-
-  // Audit trail logging
-  private logVerificationAttempt(success: boolean, method: string): void {
-    this.labStaffService.logActivity('PATIENT_VERIFICATION', {
-      patientId: this.data.patientId,
-      appointmentId: this.data.appointmentId,
-      method: method,
-      success: success,
-      timestamp: new Date()
-    }).subscribe();
-  }
-
-  // Helper method to validate date of birth
-  validateDateOfBirth(): boolean {
-    const enteredDOB = this.verificationForm.get('dateOfBirth')?.value;
-    const patientDOB = this.patientDetails?.dateOfBirth;
     
-    if (!enteredDOB || !patientDOB) return false;
+    // Check name match
+    this.verificationChecks.nameMatch = 
+      formValue.patientNameConfirm?.toLowerCase() === this.data.patientName.toLowerCase();
     
-    const entered = new Date(enteredDOB);
-    const patient = new Date(patientDOB);
+    // Check ID match
+    this.verificationChecks.idMatch = 
+      formValue.patientIdConfirm === this.data.patientId;
     
-    return entered.getTime() === patient.getTime();
+    // Check appointment match
+    this.verificationChecks.appointmentMatch = 
+      !this.data.appointmentId || formValue.appointmentConfirm;
+    
+    // Check consent
+    this.verificationChecks.consentGiven = formValue.consentGiven;
   }
 
-  // Helper method to validate phone number
-  validatePhoneNumber(): boolean {
-    const enteredPhone = this.verificationForm.get('phoneNumber')?.value;
-    const patientPhone = this.patientDetails?.phoneNumber;
-    
-    if (!enteredPhone || !patientPhone) return false;
-    
-    // Remove formatting and compare
-    const cleanEntered = enteredPhone.replace(/\D/g, '');
-    const cleanPatient = patientPhone.replace(/\D/g, '');
-    
-    return cleanEntered === cleanPatient;
+  private allChecksPass(): boolean {
+    return Object.values(this.verificationChecks).every(check => check === true);
+  }
+
+  private getVerificationMethod(): 'manual' | 'appointment' | 'id_check' {
+    if (this.data.appointmentId && this.verificationForm.get('appointmentConfirm')?.value) {
+      return 'appointment';
+    }
+    return 'manual';
+  }
+
+  // Utility methods
+  getStepTitle(): string {
+    switch (this.verificationStep) {
+      case 1: return 'Basic Information';
+      case 2: return 'Additional Verification';
+      case 3: return 'Final Confirmation';
+      default: return 'Verification';
+    }
+  }
+
+  getStepDescription(): string {
+    switch (this.verificationStep) {
+      case 1: return 'Verify patient identity and basic information';
+      case 2: return 'Additional checks for enhanced security';
+      case 3: return 'Final confirmation and consent';
+      default: return '';
+    }
+  }
+
+  isStepValid(): boolean {
+    return this.validateCurrentStep();
+  }
+
+  canProceed(): boolean {
+    return this.isStepValid() && !this.isLoading;
+  }
+
+  getCheckIcon(check: boolean): string {
+    return check ? 'check_circle' : 'radio_button_unchecked';
+  }
+
+  getCheckColor(check: boolean): string {
+    return check ? 'primary' : '';
   }
 }

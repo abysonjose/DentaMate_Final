@@ -1,115 +1,145 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-export interface DiagnosticWorkflow {
-  id: string;
-  requestId: string;
-  currentStep: 'RECEIVED' | 'PATIENT_VERIFIED' | 'IN_PROGRESS' | 'REPORT_UPLOADED' | 'VALIDATED' | 'COMPLETED';
-  steps: WorkflowStep[];
-  estimatedCompletionTime: Date;
-  actualCompletionTime?: Date;
-}
-
-export interface WorkflowStep {
+export interface DiagnosticTest {
   id: string;
   name: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED';
-  startTime?: Date;
-  endTime?: Date;
-  assignedTo?: string;
-  notes?: string;
+  code: string;
+  category: 'imaging' | 'laboratory' | 'pathology';
+  estimatedDuration: number; // in minutes
+  preparationRequired: boolean;
+  preparationInstructions?: string;
+  equipmentRequired: string[];
+  isActive: boolean;
 }
 
-export interface DiagnosticMetrics {
-  averageProcessingTime: number;
-  completionRate: number;
-  errorRate: number;
-  patientSatisfactionScore: number;
-  workloadDistribution: { [key: string]: number };
+export interface DiagnosticEquipment {
+  id: string;
+  name: string;
+  type: string;
+  model: string;
+  serialNumber: string;
+  status: 'available' | 'in_use' | 'maintenance' | 'out_of_order';
+  location: string;
+  lastMaintenance: Date;
+  nextMaintenance: Date;
+  calibrationStatus: 'valid' | 'expired' | 'due_soon';
+}
+
+export interface DiagnosticProtocol {
+  id: string;
+  testType: string;
+  protocolName: string;
+  steps: DiagnosticStep[];
+  qualityChecks: QualityCheck[];
+  safetyRequirements: string[];
+  estimatedTime: number;
+}
+
+export interface DiagnosticStep {
+  stepNumber: number;
+  title: string;
+  description: string;
+  duration: number;
+  requiredEquipment?: string[];
+  safetyNotes?: string[];
+  qualityPoints?: string[];
+}
+
+export interface QualityCheck {
+  checkPoint: string;
+  description: string;
+  acceptanceCriteria: string;
+  isRequired: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class DiagnosticService {
-  private apiUrl = `${environment.apiUrl}/lab-diagnostics`;
-  private workflowSubject = new BehaviorSubject<DiagnosticWorkflow[]>([]);
-  public workflows$ = this.workflowSubject.asObservable();
+  private readonly apiUrl = `${environment.apiUrl}/diagnostic`;
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json'
+    })
+  };
 
-  constructor(private http: HttpClient) {}
+  // State management
+  private availableTestsSubject = new BehaviorSubject<DiagnosticTest[]>([]);
+  private equipmentStatusSubject = new BehaviorSubject<DiagnosticEquipment[]>([]);
+  private protocolsSubject = new BehaviorSubject<DiagnosticProtocol[]>([]);
 
-  // Workflow Management
-  getWorkflows(): Observable<DiagnosticWorkflow[]> {
-    return this.http.get<DiagnosticWorkflow[]>(`${this.apiUrl}/workflows`);
+  // Public observables
+  public availableTests$ = this.availableTestsSubject.asObservable();
+  public equipmentStatus$ = this.equipmentStatusSubject.asObservable();
+  public protocols$ = this.protocolsSubject.asObservable();
+
+  constructor(private http: HttpClient) {
+    this.loadInitialData();
   }
 
-  getWorkflowByRequestId(requestId: string): Observable<DiagnosticWorkflow> {
-    return this.http.get<DiagnosticWorkflow>(`${this.apiUrl}/workflows/request/${requestId}`);
+  // Diagnostic Tests
+  getAvailableTests(): Observable<DiagnosticTest[]> {
+    return this.http.get<DiagnosticTest[]>(`${this.apiUrl}/tests`);
   }
 
-  updateWorkflowStep(workflowId: string, stepId: string, status: string, notes?: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/workflows/${workflowId}/steps/${stepId}`, {
-      status,
-      notes,
-      updatedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  getTestById(testId: string): Observable<DiagnosticTest> {
+    return this.http.get<DiagnosticTest>(`${this.apiUrl}/tests/${testId}`);
   }
 
-  // Patient Verification
-  verifyPatientIdentity(patientId: string, verificationData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/patient-verification`, {
-      patientId,
-      verificationData,
-      verifiedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getPatientVerificationHistory(patientId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/patient-verification/${patientId}/history`);
-  }
-
-  // Quality Control
-  performQualityCheck(reportId: string, checklistItems: any[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/quality-control/${reportId}`, {
-      checklistItems,
-      performedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getQualityCheckResults(reportId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/quality-control/${reportId}/results`);
-  }
-
-  // Diagnostic Metrics
-  getDiagnosticMetrics(dateRange: { start: Date, end: Date }): Observable<DiagnosticMetrics> {
-    return this.http.get<DiagnosticMetrics>(`${this.apiUrl}/metrics`, {
-      params: {
-        startDate: dateRange.start.toISOString(),
-        endDate: dateRange.end.toISOString()
-      }
-    });
-  }
-
-  getPersonalPerformanceMetrics(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/metrics/personal/${this.getCurrentUserId()}`);
+  getTestsByCategory(category: string): Observable<DiagnosticTest[]> {
+    return this.http.get<DiagnosticTest[]>(`${this.apiUrl}/tests/category/${category}`);
   }
 
   // Equipment Management
-  getEquipmentStatus(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/equipment/status`);
+  getEquipmentStatus(): Observable<DiagnosticEquipment[]> {
+    return this.http.get<DiagnosticEquipment[]>(`${this.apiUrl}/equipment`);
   }
 
-  reportEquipmentIssue(equipmentId: string, issue: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/equipment/${equipmentId}/issues`, {
-      ...issue,
-      reportedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  getAvailableEquipment(testType?: string): Observable<DiagnosticEquipment[]> {
+    const params = testType ? { params: { testType } } : {};
+    return this.http.get<DiagnosticEquipment[]>(`${this.apiUrl}/equipment/available`, params);
+  }
+
+  updateEquipmentStatus(equipmentId: string, status: string, notes?: string): Observable<DiagnosticEquipment> {
+    return this.http.put<DiagnosticEquipment>(`${this.apiUrl}/equipment/${equipmentId}/status`, {
+      status,
+      notes
+    }, this.httpOptions);
+  }
+
+  reserveEquipment(equipmentId: string, requestId: string, duration: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/equipment/${equipmentId}/reserve`, {
+      requestId,
+      duration
+    }, this.httpOptions);
+  }
+
+  releaseEquipment(equipmentId: string, requestId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/equipment/${equipmentId}/release`, {
+      requestId
+    }, this.httpOptions);
+  }
+
+  // Diagnostic Protocols
+  getProtocols(): Observable<DiagnosticProtocol[]> {
+    return this.http.get<DiagnosticProtocol[]>(`${this.apiUrl}/protocols`);
+  }
+
+  getProtocolByTestType(testType: string): Observable<DiagnosticProtocol> {
+    return this.http.get<DiagnosticProtocol>(`${this.apiUrl}/protocols/test/${testType}`);
+  }
+
+  // Quality Control
+  performQualityCheck(requestId: string, checkData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/quality-check/${requestId}`, checkData, this.httpOptions);
+  }
+
+  getQualityMetrics(filters?: any): Observable<any> {
+    const params = filters ? { params: filters } : {};
+    return this.http.get(`${this.apiUrl}/quality-metrics`, params);
   }
 
   // Calibration and Maintenance
@@ -117,128 +147,103 @@ export class DiagnosticService {
     return this.http.get<any[]>(`${this.apiUrl}/calibration/schedule`);
   }
 
-  recordCalibrationResult(equipmentId: string, result: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/calibration/${equipmentId}/results`, {
-      ...result,
-      performedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  recordCalibration(equipmentId: string, calibrationData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/calibration/${equipmentId}`, calibrationData, this.httpOptions);
   }
 
-  // Sample Tracking
-  trackSample(sampleId: string, location: string, status: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/samples/${sampleId}/track`, {
-      location,
-      status,
-      trackedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  getMaintenanceSchedule(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/maintenance/schedule`);
   }
 
-  getSampleHistory(sampleId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/samples/${sampleId}/history`);
+  recordMaintenance(equipmentId: string, maintenanceData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/maintenance/${equipmentId}`, maintenanceData, this.httpOptions);
   }
 
-  // Protocol Management
-  getTestProtocols(testType: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/protocols/${testType}`);
-  }
-
-  updateProtocolCompliance(requestId: string, protocolId: string, complianceData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/protocols/${protocolId}/compliance`, {
-      requestId,
-      complianceData,
-      updatedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  // Error Handling and Rework
-  initiateRework(requestId: string, reason: string, details: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/rework/${requestId}`, {
-      reason,
-      details,
-      initiatedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getReworkHistory(requestId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/rework/${requestId}/history`);
-  }
-
-  // Batch Processing
-  processBatch(batchId: string, requests: string[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/batch/${batchId}/process`, {
-      requests,
-      processedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getBatchStatus(batchId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/batch/${batchId}/status`);
-  }
-
-  // Scheduling and Capacity
-  getLabCapacity(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/capacity/current`);
-  }
-
-  scheduleTest(requestId: string, scheduledTime: Date, equipmentId?: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/schedule`, {
-      requestId,
-      scheduledTime,
-      equipmentId,
-      scheduledBy: this.getCurrentUserId()
-    });
-  }
-
-  // Integration with External Systems
-  syncWithLIS(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/integration/lis/sync`, data);
-  }
-
-  syncWithPACS(reportId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/integration/pacs/sync`, {
-      reportId,
-      syncedBy: this.getCurrentUserId()
-    });
-  }
-
-  // Utility Methods
-  private getCurrentUserId(): string {
-    return localStorage.getItem('userId') || '';
-  }
-
-  // Real-time Updates
-  subscribeToWorkflowUpdates(): Observable<any> {
-    // WebSocket connection for real-time updates
-    // Implementation depends on your WebSocket setup
-    return new Observable(observer => {
-      // WebSocket implementation
-    });
-  }
-
-  // Data Export
-  exportDiagnosticData(filters: any): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/export`, filters, {
-      responseType: 'blob'
-    });
-  }
-
-  // Validation Helpers
-  validateTestParameters(testType: string, parameters: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/validation/parameters`, {
+  // Test Scheduling
+  checkTestAvailability(testType: string, preferredTime: Date): Observable<any> {
+    return this.http.post(`${this.apiUrl}/availability/check`, {
       testType,
-      parameters
+      preferredTime
+    }, this.httpOptions);
+  }
+
+  scheduleTest(requestId: string, scheduleData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/schedule/${requestId}`, scheduleData, this.httpOptions);
+  }
+
+  rescheduleTest(requestId: string, newScheduleData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/schedule/${requestId}`, newScheduleData, this.httpOptions);
+  }
+
+  // Safety and Compliance
+  getSafetyProtocols(testType: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/safety/protocols/${testType}`);
+  }
+
+  recordSafetyIncident(incidentData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/safety/incident`, incidentData, this.httpOptions);
+  }
+
+  getComplianceChecklist(testType: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/compliance/checklist/${testType}`);
+  }
+
+  // Private methods
+  private loadInitialData(): void {
+    // Load available tests
+    this.getAvailableTests().subscribe({
+      next: (tests) => this.availableTestsSubject.next(tests),
+      error: (error) => console.error('Error loading tests:', error)
+    });
+
+    // Load equipment status
+    this.getEquipmentStatus().subscribe({
+      next: (equipment) => this.equipmentStatusSubject.next(equipment),
+      error: (error) => console.error('Error loading equipment:', error)
+    });
+
+    // Load protocols
+    this.getProtocols().subscribe({
+      next: (protocols) => this.protocolsSubject.next(protocols),
+      error: (error) => console.error('Error loading protocols:', error)
     });
   }
 
-  // Performance Optimization
-  preloadCommonData(): void {
-    // Preload frequently accessed data
-    this.getTestProtocols('common').subscribe();
-    this.getEquipmentStatus().subscribe();
+  // Utility methods
+  refreshData(): void {
+    this.loadInitialData();
+  }
+
+  getCurrentTests(): DiagnosticTest[] {
+    return this.availableTestsSubject.value;
+  }
+
+  getCurrentEquipment(): DiagnosticEquipment[] {
+    return this.equipmentStatusSubject.value;
+  }
+
+  getCurrentProtocols(): DiagnosticProtocol[] {
+    return this.protocolsSubject.value;
+  }
+
+  // Helper methods
+  getTestDuration(testType: string): number {
+    const test = this.getCurrentTests().find(t => t.code === testType);
+    return test ? test.estimatedDuration : 30; // default 30 minutes
+  }
+
+  isEquipmentAvailable(equipmentId: string): boolean {
+    const equipment = this.getCurrentEquipment().find(e => e.id === equipmentId);
+    return equipment ? equipment.status === 'available' : false;
+  }
+
+  getRequiredEquipment(testType: string): string[] {
+    const test = this.getCurrentTests().find(t => t.code === testType);
+    return test ? test.equipmentRequired : [];
+  }
+
+  formatTestName(testCode: string): string {
+    const test = this.getCurrentTests().find(t => t.code === testCode);
+    return test ? test.name : testCode.replace('_', ' ').toUpperCase();
   }
 }

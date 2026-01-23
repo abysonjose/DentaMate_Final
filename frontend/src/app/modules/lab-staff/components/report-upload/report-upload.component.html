@@ -1,0 +1,198 @@
+<div class="report-upload-container">
+  <mat-card class="upload-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>cloud_upload</mat-icon>
+        Report Upload & Management
+      </mat-card-title>
+      <mat-card-subtitle>
+        Upload diagnostic files and reports for completed tests
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="uploadForm" class="upload-form">
+        <!-- Request Selection -->
+        <div class="form-section">
+          <h3>Select Diagnostic Request</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Diagnostic Request</mat-label>
+            <mat-select formControlName="requestId" (selectionChange)="onRequestSelected()">
+              <mat-option *ngFor="let request of availableRequests" [value]="request.id">
+                <div class="request-option">
+                  <div class="request-info">
+                    <span class="patient-name">{{ request.patientName }}</span>
+                    <span class="test-type">{{ request.testType | titlecase }}</span>
+                    <mat-chip [color]="getPriorityColor(request.priority)" selected>
+                      {{ request.priority | titlecase }}
+                    </mat-chip>
+                  </div>
+                  <div class="request-meta">
+                    <small>Dr. {{ request.doctorName }} • {{ request.requestedAt | date:'short' }}</small>
+                  </div>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="uploadForm.get('requestId')?.hasError('required')">
+              Please select a diagnostic request
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Selected Request Details -->
+        <div *ngIf="selectedRequest" class="selected-request">
+          <mat-card class="request-details">
+            <mat-card-content>
+              <div class="request-header">
+                <mat-icon [color]="getPriorityColor(selectedRequest.priority)">
+                  {{ getTestTypeIcon(selectedRequest.testType) }}
+                </mat-icon>
+                <div class="request-info">
+                  <h4>{{ selectedRequest.patientName }}</h4>
+                  <p>{{ selectedRequest.testType | titlecase }} - {{ selectedRequest.priority | titlecase }} Priority</p>
+                  <p><small>Requested by Dr. {{ selectedRequest.doctorName }} on {{ selectedRequest.requestedAt | date:'medium' }}</small></p>
+                </div>
+              </div>
+              <div *ngIf="selectedRequest.notes" class="request-notes">
+                <strong>Doctor's Notes:</strong>
+                <p>{{ selectedRequest.notes }}</p>
+              </div>
+              <div *ngIf="selectedRequest.clinicalHistory" class="clinical-history">
+                <strong>Clinical History:</strong>
+                <p>{{ selectedRequest.clinicalHistory }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- File Upload Section -->
+        <div *ngIf="selectedRequest" class="form-section">
+          <h3>Upload Diagnostic Files</h3>
+          
+          <!-- File Drop Zone -->
+          <div class="file-drop-zone" 
+               (drop)="onFileDrop($event)" 
+               (dragover)="onDragOver($event)"
+               [class.drag-over]="false">
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <p>Drag and drop files here or click to browse</p>
+            <input type="file" 
+                   #fileInput 
+                   multiple 
+                   [accept]="acceptedFileTypes.image + ',' + acceptedFileTypes.pdf + ',' + acceptedFileTypes.dicom"
+                   (change)="onFileSelected($event)"
+                   style="display: none;">
+            <button mat-raised-button color="primary" type="button" (click)="fileInput.click()">
+              <mat-icon>add</mat-icon>
+              Select Files
+            </button>
+          </div>
+
+          <div class="file-info">
+            <p><small>Supported formats: Images (JPG, PNG, TIFF), PDF, DICOM files</small></p>
+            <p><small>Maximum file size: 50MB • Maximum files: {{ maxFiles }}</small></p>
+          </div>
+
+          <!-- Uploaded Files List -->
+          <div *ngIf="uploadedFiles.length > 0" class="uploaded-files">
+            <h4>Selected Files ({{ uploadedFiles.length }})</h4>
+            <div class="files-list">
+              <mat-card *ngFor="let uploadedFile of uploadedFiles; let i = index" class="file-card">
+                <mat-card-content>
+                  <div class="file-item">
+                    <div class="file-preview">
+                      <img *ngIf="uploadedFile.preview" [src]="uploadedFile.preview" alt="Preview">
+                      <mat-icon *ngIf="!uploadedFile.preview">{{ getFileIcon(uploadedFile.type) }}</mat-icon>
+                    </div>
+                    <div class="file-details">
+                      <div class="file-name">{{ uploadedFile.file.name }}</div>
+                      <div class="file-meta">
+                        <span class="file-size">{{ formatFileSize(uploadedFile.file.size) }}</span>
+                        <mat-chip [color]="uploadedFile.type === 'dicom' ? 'accent' : 'primary'" selected>
+                          {{ uploadedFile.type | titlecase }}
+                        </mat-chip>
+                      </div>
+                      <div *ngIf="uploadedFile.uploadProgress !== undefined" class="upload-progress">
+                        <mat-progress-bar [value]="uploadedFile.uploadProgress"></mat-progress-bar>
+                      </div>
+                    </div>
+                    <div class="file-actions">
+                      <button mat-icon-button color="warn" (click)="removeFile(i)" [disabled]="isUploading">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lab Remarks and Notes -->
+        <div *ngIf="selectedRequest && uploadedFiles.length > 0" class="form-section">
+          <h3>Lab Remarks & Technical Notes</h3>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Lab Remarks (Required)</mat-label>
+            <textarea matInput 
+                      formControlName="labRemarks" 
+                      rows="4" 
+                      placeholder="Enter your observations and remarks about the diagnostic procedure..."></textarea>
+            <mat-hint>Describe the procedure, quality of samples, any technical observations</mat-hint>
+            <mat-error *ngIf="uploadForm.get('labRemarks')?.hasError('required')">
+              Lab remarks are required
+            </mat-error>
+            <mat-error *ngIf="uploadForm.get('labRemarks')?.hasError('maxlength')">
+              Maximum 1000 characters allowed
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Technical Notes (Optional)</mat-label>
+            <textarea matInput 
+                      formControlName="technicalNotes" 
+                      rows="3" 
+                      placeholder="Any technical notes, equipment settings, or special considerations..."></textarea>
+            <mat-hint>Equipment settings, technical parameters, special considerations</mat-hint>
+            <mat-error *ngIf="uploadForm.get('technicalNotes')?.hasError('maxlength')">
+              Maximum 500 characters allowed
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Quality Check -->
+          <div class="quality-check">
+            <mat-checkbox formControlName="qualityCheck" color="primary">
+              I confirm that all uploaded files are of acceptable quality and properly represent the diagnostic procedure
+            </mat-checkbox>
+            <mat-error *ngIf="uploadForm.get('qualityCheck')?.hasError('required')">
+              Quality confirmation is required
+            </mat-error>
+          </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div *ngIf="isUploading" class="upload-progress-section">
+          <h4>Uploading Report...</h4>
+          <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+          <p>{{ uploadProgress }}% complete</p>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="resetForm()" [disabled]="isUploading">
+        <mat-icon>clear</mat-icon>
+        Clear
+      </button>
+      <button mat-button type="button" (click)="openUploadDialog()" [disabled]="!uploadForm.valid || uploadedFiles.length === 0 || isUploading">
+        <mat-icon>preview</mat-icon>
+        Preview & Validate
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="uploadFiles()" 
+              [disabled]="!uploadForm.valid || uploadedFiles.length === 0 || isUploading">
+        <mat-icon>cloud_upload</mat-icon>
+        Upload Report
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

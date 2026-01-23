@@ -1,336 +1,422 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-export interface AuditLog {
+export interface ComplianceRule {
   id: string;
-  userId: string;
-  userName: string;
-  action: string;
-  resourceType: string;
-  resourceId: string;
-  details: any;
-  timestamp: Date;
-  ipAddress: string;
-  userAgent: string;
-  sessionId: string;
-}
-
-export interface ComplianceCheck {
-  id: string;
-  type: 'HIPAA' | 'GDPR' | 'FDA' | 'INTERNAL';
-  status: 'PASSED' | 'FAILED' | 'WARNING';
+  name: string;
   description: string;
-  details: any;
-  checkedAt: Date;
-  checkedBy: string;
+  category: 'safety' | 'quality' | 'regulatory' | 'documentation' | 'equipment';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  isActive: boolean;
+  checkpoints: ComplianceCheckpoint[];
+  applicableTestTypes: string[];
+  regulatoryReference?: string;
 }
 
-export interface DataRetentionPolicy {
+export interface ComplianceCheckpoint {
   id: string;
-  dataType: string;
-  retentionPeriod: number; // in days
-  archiveAfter: number; // in days
-  deleteAfter: number; // in days
-  isActive: boolean;
+  name: string;
+  description: string;
+  checkType: 'manual' | 'automatic' | 'document_review';
+  isRequired: boolean;
+  acceptanceCriteria: string;
+  evidenceRequired: boolean;
+  evidenceTypes: string[];
+}
+
+export interface ComplianceAudit {
+  id: string;
+  auditType: 'routine' | 'incident_based' | 'regulatory' | 'internal';
+  requestId?: string;
+  reportId?: string;
+  staffId: string;
+  staffName: string;
+  startedAt: Date;
+  completedAt?: Date;
+  status: 'in_progress' | 'completed' | 'failed' | 'cancelled';
+  overallScore: number;
+  checkResults: ComplianceCheckResult[];
+  findings: ComplianceFinding[];
+  recommendations: string[];
+  auditTrail: AuditTrailEntry[];
+}
+
+export interface ComplianceCheckResult {
+  checkpointId: string;
+  checkpointName: string;
+  status: 'pass' | 'fail' | 'warning' | 'not_applicable';
+  score: number;
+  evidence?: ComplianceEvidence[];
+  notes?: string;
+  checkedBy: string;
+  checkedAt: Date;
+}
+
+export interface ComplianceEvidence {
+  id: string;
+  type: 'document' | 'image' | 'signature' | 'timestamp' | 'measurement';
+  fileName?: string;
+  fileUrl?: string;
+  value?: string;
+  metadata?: any;
+  uploadedAt: Date;
+}
+
+export interface ComplianceFinding {
+  id: string;
+  type: 'violation' | 'improvement' | 'observation' | 'best_practice';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  description: string;
+  ruleId?: string;
+  checkpointId?: string;
+  evidence?: ComplianceEvidence[];
+  correctiveAction?: string;
+  dueDate?: Date;
+  assignedTo?: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+}
+
+export interface AuditTrailEntry {
+  id: string;
+  timestamp: Date;
+  action: string;
+  performedBy: string;
+  details: any;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface ComplianceMetrics {
+  overallComplianceScore: number;
+  totalAudits: number;
+  passedAudits: number;
+  failedAudits: number;
+  criticalFindings: number;
+  openFindings: number;
+  averageAuditTime: number;
+  complianceTrend: ComplianceTrendData[];
+  categoryScores: { [category: string]: number };
+}
+
+export interface ComplianceTrendData {
+  date: Date;
+  score: number;
+  auditsCount: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ComplianceService {
-  private apiUrl = `${environment.apiUrl}/compliance`;
+  private readonly apiUrl = `${environment.apiUrl}/compliance`;
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json'
+    })
+  };
 
-  constructor(private http: HttpClient) {}
+  // State management
+  private complianceRulesSubject = new BehaviorSubject<ComplianceRule[]>([]);
+  private activeAuditsSubject = new BehaviorSubject<ComplianceAudit[]>([]);
+  private metricsSubject = new BehaviorSubject<ComplianceMetrics | null>(null);
+  
+  // Public observables
+  public complianceRules$ = this.complianceRulesSubject.asObservable();
+  public activeAudits$ = this.activeAuditsSubject.asObservable();
+  public metrics$ = this.metricsSubject.asObservable();
 
-  // Audit Logging
-  logActivity(activity: string, resourceType: string, resourceId: string, details?: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/audit-logs`, {
-      userId: this.getCurrentUserId(),
-      action: activity,
-      resourceType,
-      resourceId,
-      details: details || {},
-      timestamp: new Date(),
-      ipAddress: this.getClientIP(),
-      userAgent: navigator.userAgent,
-      sessionId: this.getSessionId()
-    });
+  constructor(private http: HttpClient) {
+    this.loadInitialData();
   }
 
-  getAuditLogs(filters?: any): Observable<AuditLog[]> {
-    return this.http.get<AuditLog[]>(`${this.apiUrl}/audit-logs`, {
-      params: filters || {}
-    });
+  // Compliance Rules Management
+  getComplianceRules(): Observable<ComplianceRule[]> {
+    return this.http.get<ComplianceRule[]>(`${this.apiUrl}/rules`);
   }
 
-  getAuditLogsByUser(userId: string, dateRange?: { start: Date, end: Date }): Observable<AuditLog[]> {
-    const params: any = { userId };
-    if (dateRange) {
-      params.startDate = dateRange.start.toISOString();
-      params.endDate = dateRange.end.toISOString();
+  getComplianceRule(ruleId: string): Observable<ComplianceRule> {
+    return this.http.get<ComplianceRule>(`${this.apiUrl}/rules/${ruleId}`);
+  }
+
+  getRulesForTestType(testType: string): Observable<ComplianceRule[]> {
+    return this.http.get<ComplianceRule[]>(`${this.apiUrl}/rules/test-type/${testType}`);
+  }
+
+  // Audit Management
+  startAudit(auditData: any): Observable<ComplianceAudit> {
+    return this.http.post<ComplianceAudit>(`${this.apiUrl}/audits/start`, auditData, this.httpOptions);
+  }
+
+  getAudit(auditId: string): Observable<ComplianceAudit> {
+    return this.http.get<ComplianceAudit>(`${this.apiUrl}/audits/${auditId}`);
+  }
+
+  getActiveAudits(): Observable<ComplianceAudit[]> {
+    return this.http.get<ComplianceAudit[]>(`${this.apiUrl}/audits/active`);
+  }
+
+  getAuditHistory(filters?: any): Observable<ComplianceAudit[]> {
+    const params = filters ? { params: filters } : {};
+    return this.http.get<ComplianceAudit[]>(`${this.apiUrl}/audits/history`, params);
+  }
+
+  updateAuditCheckpoint(auditId: string, checkpointId: string, result: any): Observable<ComplianceAudit> {
+    return this.http.put<ComplianceAudit>(
+      `${this.apiUrl}/audits/${auditId}/checkpoints/${checkpointId}`, 
+      result, 
+      this.httpOptions
+    );
+  }
+
+  completeAudit(auditId: string, summary: any): Observable<ComplianceAudit> {
+    return this.http.post<ComplianceAudit>(
+      `${this.apiUrl}/audits/${auditId}/complete`, 
+      summary, 
+      this.httpOptions
+    );
+  }
+
+  cancelAudit(auditId: string, reason: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/audits/${auditId}/cancel`, {
+      reason
+    }, this.httpOptions);
+  }
+
+  // Evidence Management
+  uploadEvidence(auditId: string, checkpointId: string, files: File[], metadata?: any): Observable<ComplianceEvidence[]> {
+    const formData = new FormData();
+    
+    files.forEach(file => formData.append('files', file));
+    
+    if (metadata) {
+      formData.append('metadata', JSON.stringify(metadata));
     }
-    return this.http.get<AuditLog[]>(`${this.apiUrl}/audit-logs/user`, { params });
+
+    return this.http.post<ComplianceEvidence[]>(
+      `${this.apiUrl}/audits/${auditId}/checkpoints/${checkpointId}/evidence`, 
+      formData
+    );
   }
 
-  getAuditLogsByResource(resourceType: string, resourceId: string): Observable<AuditLog[]> {
-    return this.http.get<AuditLog[]>(`${this.apiUrl}/audit-logs/resource`, {
-      params: { resourceType, resourceId }
-    });
+  getEvidence(evidenceId: string): Observable<ComplianceEvidence> {
+    return this.http.get<ComplianceEvidence>(`${this.apiUrl}/evidence/${evidenceId}`);
   }
 
-  // Compliance Checks
-  runComplianceCheck(checkType: string, resourceId?: string): Observable<ComplianceCheck> {
-    return this.http.post<ComplianceCheck>(`${this.apiUrl}/checks`, {
-      type: checkType,
-      resourceId,
-      checkedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getComplianceStatus(): Observable<ComplianceCheck[]> {
-    return this.http.get<ComplianceCheck[]>(`${this.apiUrl}/status`);
-  }
-
-  getComplianceHistory(dateRange?: { start: Date, end: Date }): Observable<ComplianceCheck[]> {
-    const params: any = {};
-    if (dateRange) {
-      params.startDate = dateRange.start.toISOString();
-      params.endDate = dateRange.end.toISOString();
-    }
-    return this.http.get<ComplianceCheck[]>(`${this.apiUrl}/history`, { params });
-  }
-
-  // Data Access Tracking
-  trackDataAccess(dataType: string, dataId: string, accessType: 'READ' | 'WRITE' | 'DELETE'): Observable<any> {
-    return this.http.post(`${this.apiUrl}/data-access`, {
-      userId: this.getCurrentUserId(),
-      dataType,
-      dataId,
-      accessType,
-      timestamp: new Date(),
-      ipAddress: this.getClientIP()
-    });
-  }
-
-  getDataAccessLogs(dataId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/data-access/${dataId}`);
-  }
-
-  // Privacy and Consent Management
-  recordConsentGiven(patientId: string, consentType: string, details: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/consent`, {
-      patientId,
-      consentType,
-      details,
-      givenBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  recordConsentWithdrawn(patientId: string, consentType: string, reason: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/consent`, {
-      body: {
-        patientId,
-        consentType,
-        reason,
-        withdrawnBy: this.getCurrentUserId(),
-        timestamp: new Date()
-      }
-    });
-  }
-
-  getConsentStatus(patientId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/consent/${patientId}`);
-  }
-
-  // Data Retention and Archival
-  getRetentionPolicies(): Observable<DataRetentionPolicy[]> {
-    return this.http.get<DataRetentionPolicy[]>(`${this.apiUrl}/retention/policies`);
-  }
-
-  applyRetentionPolicy(dataType: string, dataIds: string[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/retention/apply`, {
-      dataType,
-      dataIds,
-      appliedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getDataDueForArchival(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/retention/due-archival`);
-  }
-
-  getDataDueForDeletion(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/retention/due-deletion`);
-  }
-
-  // Security Monitoring
-  reportSecurityIncident(incident: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/security/incidents`, {
-      ...incident,
-      reportedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getSecurityIncidents(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/security/incidents`);
-  }
-
-  // Access Control Validation
-  validateUserAccess(resourceType: string, resourceId: string, action: string): Observable<boolean> {
-    return this.http.post<boolean>(`${this.apiUrl}/access/validate`, {
-      userId: this.getCurrentUserId(),
-      resourceType,
-      resourceId,
-      action
-    });
-  }
-
-  getAccessPermissions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/access/permissions/${this.getCurrentUserId()}`);
-  }
-
-  // Data Anonymization
-  anonymizeData(dataType: string, dataIds: string[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/anonymization`, {
-      dataType,
-      dataIds,
-      requestedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
-  }
-
-  getAnonymizationStatus(requestId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/anonymization/${requestId}/status`);
-  }
-
-  // Compliance Reporting
-  generateComplianceReport(reportType: string, dateRange: { start: Date, end: Date }): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/reports/${reportType}`, {
-      startDate: dateRange.start.toISOString(),
-      endDate: dateRange.end.toISOString(),
-      generatedBy: this.getCurrentUserId()
-    }, {
+  downloadEvidence(evidenceId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/evidence/${evidenceId}/download`, {
       responseType: 'blob'
     });
   }
 
-  getComplianceReportHistory(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/reports/history`);
+  deleteEvidence(evidenceId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/evidence/${evidenceId}`);
   }
 
-  // Data Breach Management
-  reportDataBreach(breach: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/breaches`, {
-      ...breach,
-      reportedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  // Findings Management
+  createFinding(auditId: string, findingData: any): Observable<ComplianceFinding> {
+    return this.http.post<ComplianceFinding>(
+      `${this.apiUrl}/audits/${auditId}/findings`, 
+      findingData, 
+      this.httpOptions
+    );
   }
 
-  getDataBreaches(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/breaches`);
+  updateFinding(findingId: string, updateData: any): Observable<ComplianceFinding> {
+    return this.http.put<ComplianceFinding>(
+      `${this.apiUrl}/findings/${findingId}`, 
+      updateData, 
+      this.httpOptions
+    );
   }
 
-  updateBreachStatus(breachId: string, status: string, notes: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/breaches/${breachId}`, {
-      status,
-      notes,
-      updatedBy: this.getCurrentUserId(),
-      timestamp: new Date()
+  resolveFinding(findingId: string, resolution: any): Observable<ComplianceFinding> {
+    return this.http.post<ComplianceFinding>(
+      `${this.apiUrl}/findings/${findingId}/resolve`, 
+      resolution, 
+      this.httpOptions
+    );
+  }
+
+  getFindings(filters?: any): Observable<ComplianceFinding[]> {
+    const params = filters ? { params: filters } : {};
+    return this.http.get<ComplianceFinding[]>(`${this.apiUrl}/findings`, params);
+  }
+
+  getOpenFindings(): Observable<ComplianceFinding[]> {
+    return this.http.get<ComplianceFinding[]>(`${this.apiUrl}/findings/open`);
+  }
+
+  // Metrics and Reporting
+  getComplianceMetrics(timeRange?: string): Observable<ComplianceMetrics> {
+    const params = timeRange ? { params: { timeRange } } : {};
+    return this.http.get<ComplianceMetrics>(`${this.apiUrl}/metrics`, params);
+  }
+
+  generateComplianceReport(reportType: string, filters?: any): Observable<any> {
+    const requestData = { reportType, filters };
+    return this.http.post(`${this.apiUrl}/reports/generate`, requestData, this.httpOptions);
+  }
+
+  getComplianceReport(reportId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/reports/${reportId}`, {
+      responseType: 'blob'
     });
   }
 
   // Regulatory Compliance
-  checkHIPAACompliance(resourceId: string): Observable<ComplianceCheck> {
-    return this.runComplianceCheck('HIPAA', resourceId);
+  getRegulatoryRequirements(jurisdiction?: string): Observable<any[]> {
+    const params = jurisdiction ? { params: { jurisdiction } } : {};
+    return this.http.get<any[]>(`${this.apiUrl}/regulatory/requirements`, params);
   }
 
-  checkGDPRCompliance(resourceId: string): Observable<ComplianceCheck> {
-    return this.runComplianceCheck('GDPR', resourceId);
-  }
-
-  checkFDACompliance(resourceId: string): Observable<ComplianceCheck> {
-    return this.runComplianceCheck('FDA', resourceId);
+  checkRegulatoryCompliance(auditId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/regulatory/check/${auditId}`, {}, this.httpOptions);
   }
 
   // Training and Certification
-  recordComplianceTraining(trainingType: string, completionDate: Date): Observable<any> {
-    return this.http.post(`${this.apiUrl}/training`, {
-      userId: this.getCurrentUserId(),
-      trainingType,
-      completionDate,
-      recordedAt: new Date()
+  getTrainingRequirements(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/training/requirements`);
+  }
+
+  recordTrainingCompletion(trainingData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/training/complete`, trainingData, this.httpOptions);
+  }
+
+  getCertificationStatus(staffId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/certification/status/${staffId}`);
+  }
+
+  // Audit Trail
+  getAuditTrail(auditId: string): Observable<AuditTrailEntry[]> {
+    return this.http.get<AuditTrailEntry[]>(`${this.apiUrl}/audits/${auditId}/trail`);
+  }
+
+  addAuditTrailEntry(auditId: string, entry: any): Observable<AuditTrailEntry> {
+    return this.http.post<AuditTrailEntry>(
+      `${this.apiUrl}/audits/${auditId}/trail`, 
+      entry, 
+      this.httpOptions
+    );
+  }
+
+  // Private methods
+  private loadInitialData(): void {
+    // Load compliance rules
+    this.getComplianceRules().subscribe({
+      next: (rules) => this.complianceRulesSubject.next(rules),
+      error: (error) => console.error('Error loading compliance rules:', error)
+    });
+
+    // Load active audits
+    this.getActiveAudits().subscribe({
+      next: (audits) => this.activeAuditsSubject.next(audits),
+      error: (error) => console.error('Error loading active audits:', error)
+    });
+
+    // Load metrics
+    this.getComplianceMetrics().subscribe({
+      next: (metrics) => this.metricsSubject.next(metrics),
+      error: (error) => console.error('Error loading compliance metrics:', error)
     });
   }
 
-  getTrainingRecords(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/training/${this.getCurrentUserId()}`);
+  // Utility methods
+  refreshData(): void {
+    this.loadInitialData();
   }
 
-  // Policy Management
-  getPolicies(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/policies`);
+  getCurrentRules(): ComplianceRule[] {
+    return this.complianceRulesSubject.value;
   }
 
-  acknowledgePolicyRead(policyId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/policies/${policyId}/acknowledge`, {
-      userId: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  getCurrentActiveAudits(): ComplianceAudit[] {
+    return this.activeAuditsSubject.value;
   }
 
-  // Utility Methods
-  private getCurrentUserId(): string {
-    return localStorage.getItem('userId') || '';
+  getCurrentMetrics(): ComplianceMetrics | null {
+    return this.metricsSubject.value;
   }
 
-  private getSessionId(): string {
-    return sessionStorage.getItem('sessionId') || '';
+  // Helper methods
+  getSeverityColor(severity: string): string {
+    switch (severity) {
+      case 'critical': return 'warn';
+      case 'high': return 'accent';
+      case 'medium': return 'primary';
+      case 'low': return '';
+      default: return '';
+    }
   }
 
-  private getClientIP(): string {
-    // This would typically be handled by the backend
-    return 'client-ip';
+  getSeverityIcon(severity: string): string {
+    switch (severity) {
+      case 'critical': return 'error';
+      case 'high': return 'warning';
+      case 'medium': return 'info';
+      case 'low': return 'help';
+      default: return 'help';
+    }
   }
 
-  // Compliance Dashboard Data
-  getComplianceDashboardData(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/dashboard`);
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'pass': return 'primary';
+      case 'completed': return 'primary';
+      case 'resolved': return 'primary';
+      case 'fail': return 'warn';
+      case 'failed': return 'warn';
+      case 'warning': return 'accent';
+      case 'in_progress': return 'accent';
+      case 'open': return 'warn';
+      default: return '';
+    }
   }
 
-  // Risk Assessment
-  assessComplianceRisk(resourceType: string, resourceId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/risk-assessment`, {
-      resourceType,
-      resourceId,
-      assessedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'pass': return 'check_circle';
+      case 'completed': return 'check_circle';
+      case 'resolved': return 'check_circle';
+      case 'fail': return 'cancel';
+      case 'failed': return 'cancel';
+      case 'warning': return 'warning';
+      case 'in_progress': return 'hourglass_empty';
+      case 'open': return 'error';
+      default: return 'help';
+    }
   }
 
-  // Automated Compliance Monitoring
-  enableAutomatedMonitoring(resourceType: string, rules: any[]): Observable<any> {
-    return this.http.post(`${this.apiUrl}/monitoring/enable`, {
-      resourceType,
-      rules,
-      enabledBy: this.getCurrentUserId()
-    });
+  calculateComplianceScore(checkResults: ComplianceCheckResult[]): number {
+    if (checkResults.length === 0) return 0;
+    
+    const totalScore = checkResults.reduce((sum, result) => sum + result.score, 0);
+    return Math.round(totalScore / checkResults.length);
   }
 
-  getMonitoringAlerts(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/monitoring/alerts`);
+  formatAuditDuration(startedAt: Date, completedAt?: Date): string {
+    const end = completedAt || new Date();
+    const duration = end.getTime() - startedAt.getTime();
+    const hours = Math.floor(duration / (1000 * 60 * 60));
+    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
   }
 
-  acknowledgeAlert(alertId: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/monitoring/alerts/${alertId}/acknowledge`, {
-      acknowledgedBy: this.getCurrentUserId(),
-      timestamp: new Date()
-    });
+  isAuditOverdue(audit: ComplianceAudit): boolean {
+    if (audit.status === 'completed') return false;
+    
+    const now = new Date();
+    const startedAt = new Date(audit.startedAt);
+    const hoursSinceStart = (now.getTime() - startedAt.getTime()) / (1000 * 60 * 60);
+    
+    // Consider audit overdue if it's been more than 24 hours
+    return hoursSinceStart > 24;
   }
 }

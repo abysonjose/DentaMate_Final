@@ -1,268 +1,262 @@
 <div class="lab-staff-dashboard">
-  <mat-sidenav-container class="sidenav-container">
-    <!-- Side Navigation -->
-    <mat-sidenav #sidenav [opened]="sidenavOpened" mode="side" class="sidenav">
-      <mat-toolbar class="sidenav-header">
-        <mat-icon>biotech</mat-icon>
-        <span>Lab Staff Portal</span>
-      </mat-toolbar>
-      
-      <mat-nav-list class="navigation-list">
-        <mat-list-item 
-          *ngFor="let item of navigationItems" 
-          [routerLink]="item.route"
-          routerLinkActive="active-nav-item"
-          class="nav-item">
-          <mat-icon matListIcon>{{ item.icon }}</mat-icon>
-          <span matLine>{{ item.label }}</span>
-          <span matLine class="nav-description">{{ item.description }}</span>
-          <mat-chip 
-            *ngIf="item.badge && item.badge > 0" 
-            class="nav-badge"
-            color="warn">
-            {{ item.badge }}
-          </mat-chip>
-        </mat-list-item>
-      </mat-nav-list>
-    </mat-sidenav>
-
-    <!-- Main Content -->
-    <mat-sidenav-content class="main-content">
-      <!-- Top Toolbar -->
-      <mat-toolbar class="top-toolbar">
-        <button mat-icon-button (click)="toggleSidenav()">
-          <mat-icon>menu</mat-icon>
-        </button>
-        
-        <span class="toolbar-title">Lab Staff Dashboard</span>
-        
-        <span class="toolbar-spacer"></span>
-        
-        <!-- Alerts -->
-        <button mat-icon-button [matBadge]="unreadAlertsCount" matBadgeColor="warn" 
-                [matBadgeHidden]="unreadAlertsCount === 0" class="alerts-button">
-          <mat-icon>notifications</mat-icon>
-        </button>
-        
-        <!-- Refresh -->
-        <button mat-icon-button (click)="refreshDashboard()" matTooltip="Refresh Dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="welcome-section">
+        <h1>Lab Staff Dashboard</h1>
+        <p *ngIf="profile" class="welcome-text">
+          Welcome back, {{ profile.name }} | {{ profile.department | titlecase }} Department
+        </p>
+      </div>
+      <div class="header-actions">
+        <button mat-icon-button (click)="onRefreshData()" matTooltip="Refresh Data">
           <mat-icon>refresh</mat-icon>
         </button>
-        
-        <!-- User Profile -->
-        <div class="user-profile" *ngIf="currentUser$ | async as user">
-          <mat-icon>person</mat-icon>
-          <span>{{ user.name }}</span>
-        </div>
-      </mat-toolbar>
+      </div>
+    </div>
+  </div>
 
-      <!-- Dashboard Content -->
-      <div class="dashboard-content">
-        <!-- Alerts Section -->
-        <div class="alerts-section" *ngIf="alerts.length > 0">
-          <mat-card class="alerts-card">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="dashboard-content">
+    
+    <!-- Quick Stats Cards -->
+    <div class="stats-grid">
+      <mat-card class="stat-card pending">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>assignment</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ quickStats.pendingRequests }}</h3>
+              <p>Pending Requests</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card urgent">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>priority_high</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ quickStats.urgentRequests }}</h3>
+              <p>Urgent Requests</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card completed">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ quickStats.completedToday }}</h3>
+              <p>Completed Today</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card ai-processing">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>psychology</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ quickStats.aiProcessingQueue }}</h3>
+              <p>AI Processing</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="onTabChange($event.index)">
+      
+      <!-- Today's Worklist Tab -->
+      <mat-tab label="Today's Worklist">
+        <div class="tab-content">
+          <mat-card>
             <mat-card-header>
               <mat-card-title>
-                <mat-icon>notifications_active</mat-icon>
-                Alerts & Notifications
-                <button mat-button color="primary" (click)="markAllAlertsAsRead()" 
-                        *ngIf="unreadAlertsCount > 0" class="mark-read-btn">
-                  Mark All Read
-                </button>
+                <mat-icon>list_alt</mat-icon>
+                Today's Diagnostic Requests
+              </mat-card-title>
+              <mat-card-subtitle>
+                {{ todayWorklist.length }} items in your worklist
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div *ngIf="todayWorklist.length === 0" class="empty-state">
+                <mat-icon>assignment_turned_in</mat-icon>
+                <p>No pending requests for today. Great job!</p>
+              </div>
+              
+              <div *ngIf="todayWorklist.length > 0" class="worklist-items">
+                <div *ngFor="let item of todayWorklist" 
+                     class="worklist-item" 
+                     (click)="onWorklistItemClick(item)">
+                  <div class="item-header">
+                    <div class="patient-info">
+                      <h4>{{ item.patientName }}</h4>
+                      <span class="request-id">ID: {{ item.requestId }}</span>
+                    </div>
+                    <div class="item-badges">
+                      <mat-chip [color]="getPriorityColor(item.priority)" selected>
+                        {{ item.priority | titlecase }}
+                      </mat-chip>
+                      <mat-chip [color]="getStatusColor(item.status)" selected>
+                        {{ item.status | titlecase }}
+                      </mat-chip>
+                    </div>
+                  </div>
+                  <div class="item-details">
+                    <div class="test-type">
+                      <mat-icon>medical_services</mat-icon>
+                      <span>{{ item.testType | titlecase }}</span>
+                    </div>
+                    <div class="scheduled-time" *ngIf="item.scheduledAt">
+                      <mat-icon>schedule</mat-icon>
+                      <span>{{ item.scheduledAt | date:'short' }}</span>
+                    </div>
+                    <div class="duration">
+                      <mat-icon>timer</mat-icon>
+                      <span>{{ formatDuration(item.estimatedDuration) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Alerts & Notifications Tab -->
+      <mat-tab label="Alerts">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>notifications</mat-icon>
+                Recent Alerts
+                <mat-chip *ngIf="alerts.length > 0" [color]="'warn'" selected>
+                  {{ alerts.length }}
+                </mat-chip>
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="alerts-list">
+              <div *ngIf="alerts.length === 0" class="empty-state">
+                <mat-icon>notifications_off</mat-icon>
+                <p>No active alerts. All systems running smoothly!</p>
+              </div>
+              
+              <div *ngIf="alerts.length > 0" class="alerts-list">
                 <div *ngFor="let alert of alerts" 
                      class="alert-item" 
-                     [class.unread]="!alert.read"
-                     [class.urgent]="alert.priority === 'urgent'">
-                  <mat-icon [color]="getAlertColor(alert.priority)">
-                    {{ getAlertIcon(alert.type) }}
-                  </mat-icon>
+                     [class]="'alert-' + alert.severity"
+                     (click)="onAlertClick(alert)">
+                  <div class="alert-icon">
+                    <mat-icon [color]="getAlertColor(alert.severity)">
+                      {{ getAlertIcon(alert.type) }}
+                    </mat-icon>
+                  </div>
                   <div class="alert-content">
-                    <div class="alert-title">{{ alert.title }}</div>
-                    <div class="alert-message">{{ alert.message }}</div>
-                    <div class="alert-time">{{ alert.timestamp | date:'short' }}</div>
-                  </div>
-                  <button mat-icon-button (click)="dismissAlert(alert.id)" class="dismiss-btn">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                </div>
-              </div>
-            </mat-card-content>
-          </mat-card>
-        </div>
-
-        <!-- Metrics Overview -->
-        <div class="metrics-section">
-          <div class="metrics-grid">
-            <!-- Pending Requests -->
-            <mat-card class="metric-card pending">
-              <mat-card-content>
-                <div class="metric-header">
-                  <mat-icon>assignment</mat-icon>
-                  <span>Pending Requests</span>
-                </div>
-                <div class="metric-value">{{ dashboardMetrics.pendingRequests }}</div>
-                <div class="metric-subtitle">Awaiting processing</div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- In Progress -->
-            <mat-card class="metric-card progress">
-              <mat-card-content>
-                <div class="metric-header">
-                  <mat-icon>hourglass_empty</mat-icon>
-                  <span>In Progress</span>
-                </div>
-                <div class="metric-value">{{ dashboardMetrics.inProgressTests }}</div>
-                <div class="metric-subtitle">Currently processing</div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- Completed Today -->
-            <mat-card class="metric-card completed">
-              <mat-card-content>
-                <div class="metric-header">
-                  <mat-icon>check_circle</mat-icon>
-                  <span>Completed Today</span>
-                </div>
-                <div class="metric-value">{{ dashboardMetrics.completedToday }}</div>
-                <div class="metric-subtitle">Reports uploaded</div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- Urgent Requests -->
-            <mat-card class="metric-card urgent">
-              <mat-card-content>
-                <div class="metric-header">
-                  <mat-icon>priority_high</mat-icon>
-                  <span>Urgent Requests</span>
-                </div>
-                <div class="metric-value">{{ dashboardMetrics.urgentRequests }}</div>
-                <div class="metric-subtitle">High priority cases</div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- Delayed Uploads -->
-            <mat-card class="metric-card delayed">
-              <mat-card-content>
-                <div class="metric-header">
-                  <mat-icon>schedule</mat-icon>
-                  <span>Delayed Uploads</span>
-                </div>
-                <div class="metric-value">{{ dashboardMetrics.delayedUploads }}</div>
-                <div class="metric-subtitle">Overdue reports</div>
-              </mat-card-content>
-            </mat-card>
-
-            <!-- AI Processing -->
-            <mat-card class="metric-card ai">
-              <mat-card-content>
-                <div class="metric-header">
-                  <mat-icon>psychology</mat-icon>
-                  <span>AI Processing</span>
-                </div>
-                <div class="metric-value">{{ dashboardMetrics.aiProcessingQueue }}</div>
-                <div class="metric-subtitle">In AI analysis queue</div>
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </div>
-
-        <!-- Recent Requests -->
-        <div class="recent-requests-section">
-          <mat-card class="recent-requests-card">
-            <mat-card-header>
-              <mat-card-title>
-                <mat-icon>history</mat-icon>
-                Recent Diagnostic Requests
-              </mat-card-title>
-              <mat-card-subtitle>Latest requests assigned to you</mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-              <div *ngIf="isLoadingMetrics" class="loading-container">
-                <mat-spinner diameter="40"></mat-spinner>
-                <span>Loading recent requests...</span>
-              </div>
-              
-              <div *ngIf="!isLoadingMetrics && recentRequests.length === 0" class="no-data">
-                <mat-icon>assignment</mat-icon>
-                <span>No recent requests found</span>
-              </div>
-              
-              <div *ngIf="!isLoadingMetrics && recentRequests.length > 0" class="requests-list">
-                <div *ngFor="let request of recentRequests" class="request-item">
-                  <div class="request-info">
-                    <div class="patient-info">
-                      <strong>{{ request.patientName }}</strong>
-                      <span class="patient-id">ID: {{ request.patientId }}</span>
-                    </div>
-                    <div class="test-info">
-                      <mat-chip [color]="request.priority === 'urgent' ? 'warn' : 'primary'">
-                        {{ request.testType }}
-                      </mat-chip>
-                      <span class="doctor-name">Dr. {{ request.doctorName }}</span>
-                    </div>
-                    <div class="request-meta">
-                      <span class="request-time">{{ request.requestedAt | date:'short' }}</span>
-                      <mat-chip class="status-chip" [color]="request.status === 'PENDING' ? 'accent' : 'primary'">
-                        {{ request.status }}
+                    <h4>{{ alert.title }}</h4>
+                    <p>{{ alert.message }}</p>
+                    <div class="alert-meta">
+                      <span class="timestamp">{{ alert.timestamp | date:'short' }}</span>
+                      <mat-chip *ngIf="alert.actionRequired" color="warn" selected>
+                        Action Required
                       </mat-chip>
                     </div>
                   </div>
-                  <div class="request-actions">
-                    <button mat-button color="primary" [routerLink]="['/lab-staff/requests', request.id]">
-                      View Details
-                    </button>
-                  </div>
                 </div>
               </div>
             </mat-card-content>
-            <mat-card-actions>
-              <button mat-button color="primary" routerLink="/lab-staff/requests">
-                View All Requests
-              </button>
-            </mat-card-actions>
           </mat-card>
         </div>
+      </mat-tab>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions-section">
-          <mat-card class="quick-actions-card">
+      <!-- Performance Metrics Tab -->
+      <mat-tab label="Performance">
+        <div class="tab-content">
+          <mat-card>
             <mat-card-header>
               <mat-card-title>
-                <mat-icon>flash_on</mat-icon>
-                Quick Actions
+                <mat-icon>analytics</mat-icon>
+                Performance Metrics
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="actions-grid">
-                <button mat-raised-button color="primary" routerLink="/lab-staff/upload">
-                  <mat-icon>cloud_upload</mat-icon>
-                  Upload Report
-                </button>
-                <button mat-raised-button color="accent" routerLink="/lab-staff/verification">
-                  <mat-icon>verified_user</mat-icon>
-                  Verify Patient
-                </button>
-                <button mat-raised-button routerLink="/lab-staff/requests">
-                  <mat-icon>assignment</mat-icon>
-                  View Requests
-                </button>
-                <button mat-raised-button routerLink="/lab-staff/ai-status">
-                  <mat-icon>psychology</mat-icon>
-                  AI Status
-                </button>
+              <div *ngIf="metrics" class="metrics-grid">
+                <div class="metric-item">
+                  <div class="metric-label">Average Processing Time</div>
+                  <div class="metric-value">{{ metrics.averageProcessingTime }} min</div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Quality Score</div>
+                  <div class="metric-value">{{ metrics.qualityScore }}%</div>
+                  <mat-progress-bar 
+                    mode="determinate" 
+                    [value]="metrics.qualityScore"
+                    [color]="metrics.qualityScore >= 90 ? 'primary' : metrics.qualityScore >= 75 ? 'accent' : 'warn'">
+                  </mat-progress-bar>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Rework Requests</div>
+                  <div class="metric-value">{{ metrics.reworkRequests }}</div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-label">Reports Uploaded</div>
+                  <div class="metric-value">{{ metrics.completedReports }}</div>
+                </div>
               </div>
             </mat-card-content>
           </mat-card>
         </div>
+      </mat-tab>
+
+    </mat-tab-group>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <div class="actions-grid">
+        <button mat-raised-button color="primary" routerLink="/lab-staff/worklist">
+          <mat-icon>assignment</mat-icon>
+          View All Requests
+        </button>
+        <button mat-raised-button color="accent" routerLink="/lab-staff/upload">
+          <mat-icon>cloud_upload</mat-icon>
+          Upload Report
+        </button>
+        <button mat-raised-button routerLink="/lab-staff/history">
+          <mat-icon>history</mat-icon>
+          View History
+        </button>
+        <button mat-raised-button routerLink="/lab-staff/compliance">
+          <mat-icon>verified</mat-icon>
+          Compliance Audit
+        </button>
       </div>
+    </div>
 
-      <!-- Router Outlet for Child Components -->
-      <router-outlet></router-outlet>
-    </mat-sidenav-content>
-  </mat-sidenav-container>
+  </div>
 </div>
+
+<!-- Router Outlet for Child Routes -->
+<router-outlet></router-outlet>

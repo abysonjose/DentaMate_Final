@@ -93,3 +93,8 @@ import { ComplianceService } from './services/compliance.service';
   ]
 })
 export class LabStaffModule { }
+    AiIntegrationService,
+    ComplianceService
+  ]
+})
+export class LabStaffModule { }

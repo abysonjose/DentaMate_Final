@@ -1,0 +1,313 @@
+<div class="patient-verification-container">
+  <mat-card class="verification-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>verified_user</mat-icon>
+        Patient Verification
+      </mat-card-title>
+      <mat-card-subtitle>
+        Verify patient identity before conducting diagnostic procedures
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Patient Search Section -->
+      <div class="search-section">
+        <h3>Search Patient</h3>
+        <form [formGroup]="searchForm" (ngSubmit)="searchPatients()" class="search-form">
+          <div class="search-controls">
+            <mat-form-field appearance="outline" class="search-type">
+              <mat-label>Search By</mat-label>
+              <mat-select formControlName="searchType">
+                <mat-option value="patient_name">Patient Name</mat-option>
+                <mat-option value="patient_id">Patient ID</mat-option>
+                <mat-option value="phone">Phone Number</mat-option>
+                <mat-option value="request_id">Request ID</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="search-input">
+              <mat-label>Search Value</mat-label>
+              <input matInput formControlName="searchValue" placeholder="Enter search term...">
+              <mat-error *ngIf="searchForm.get('searchValue')?.hasError('required')">
+                Search value is required
+              </mat-error>
+              <mat-error *ngIf="searchForm.get('searchValue')?.hasError('minlength')">
+                Minimum 2 characters required
+              </mat-error>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" type="submit" 
+                    [disabled]="!searchForm.valid || isSearching">
+              <mat-icon *ngIf="!isSearching">search</mat-icon>
+              <mat-icon *ngIf="isSearching" class="spinning">refresh</mat-icon>
+              {{ isSearching ? 'Searching...' : 'Search' }}
+            </button>
+
+            <button mat-button type="button" (click)="clearSearch()">
+              <mat-icon>clear</mat-icon>
+              Clear
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Search Results -->
+      <div *ngIf="searchResults.length > 0" class="search-results">
+        <h3>Patients Requiring Verification ({{ searchResults.length }})</h3>
+        <div class="results-grid">
+          <mat-card *ngFor="let request of searchResults" 
+                    class="patient-card"
+                    [class.selected]="selectedRequest?.id === request.id"
+                    (click)="selectPatient(request)">
+            <mat-card-content>
+              <div class="patient-header">
+                <div class="patient-info">
+                  <h4>{{ request.patientName }}</h4>
+                  <p class="test-info">
+                    <mat-icon>{{ getTestTypeIcon(request.testType) }}</mat-icon>
+                    {{ request.testType | titlecase }}
+                  </p>
+                </div>
+                <div class="priority-badge">
+                  <mat-chip [color]="getPriorityColor(request.priority)" selected>
+                    {{ request.priority | titlecase }}
+                  </mat-chip>
+                </div>
+              </div>
+              <div class="request-details">
+                <p><strong>Request ID:</strong> {{ request.requestId }}</p>
+                <p><strong>Doctor:</strong> Dr. {{ request.doctorName }}</p>
+                <p><strong>Requested:</strong> {{ request.requestedAt | date:'medium' }}</p>
+                <p *ngIf="request.scheduledAt"><strong>Scheduled:</strong> {{ request.scheduledAt | date:'medium' }}</p>
+              </div>
+              <div *ngIf="request.notes" class="request-notes">
+                <strong>Notes:</strong> {{ request.notes }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Selected Patient Details -->
+      <div *ngIf="selectedRequest && patientInfo" class="patient-details">
+        <h3>Patient Information</h3>
+        <mat-card class="patient-info-card">
+          <mat-card-content>
+            <div class="patient-overview">
+              <div class="basic-info">
+                <h4>{{ patientInfo.name }}</h4>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <mat-icon>cake</mat-icon>
+                    <span>{{ formatDate(patientInfo.dateOfBirth) }} ({{ calculateAge(patientInfo.dateOfBirth) }} years)</span>
+                  </div>
+                  <div class="info-item">
+                    <mat-icon>phone</mat-icon>
+                    <span>{{ patientInfo.phone }}</span>
+                  </div>
+                  <div class="info-item">
+                    <mat-icon>email</mat-icon>
+                    <span>{{ patientInfo.email }}</span>
+                  </div>
+                  <div class="info-item">
+                    <mat-icon>home</mat-icon>
+                    <span>{{ patientInfo.address }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="emergency-contact">
+                <h5>Emergency Contact</h5>
+                <div class="contact-info">
+                  <p><strong>{{ patientInfo.emergencyContact.name }}</strong></p>
+                  <p>{{ patientInfo.emergencyContact.relationship }}</p>
+                  <p>{{ patientInfo.emergencyContact.phone }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="medical-info">
+              <div *ngIf="patientInfo.allergies.length > 0" class="allergies">
+                <h5>Allergies</h5>
+                <mat-chip-list>
+                  <mat-chip *ngFor="let allergy of patientInfo.allergies" color="warn" selected>
+                    {{ allergy }}
+                  </mat-chip>
+                </mat-chip-list>
+              </div>
+
+              <div *ngIf="patientInfo.currentMedications.length > 0" class="medications">
+                <h5>Current Medications</h5>
+                <mat-chip-list>
+                  <mat-chip *ngFor="let medication of patientInfo.currentMedications" color="accent" selected>
+                    {{ medication }}
+                  </mat-chip>
+                </mat-chip-list>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Verification Form -->
+      <div *ngIf="selectedRequest && patientInfo && !verificationResult" class="verification-form">
+        <h3>Verify Patient Identity</h3>
+        <form [formGroup]="verificationForm" class="verification-form-content">
+          <!-- Verification Method Selection -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Verification Method</mat-label>
+            <mat-select formControlName="verificationMethod" (selectionChange)="onVerificationMethodChange()">
+              <mat-option *ngFor="let method of verificationMethods" [value]="method.value">
+                <mat-icon>{{ method.icon }}</mat-icon>
+                {{ method.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="verificationForm.get('verificationMethod')?.hasError('required')">
+              Please select a verification method
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Method-specific fields -->
+          <div class="method-specific-fields">
+            <!-- ID Card Verification -->
+            <mat-form-field *ngIf="verificationForm.get('verificationMethod')?.value === 'id_card'" 
+                            appearance="outline" class="full-width">
+              <mat-label>ID Card Number</mat-label>
+              <input matInput formControlName="idNumber" placeholder="Enter government ID number">
+              <mat-error *ngIf="verificationForm.get('idNumber')?.hasError('required')">
+                ID number is required
+              </mat-error>
+              <mat-error *ngIf="verificationForm.get('idNumber')?.hasError('minlength')">
+                ID number must be at least 5 characters
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Phone Verification -->
+            <mat-form-field *ngIf="verificationForm.get('verificationMethod')?.value === 'phone_verification'" 
+                            appearance="outline" class="full-width">
+              <mat-label>Phone Number</mat-label>
+              <input matInput formControlName="phoneNumber" placeholder="Enter phone number">
+              <mat-error *ngIf="verificationForm.get('phoneNumber')?.hasError('required')">
+                Phone number is required
+              </mat-error>
+              <mat-error *ngIf="verificationForm.get('phoneNumber')?.hasError('pattern')">
+                Please enter a valid phone number
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Emergency Contact Verification -->
+            <div *ngIf="verificationForm.get('verificationMethod')?.value === 'emergency_contact'" class="emergency-fields">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Emergency Contact Name</mat-label>
+                <input matInput formControlName="emergencyContactName" placeholder="Contact name">
+                <mat-error *ngIf="verificationForm.get('emergencyContactName')?.hasError('required')">
+                  Contact name is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Emergency Contact Phone</mat-label>
+                <input matInput formControlName="emergencyContactPhone" placeholder="Contact phone">
+                <mat-error *ngIf="verificationForm.get('emergencyContactPhone')?.hasError('required')">
+                  Contact phone is required
+                </mat-error>
+                <mat-error *ngIf="verificationForm.get('emergencyContactPhone')?.hasError('pattern')">
+                  Please enter a valid phone number
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Biometric Verification -->
+            <div *ngIf="verificationForm.get('verificationMethod')?.value === 'biometric'" class="biometric-section">
+              <mat-card class="biometric-card">
+                <mat-card-content>
+                  <div class="biometric-placeholder">
+                    <mat-icon class="biometric-icon">fingerprint</mat-icon>
+                    <p>Biometric verification would be integrated here</p>
+                    <button mat-raised-button color="primary" type="button">
+                      <mat-icon>fingerprint</mat-icon>
+                      Capture Biometric
+                    </button>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <!-- Verification Notes -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Verification Notes</mat-label>
+            <textarea matInput formControlName="verificationNotes" rows="3" 
+                      placeholder="Enter verification notes and observations..."></textarea>
+            <mat-hint>Document the verification process and any observations</mat-hint>
+            <mat-error *ngIf="verificationForm.get('verificationNotes')?.hasError('required')">
+              Verification notes are required
+            </mat-error>
+            <mat-error *ngIf="verificationForm.get('verificationNotes')?.hasError('maxlength')">
+              Maximum 500 characters allowed
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Consent Checkbox -->
+          <div class="consent-section">
+            <mat-checkbox formControlName="consentGiven" color="primary">
+              I confirm that the patient has given consent for the diagnostic procedure and identity verification
+            </mat-checkbox>
+            <mat-error *ngIf="verificationForm.get('consentGiven')?.hasError('required')">
+              Patient consent confirmation is required
+            </mat-error>
+          </div>
+        </form>
+      </div>
+
+      <!-- Verification Result -->
+      <div *ngIf="verificationResult" class="verification-result">
+        <mat-card class="result-card success">
+          <mat-card-content>
+            <div class="result-header">
+              <mat-icon color="primary" class="success-icon">check_circle</mat-icon>
+              <div class="result-info">
+                <h4>Patient Verified Successfully</h4>
+                <p>{{ selectedRequest?.patientName }} has been verified and can proceed with the diagnostic procedure</p>
+              </div>
+            </div>
+            <div class="result-details">
+              <div class="detail-item">
+                <strong>Method:</strong> {{ getVerificationMethodLabel(verificationResult.verificationMethod) }}
+              </div>
+              <div class="detail-item">
+                <strong>Verified By:</strong> {{ verificationResult.verifiedBy }}
+              </div>
+              <div class="detail-item">
+                <strong>Verified At:</strong> {{ verificationResult.verifiedAt | date:'medium' }}
+              </div>
+              <div *ngIf="verificationResult.notes" class="detail-item">
+                <strong>Notes:</strong> {{ verificationResult.notes }}
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="clearSelection()" 
+              [disabled]="isVerifying">
+        <mat-icon>clear</mat-icon>
+        Clear Selection
+      </button>
+      <button mat-button type="button" (click)="openVerificationDialog()" 
+              [disabled]="!selectedRequest || !patientInfo || verificationResult || isVerifying">
+        <mat-icon>preview</mat-icon>
+        Quick Verify
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="verifyPatient()" 
+              [disabled]="!verificationForm.valid || verificationResult || isVerifying">
+        <mat-icon *ngIf="!isVerifying">verified_user</mat-icon>
+        <mat-icon *ngIf="isVerifying" class="spinning">refresh</mat-icon>
+        {{ isVerifying ? 'Verifying...' : 'Verify Patient' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

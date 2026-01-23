@@ -35,6 +35,7 @@ import { PrescriptionManagementComponent } from './components/prescription-manag
 import { AiDiagnosisComponent } from './components/ai-diagnosis/ai-diagnosis.component';
 import { LabRequestsComponent } from './components/lab-requests/lab-requests.component';
 import { NotificationsComponent } from './components/notifications/notifications.component';
+import { LabNotificationsComponent } from './components/lab-notifications/lab-notifications.component';
 
 // Dialogs
 import { ConsultationNotesDialogComponent } from './dialogs/consultation-notes-dialog/consultation-notes-dialog.component';
@@ -52,6 +53,9 @@ import { DoctorPrescriptionService } from './services/doctor-prescription.servic
 import { DoctorAiService } from './services/doctor-ai.service';
 import { DoctorLabService } from './services/doctor-lab.service';
 
+// Shared Services
+import { LabDoctorIntegrationService } from '../../shared/services/lab-doctor-integration.service';
+
 // Routing
 import { DoctorRoutingModule } from './doctor-routing.module';
 
@@ -66,6 +70,7 @@ import { DoctorRoutingModule } from './doctor-routing.module';
     AiDiagnosisComponent,
     LabRequestsComponent,
     NotificationsComponent,
+    LabNotificationsComponent,
     ConsultationNotesDialogComponent,
     PrescriptionDialogComponent,
     LabRequestDialogComponent,
@@ -108,7 +113,8 @@ import { DoctorRoutingModule } from './doctor-routing.module';
     DoctorPatientService,
     DoctorPrescriptionService,
     DoctorAiService,
-    DoctorLabService
+    DoctorLabService,
+    LabDoctorIntegrationService
   ]
 })
 export class DoctorModule { }

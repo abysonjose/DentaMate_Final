@@ -77,6 +77,14 @@ const routes: Routes = [
     data: { roles: ['billing-officer', 'cashier', 'accountant'] }
   },
   
+  // Lab Staff module
+  {
+    path: 'lab-staff',
+    loadChildren: () => import('./modules/lab-staff/lab-staff.module').then(m => m.LabStaffModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['lab-staff'] }
+  },
+
   // Admin modules
   {
     path: 'branch-admin',
