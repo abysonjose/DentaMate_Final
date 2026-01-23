@@ -1,0 +1,255 @@
+.dashboard-header {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+
+    .shift-info {
+      .dashboard-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 28px;
+        font-weight: 500;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
+      }
+
+      .shift-details {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-top: 8px;
+
+        .shift-time {
+          font-size: 16px;
+          opacity: 0.9;
+        }
+
+        mat-chip-listbox {
+          mat-chip {
+            &.status-active {
+              background-color: #4CAF50;
+              color: white;
+            }
+            &.status-scheduled {
+              background-color: #FF9800;
+              color: white;
+            }
+            &.status-completed {
+              background-color: #9E9E9E;
+              color: white;
+            }
+          }
+        }
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      .current-time {
+        font-size: 18px;
+        font-weight: 500;
+        padding: 8px 16px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 20px;
+      }
+
+      button {
+        color: white;
+
+        mat-icon {
+          &.spinning {
+            animation: spin 1s linear infinite;
+          }
+        }
+      }
+    }
+  }
+
+  .shift-progress {
+    .progress-text {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 5px;
+      display: block;
+    }
+  }
+}
+
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+
+  .stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+
+    mat-card-content {
+      padding: 20px;
+
+      .stat-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+
+        .stat-icon {
+          font-size: 36px;
+          width: 36px;
+          height: 36px;
+          opacity: 0.8;
+        }
+
+        .stat-details {
+          .stat-number {
+            font-size: 32px;
+            font-weight: 600;
+            line-height: 1;
+          }
+
+          .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 2px;
+          }
+        }
+      }
+
+      .stat-subtitle {
+        font-size: 12px;
+        color: #888;
+        margin-left: 51px;
+      }
+    }
+
+    &.patients-card {
+      .stat-icon { color: #2196F3; }
+      .stat-number { color: #2196F3; }
+    }
+
+    &.tasks-card {
+      .stat-icon { color: #FF9800; }
+      .stat-number { color: #FF9800; }
+    }
+
+    &.doctors-card {
+      .stat-icon { color: #4CAF50; }
+      .stat-number { color: #4CAF50; }
+    }
+
+    &.queue-card {
+      .stat-icon { color: #9C27B0; }
+      .stat-number { color: #9C27B0; }
+    }
+  }
+}
+
+.navigation-section {
+  margin-bottom: 30px;
+
+  .nurse-tabs {
+    .tab-content {
+      padding: 30px;
+      text-align: center;
+
+      .navigate-button {
+        padding: 12px 24px;
+        font-size: 16px;
+
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+}
+
+.main-content {
+  min-height: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  p {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #666;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 15px;
+
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+
+      .shift-info .dashboard-title {
+        font-size: 24px;
+      }
+
+      .header-actions {
+        align-self: flex-end;
+      }
+    }
+  }
+
+  .quick-stats {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .navigation-section .nurse-tabs .tab-content {
+    padding: 20px;
+  }
+
+  .main-content {
+    padding: 15px;
+  }
+}

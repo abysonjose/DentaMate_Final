@@ -1,0 +1,310 @@
+<!-- Clinical Communication Header -->
+<div class="communication-header">
+  <div class="header-content">
+    <h2>
+      <mat-icon>forum</mat-icon>
+      Clinical Communication
+    </h2>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openSendMessageDialog()">
+        <mat-icon>send</mat-icon>
+        Send Message
+      </button>
+      <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
+        <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Communication Tabs -->
+<mat-tab-group [(selectedIndex)]="selectedTab" class="communication-tabs">
+  
+  <!-- Messages Tab -->
+  <mat-tab label="Messages" [badge]="getFilteredMessages().filter(m => !m.read).length">
+    <div class="tab-content">
+      <!-- Message Filters -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline">
+          <mat-label>Filter Messages</mat-label>
+          <mat-select [(value)]="messageFilter">
+            <mat-option value="all">All Messages</mat-option>
+            <mat-option value="unread">Unread Only</mat-option>
+            <mat-option value="urgent">Urgent Only</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Messages List -->
+      <div class="messages-list" *ngIf="getFilteredMessages().length; else noMessages">
+        <mat-card *ngFor="let message of getFilteredMessages()" class="message-card" 
+                  [class.unread]="!message.read">
+          <mat-card-header>
+            <div class="message-header">
+              <div class="sender-info">
+                <span class="sender-name">{{ message.senderName }}</span>
+                <mat-chip [color]="getMessageTypeColor(message.messageType)" class="message-type">
+                  {{ message.messageType | titlecase }}
+                </mat-chip>
+              </div>
+              <div class="message-time">
+                {{ message.timestamp | date:'short' }}
+              </div>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="message-subject">{{ message.subject }}</div>
+            <div class="message-content">{{ message.message }}</div>
+            <div class="patient-info" *ngIf="message.patientName">
+              <mat-icon>person</mat-icon>
+              <span>Patient: {{ message.patientName }}</span>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button (click)="markMessageAsRead(message.id)" *ngIf="!message.read">
+              <mat-icon>mark_email_read</mat-icon>
+              Mark as Read
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <ng-template #noMessages>
+        <div class="no-data">
+          <mat-icon>mail_outline</mat-icon>
+          <p>No messages found</p>
+        </div>
+      </ng-template>
+    </div>
+  </mat-tab>
+
+  <!-- Tasks Tab -->
+  <mat-tab label="Tasks" [badge]="getFilteredTasks().filter(t => t.status === 'pending').length">
+    <div class="tab-content">
+      <!-- Task Filters -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline">
+          <mat-label>Filter Tasks</mat-label>
+          <mat-select [(value)]="taskFilter">
+            <mat-option value="all">All Tasks</mat-option>
+            <mat-option value="pending">Pending</mat-option>
+            <mat-option value="in-progress">In Progress</mat-option>
+            <mat-option value="urgent">Urgent</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Tasks List -->
+      <div class="tasks-list" *ngIf="getFilteredTasks().length; else noTasks">
+        <mat-card *ngFor="let task of getFilteredTasks()" class="task-card">
+          <mat-card-header>
+            <div class="task-header">
+              <div class="task-info">
+                <span class="task-title">{{ task.title }}</span>
+                <mat-chip [color]="getTaskPriorityColor(task.priority)" class="task-priority">
+                  {{ task.priority | titlecase }}
+                </mat-chip>
+              </div>
+              <div class="task-time">
+                {{ task.createdAt | date:'short' }}
+              </div>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="task-description">{{ task.description }}</div>
+            <div class="task-details">
+              <div class="assigned-by">
+                <mat-icon>person</mat-icon>
+                <span>Assigned by: {{ task.assignedByName }} ({{ task.assignedByRole | titlecase }})</span>
+              </div>
+              <div class="patient-info" *ngIf="task.patientName">
+                <mat-icon>local_hospital</mat-icon>
+                <span>Patient: {{ task.patientName }}</span>
+              </div>
+              <div class="due-time" *ngIf="task.dueTime">
+                <mat-icon>schedule</mat-icon>
+                <span>Due: {{ task.dueTime | date:'short' }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="acceptTask(task.id)" 
+                    *ngIf="task.status === 'pending'">
+              <mat-icon>check</mat-icon>
+              Accept Task
+            </button>
+            <button mat-raised-button color="primary" (click)="completeTask(task.id)" 
+                    *ngIf="task.status === 'in-progress'">
+              <mat-icon>done</mat-icon>
+              Complete Task
+            </button>
+            <mat-chip *ngIf="task.status === 'completed'" color="primary">
+              <mat-icon>check_circle</mat-icon>
+              Completed
+            </mat-chip>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <ng-template #noTasks>
+        <div class="no-data">
+          <mat-icon>assignment</mat-icon>
+          <p>No tasks found</p>
+        </div>
+      </ng-template>
+    </div>
+  </mat-tab>
+
+  <!-- Handoffs Tab -->
+  <mat-tab label="Patient Handoffs" [badge]="getFilteredHandoffs().filter(h => h.status === 'pending').length">
+    <div class="tab-content">
+      <!-- Handoff Filters -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline">
+          <mat-label>Filter Handoffs</mat-label>
+          <mat-select [(value)]="handoffFilter">
+            <mat-option value="all">All Handoffs</mat-option>
+            <mat-option value="pending">Pending</mat-option>
+            <mat-option value="acknowledged">Acknowledged</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Handoffs List -->
+      <div class="handoffs-list" *ngIf="getFilteredHandoffs().length; else noHandoffs">
+        <mat-card *ngFor="let handoff of getFilteredHandoffs()" class="handoff-card">
+          <mat-card-header>
+            <div class="handoff-header">
+              <div class="handoff-info">
+                <span class="patient-name">{{ handoff.patientName }}</span>
+                <mat-chip class="token-chip">{{ handoff.tokenNumber }}</mat-chip>
+                <mat-chip [color]="getHandoffTypeColor(handoff.handoffType)" class="handoff-type">
+                  {{ handoff.handoffType | titlecase }}
+                </mat-chip>
+              </div>
+              <div class="handoff-time">
+                {{ handoff.timestamp | date:'short' }}
+              </div>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="handoff-details">
+              <div class="from-staff">
+                <mat-icon>person</mat-icon>
+                <span>From: {{ handoff.fromStaffName }} ({{ handoff.fromRole | titlecase }})</span>
+              </div>
+              <div class="to-staff">
+                <mat-icon>person_outline</mat-icon>
+                <span>To: {{ handoff.toStaffName }} ({{ handoff.toRole | titlecase }})</span>
+              </div>
+            </div>
+            <div class="handoff-notes" *ngIf="handoff.notes">
+              <strong>Notes:</strong> {{ handoff.notes }}
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="acknowledgeHandoff(handoff.id)" 
+                    *ngIf="handoff.status === 'pending' && handoff.toRole === 'nurse'">
+              <mat-icon>check</mat-icon>
+              Acknowledge
+            </button>
+            <button mat-raised-button color="primary" (click)="completeHandoff(handoff.id)" 
+                    *ngIf="handoff.status === 'acknowledged' && handoff.toRole === 'nurse'">
+              <mat-icon>done</mat-icon>
+              Complete Handoff
+            </button>
+            <mat-chip *ngIf="handoff.status === 'completed'" color="primary">
+              <mat-icon>check_circle</mat-icon>
+              Completed
+            </mat-chip>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <ng-template #noHandoffs>
+        <div class="no-data">
+          <mat-icon>swap_horiz</mat-icon>
+          <p>No patient handoffs found</p>
+        </div>
+      </ng-template>
+    </div>
+  </mat-tab>
+
+  <!-- Alerts Tab -->
+  <mat-tab label="Alerts" [badge]="getFilteredAlerts().filter(a => !a.acknowledged).length">
+    <div class="tab-content">
+      <!-- Alert Filters -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline">
+          <mat-label>Filter Alerts</mat-label>
+          <mat-select [(value)]="alertFilter">
+            <mat-option value="all">All Alerts</mat-option>
+            <mat-option value="active">Active Only</mat-option>
+            <mat-option value="emergency">Emergency Only</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Alerts List -->
+      <div class="alerts-list" *ngIf="getFilteredAlerts().length; else noAlerts">
+        <mat-card *ngFor="let alert of getFilteredAlerts()" class="alert-card" 
+                  [class]="'alert-' + alert.priority">
+          <mat-card-header>
+            <div class="alert-header">
+              <div class="alert-info">
+                <span class="alert-title">{{ alert.title }}</span>
+                <mat-chip [color]="getAlertPriorityColor(alert.priority)" class="alert-priority">
+                  {{ alert.priority | titlecase }}
+                </mat-chip>
+              </div>
+              <div class="alert-time">
+                {{ alert.timestamp | date:'short' }}
+              </div>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="alert-message">{{ alert.message }}</div>
+            <div class="alert-details">
+              <div class="triggered-by">
+                <mat-icon>person</mat-icon>
+                <span>Triggered by: {{ alert.triggeredByName }} ({{ alert.triggeredByRole | titlecase }})</span>
+              </div>
+              <div class="patient-info" *ngIf="alert.patientName">
+                <mat-icon>local_hospital</mat-icon>
+                <span>Patient: {{ alert.patientName }}</span>
+              </div>
+              <div class="room-info" *ngIf="alert.roomId">
+                <mat-icon>meeting_room</mat-icon>
+                <span>Room: {{ alert.roomId }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="acknowledgeAlert(alert.id)" 
+                    *ngIf="!alert.acknowledged">
+              <mat-icon>check</mat-icon>
+              Acknowledge
+            </button>
+            <mat-chip *ngIf="alert.acknowledged" color="primary">
+              <mat-icon>check_circle</mat-icon>
+              Acknowledged
+            </mat-chip>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <ng-template #noAlerts>
+        <div class="no-data">
+          <mat-icon>notification_important</mat-icon>
+          <p>No alerts found</p>
+        </div>
+      </ng-template>
+    </div>
+  </mat-tab>
+</mat-tab-group>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="40"></mat-spinner>
+  <p>Loading communication data...</p>
+</div>

@@ -1,0 +1,317 @@
+.shift-header {
+  margin-bottom: 20px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+
+      mat-icon {
+        color: #2196F3;
+      }
+    }
+
+    button mat-icon.spinning {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.shift-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shift-details-card {
+  .shift-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #2196F3;
+
+      mat-icon {
+        color: #2196F3;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .info-content {
+        display: flex;
+        flex-direction: column;
+
+        .label {
+          font-size: 12px;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .value {
+          font-size: 16px;
+          font-weight: 500;
+          color: #333;
+          margin-top: 2px;
+        }
+      }
+    }
+  }
+}
+
+.assignments-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  .doctors-list, .rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .doctor-item, .room-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e3f2fd;
+        border-color: #2196F3;
+      }
+
+      .doctor-info, .room-info {
+        flex: 1;
+
+        .doctor-name, .room-name {
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 4px;
+        }
+
+        .doctor-specialization, .room-type {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .doctor-details, .room-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .room-chip {
+          background: #e3f2fd;
+          color: #1976d2;
+        }
+      }
+
+      .patient-count, .room-doctor {
+        font-size: 12px;
+        color: #666;
+        text-align: right;
+        min-width: 80px;
+      }
+    }
+  }
+}
+
+.priority-patients-card {
+  .priority-patients {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .patient-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      background: #fff3e0;
+      border-radius: 8px;
+      border-left: 4px solid #ff9800;
+
+      .patient-info {
+        flex: 1;
+
+        .patient-name {
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 4px;
+        }
+
+        .patient-details {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .patient-status {
+        margin: 0 15px;
+      }
+
+      .patient-time {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: #666;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+}
+
+.alerts-card {
+  background: #ffebee;
+  border-left: 4px solid #f44336;
+
+  mat-card-header {
+    .alert-icon {
+      color: #f44336;
+      margin-right: 8px;
+    }
+  }
+
+  .alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #ffcdd2;
+
+      .alert-content {
+        flex: 1;
+
+        .alert-title {
+          font-weight: 500;
+          color: #d32f2f;
+          margin-bottom: 4px;
+        }
+
+        .alert-message {
+          color: #333;
+          margin-bottom: 8px;
+        }
+
+        .alert-time {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .dismiss-btn {
+        color: #666;
+        margin-left: 10px;
+      }
+    }
+  }
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+    margin-bottom: 15px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #666;
+
+  p {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .shift-details-card .shift-info-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .assignments-section {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .doctors-list .doctor-item,
+  .rooms-list .room-item,
+  .priority-patients .patient-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    .doctor-details,
+    .room-status,
+    .patient-status {
+      align-self: flex-end;
+    }
+  }
+
+  .alerts-list .alert-item {
+    flex-direction: column;
+    gap: 10px;
+
+    .dismiss-btn {
+      align-self: flex-end;
+      margin-left: 0;
+    }
+  }
+}

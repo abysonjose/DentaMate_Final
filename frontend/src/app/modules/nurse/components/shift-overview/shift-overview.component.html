@@ -1,0 +1,186 @@
+<!-- Shift Overview Header -->
+<div class="shift-header">
+  <div class="header-content">
+    <h2>
+      <mat-icon>schedule</mat-icon>
+      Shift Overview
+    </h2>
+    <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
+      <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+    </button>
+  </div>
+</div>
+
+<div class="shift-content" *ngIf="!isLoading">
+  <!-- Shift Details Card -->
+  <mat-card class="shift-details-card">
+    <mat-card-header>
+      <mat-card-title>Today's Shift Details</mat-card-title>
+      <mat-card-subtitle>{{ currentShift?.date | date:'fullDate' }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="shift-info-grid" *ngIf="currentShift">
+        <div class="info-item">
+          <mat-icon>access_time</mat-icon>
+          <div class="info-content">
+            <span class="label">Shift Time</span>
+            <span class="value">{{ formatTime(currentShift.startTime) }} - {{ formatTime(currentShift.endTime) }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <mat-icon>timelapse</mat-icon>
+          <div class="info-content">
+            <span class="label">Duration</span>
+            <span class="value">{{ getShiftDuration() }}</span>
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <mat-icon>info</mat-icon>
+          <div class="info-content">
+            <span class="label">Status</span>
+            <mat-chip [color]="getStatusColor(getShiftStatus())">{{ getShiftStatus() }}</mat-chip>
+          </div>
+        </div>
+        
+        <div class="info-item" *ngIf="getShiftStatus() === 'Scheduled'">
+          <mat-icon>schedule</mat-icon>
+          <div class="info-content">
+            <span class="label">Time Until Shift</span>
+            <span class="value">{{ getTimeUntilShift() }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Assigned Doctors and Rooms -->
+  <div class="assignments-section">
+    <div class="doctors-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Assigned Doctors ({{ currentShift?.assignedDoctors?.length || 0 }})</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="doctors-list" *ngIf="currentShift?.assignedDoctors?.length; else noDoctors">
+            <div class="doctor-item" *ngFor="let doctor of currentShift.assignedDoctors">
+              <div class="doctor-info">
+                <div class="doctor-name">{{ doctor.name }}</div>
+                <div class="doctor-specialization">{{ doctor.specialization }}</div>
+              </div>
+              <div class="doctor-details">
+                <mat-chip class="room-chip">Room {{ doctor.roomId }}</mat-chip>
+                <mat-chip [color]="getStatusColor(doctor.status)">{{ doctor.status | titlecase }}</mat-chip>
+              </div>
+              <div class="patient-count">
+                {{ getPatientsByDoctor(doctor.id).length }} patients
+              </div>
+            </div>
+          </div>
+          <ng-template #noDoctors>
+            <div class="no-data">
+              <mat-icon>person_off</mat-icon>
+              <p>No doctors assigned to this shift</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="rooms-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Assigned Rooms ({{ currentShift?.assignedRooms?.length || 0 }})</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="rooms-list" *ngIf="currentShift?.assignedRooms?.length; else noRooms">
+            <div class="room-item" *ngFor="let room of currentShift.assignedRooms">
+              <div class="room-info">
+                <div class="room-name">{{ room.name }}</div>
+                <div class="room-type">{{ room.type }}</div>
+              </div>
+              <div class="room-status">
+                <mat-chip [color]="getStatusColor(room.status)">{{ room.status | titlecase }}</mat-chip>
+              </div>
+              <div class="room-doctor" *ngIf="getDoctorByRoom(room.id) as doctor">
+                Dr. {{ doctor.name }}
+              </div>
+            </div>
+          </div>
+          <ng-template #noRooms>
+            <div class="no-data">
+              <mat-icon>meeting_room_off</mat-icon>
+              <p>No rooms assigned to this shift</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Priority Patients -->
+  <mat-card class="priority-patients-card">
+    <mat-card-header>
+      <mat-card-title>Priority Patients Requiring Attention</mat-card-title>
+      <mat-card-subtitle>Patients awaiting preparation or immediate assistance</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="priority-patients" *ngIf="getPriorityPatients().length; else noPriorityPatients">
+        <div class="patient-item" *ngFor="let patient of getPriorityPatients()">
+          <div class="patient-info">
+            <div class="patient-name">{{ patient.name }}</div>
+            <div class="patient-details">
+              Token: {{ patient.tokenNumber }} | 
+              Age: {{ patient.age }} | 
+              {{ patient.gender }}
+            </div>
+          </div>
+          <div class="patient-status">
+            <mat-chip [color]="getStatusColor(patient.status)">{{ patient.status | titlecase }}</mat-chip>
+          </div>
+          <div class="patient-time">
+            <mat-icon>schedule</mat-icon>
+            {{ patient.estimatedTime }}
+          </div>
+        </div>
+      </div>
+      <ng-template #noPriorityPatients>
+        <div class="no-data">
+          <mat-icon>check_circle</mat-icon>
+          <p>All patients are prepared and ready</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Alerts and Notifications -->
+  <mat-card class="alerts-card" *ngIf="getUrgentNotifications().length">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="alert-icon">priority_high</mat-icon>
+        Urgent Alerts
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="alerts-list">
+        <div class="alert-item" *ngFor="let notification of getUrgentNotifications()">
+          <div class="alert-content">
+            <div class="alert-title">{{ notification.title }}</div>
+            <div class="alert-message">{{ notification.message }}</div>
+            <div class="alert-time">{{ notification.timestamp | date:'short' }}</div>
+          </div>
+          <button mat-icon-button (click)="markNotificationRead(notification.id)" class="dismiss-btn">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="40"></mat-spinner>
+  <p>Loading shift overview...</p>
+</div>

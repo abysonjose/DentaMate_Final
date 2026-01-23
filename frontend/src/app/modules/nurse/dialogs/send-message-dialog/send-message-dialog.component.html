@@ -1,0 +1,112 @@
+<h2 mat-dialog-title>
+  <mat-icon>send</mat-icon>
+  Send Clinical Message
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="messageForm" class="message-form">
+    
+    <!-- Recipient Type -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Send To</mat-label>
+      <mat-select formControlName="recipientType">
+        <mat-option *ngFor="let type of recipientTypes" [value]="type.value">
+          {{ type.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Recipient Selection -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Select Recipient</mat-label>
+      <mat-select formControlName="recipientId">
+        <mat-option *ngFor="let recipient of getRecipients()" [value]="recipient.id">
+          {{ recipient.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Message Type -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Message Type</mat-label>
+      <mat-select formControlName="messageType">
+        <mat-option *ngFor="let type of messageTypes" [value]="type.value">
+          {{ type.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Patient Selection (Optional) -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Related Patient (Optional)</mat-label>
+      <mat-select formControlName="patientId">
+        <mat-option value="">None</mat-option>
+        <mat-option *ngFor="let patient of patients" [value]="patient.id">
+          {{ patient.name }} ({{ patient.tokenNumber }})
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Subject -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Subject</mat-label>
+      <input matInput formControlName="subject" placeholder="Enter message subject">
+      <mat-hint>{{ messageForm.get('subject')?.value?.length || 0 }}/100 characters</mat-hint>
+      <mat-error *ngIf="messageForm.get('subject')?.hasError('required')">
+        Subject is required
+      </mat-error>
+      <mat-error *ngIf="messageForm.get('subject')?.hasError('maxlength')">
+        Subject cannot exceed 100 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Message Content -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Message</mat-label>
+      <textarea matInput formControlName="message" rows="5" 
+                placeholder="Enter your message..."></textarea>
+      <mat-hint>{{ messageForm.get('message')?.value?.length || 0 }}/1000 characters</mat-hint>
+      <mat-error *ngIf="messageForm.get('message')?.hasError('required')">
+        Message is required
+      </mat-error>
+      <mat-error *ngIf="messageForm.get('message')?.hasError('maxlength')">
+        Message cannot exceed 1000 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Message Preview -->
+    <div class="message-preview" *ngIf="messageForm.valid">
+      <h3>Message Preview</h3>
+      <div class="preview-content">
+        <div class="preview-item">
+          <strong>To:</strong> {{ getSelectedRecipientName() }} ({{ messageForm.get('recipientType')?.value | titlecase }})
+        </div>
+        <div class="preview-item" *ngIf="getSelectedPatientName()">
+          <strong>Patient:</strong> {{ getSelectedPatientName() }}
+        </div>
+        <div class="preview-item">
+          <strong>Type:</strong> {{ messageForm.get('messageType')?.value | titlecase }}
+        </div>
+        <div class="preview-item">
+          <strong>Subject:</strong> {{ messageForm.get('subject')?.value }}
+        </div>
+        <div class="preview-item">
+          <strong>Message:</strong> {{ messageForm.get('message')?.value }}
+        </div>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <button mat-button (click)="onCancel()" class="cancel-btn">
+    <mat-icon>close</mat-icon>
+    Cancel
+  </button>
+  
+  <button mat-raised-button color="primary" (click)="onSend()" 
+          [disabled]="messageForm.invalid" class="send-btn">
+    <mat-icon>send</mat-icon>
+    Send Message
+  </button>
+</mat-dialog-actions>

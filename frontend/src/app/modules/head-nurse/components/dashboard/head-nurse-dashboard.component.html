@@ -1,0 +1,245 @@
+<!-- Header Section -->
+<div class="dashboard-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h1>Head Nurse Dashboard</h1>
+      <p class="subtitle">Clinical Coordination & Supervision</p>
+    </div>
+    <div class="time-section">
+      <div class="current-time">{{ currentTime | date:'HH:mm:ss' }}</div>
+      <div class="shift-info">
+        Shift: {{ shiftSummary.startTime }} - {{ shiftSummary.endTime }}
+      </div>
+    </div>
+    <div class="actions-section">
+      <button mat-icon-button (click)="refreshDashboard()" matTooltip="Refresh Dashboard">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Metrics Cards -->
+<div class="metrics-grid">
+  <mat-card class="metric-card patients">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>people</mat-icon>
+        <span class="metric-title">Patients in Queue</span>
+      </div>
+      <div class="metric-value">{{ dashboardMetrics.totalPatientsInQueue }}</div>
+      <div class="metric-subtitle" *ngIf="dashboardMetrics.patientBacklog > 0">
+        {{ dashboardMetrics.patientBacklog }} urgent cases
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card doctors">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>medical_services</mat-icon>
+        <span class="metric-title">Active Doctors</span>
+      </div>
+      <div class="metric-value">{{ dashboardMetrics.activeDoctors }}</div>
+      <div class="metric-subtitle">Currently treating patients</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card nurses">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>local_hospital</mat-icon>
+        <span class="metric-title">Nurses on Duty</span>
+      </div>
+      <div class="metric-value">{{ dashboardMetrics.nursesOnDuty }}</div>
+      <div class="metric-subtitle" [class.warning]="dashboardMetrics.staffShortage">
+        {{ dashboardMetrics.staffShortage ? 'Staff shortage detected' : 'Adequate staffing' }}
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card alerts">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>notifications</mat-icon>
+        <span class="metric-title">Critical Alerts</span>
+      </div>
+      <div class="metric-value">{{ dashboardMetrics.criticalAlerts }}</div>
+      <div class="metric-subtitle">Require immediate attention</div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Alerts Section -->
+<mat-card class="alerts-section" *ngIf="alerts.length > 0">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>warning</mat-icon>
+      Active Alerts
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="alerts-list">
+      <div class="alert-item" 
+           *ngFor="let alert of alerts" 
+           [class]="'severity-' + alert.severity"
+           [class.acknowledged]="alert.acknowledged">
+        <div class="alert-icon">
+          <mat-icon [color]="getAlertColor(alert.severity)">{{ getAlertIcon(alert.type) }}</mat-icon>
+        </div>
+        <div class="alert-content">
+          <div class="alert-message">{{ alert.message }}</div>
+          <div class="alert-time">{{ alert.timestamp | date:'HH:mm' }}</div>
+        </div>
+        <div class="alert-actions">
+          <button mat-icon-button 
+                  (click)="acknowledgeAlert(alert.id)" 
+                  *ngIf="!alert.acknowledged"
+                  matTooltip="Acknowledge">
+            <mat-icon>check</mat-icon>
+          </button>
+          <button mat-icon-button 
+                  (click)="dismissAlert(alert.id)" 
+                  matTooltip="Dismiss">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Main Content Grid -->
+<div class="content-grid">
+  <!-- Nursing Staff Summary -->
+  <mat-card class="staff-summary">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>group</mat-icon>
+        Nursing Staff Status
+      </mat-card-title>
+      <div class="header-actions">
+        <button mat-button routerLink="/head-nurse/nursing-staff">View All</button>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="staff-list">
+        <div class="staff-item" *ngFor="let staff of nursingStaffSummary">
+          <div class="staff-info">
+            <div class="staff-name">{{ staff.name }}</div>
+            <div class="staff-role">{{ staff.role | titlecase }}</div>
+          </div>
+          <div class="staff-status">
+            <mat-chip [color]="getStatusChipColor(staff.status)" selected>
+              {{ staff.status | titlecase }}
+            </mat-chip>
+          </div>
+          <div class="staff-assignment" *ngIf="staff.currentAssignment">
+            <small>{{ staff.currentAssignment }}</small>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Patient Flow Summary -->
+  <mat-card class="patient-flow-summary">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>timeline</mat-icon>
+        Patient Flow Status
+      </mat-card-title>
+      <div class="header-actions">
+        <button mat-button routerLink="/head-nurse/patient-flow">View All</button>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="patient-list">
+        <div class="patient-item" *ngFor="let patient of patientFlowSummary">
+          <div class="patient-info">
+            <div class="patient-name">{{ patient.patientName }}</div>
+            <div class="token-number">Token: {{ patient.tokenNumber }}</div>
+          </div>
+          <div class="patient-status">
+            <mat-chip [color]="getStatusChipColor(patient.status)" selected>
+              {{ patient.status | titlecase }}
+            </mat-chip>
+          </div>
+          <div class="patient-details">
+            <div *ngIf="patient.doctorAssigned">Dr. {{ patient.doctorAssigned }}</div>
+            <div *ngIf="patient.roomNumber">Room {{ patient.roomNumber }}</div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Recent Activities -->
+  <mat-card class="recent-activities">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Recent Activities
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let activity of recentActivities">
+          <div class="activity-time">{{ activity.timestamp | date:'HH:mm' }}</div>
+          <div class="activity-description">{{ activity.description }}</div>
+          <div class="activity-user">by {{ activity.user }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Shift Summary -->
+  <mat-card class="shift-summary">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>schedule</mat-icon>
+        Today's Shift Summary
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <div class="stat-label">Total Patients</div>
+          <div class="stat-value">{{ shiftSummary.totalPatients }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Completed Procedures</div>
+          <div class="stat-value">{{ shiftSummary.completedProcedures }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Avg. Turnaround Time</div>
+          <div class="stat-value">{{ shiftSummary.avgTurnaroundTime }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <button mat-fab 
+          color="primary" 
+          routerLink="/head-nurse/nursing-staff"
+          matTooltip="Manage Nursing Staff">
+    <mat-icon>group</mat-icon>
+  </button>
+  
+  <button mat-fab 
+          color="accent" 
+          routerLink="/head-nurse/patient-flow"
+          matTooltip="Monitor Patient Flow">
+    <mat-icon>timeline</mat-icon>
+  </button>
+  
+  <button mat-fab 
+          color="warn" 
+          routerLink="/head-nurse/compliance"
+          matTooltip="Compliance Tracking">
+    <mat-icon>fact_check</mat-icon>
+  </button>
+</div>

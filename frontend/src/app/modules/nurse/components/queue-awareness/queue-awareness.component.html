@@ -1,0 +1,188 @@
+<!-- Queue Awareness Header -->
+<div class="queue-header">
+  <div class="header-content">
+    <h2>
+      <mat-icon>queue</mat-icon>
+      Live Queue Status
+    </h2>
+    <div class="header-info">
+      <div class="current-time">
+        <mat-icon>schedule</mat-icon>
+        {{ getCurrentTimeString() }}
+      </div>
+      <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
+        <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Queue Overview Cards -->
+<div class="queue-overview" *ngIf="!isLoading">
+  <mat-card class="overview-card total-patients">
+    <mat-card-content>
+      <div class="card-content">
+        <mat-icon class="card-icon">people</mat-icon>
+        <div class="card-details">
+          <div class="card-number">{{ getTotalPatientsWaiting() }}</div>
+          <div class="card-label">Total Patients Waiting</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="overview-card average-wait">
+    <mat-card-content>
+      <div class="card-content">
+        <mat-icon class="card-icon">timer</mat-icon>
+        <div class="card-details">
+          <div class="card-number">{{ formatWaitTime(getAverageWaitTime()) }}</div>
+          <div class="card-label">Average Wait Time</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="overview-card active-doctors">
+    <mat-card-content>
+      <div class="card-content">
+        <mat-icon class="card-icon">medical_services</mat-icon>
+        <div class="card-details">
+          <div class="card-number">{{ assignedDoctors.length }}</div>
+          <div class="card-label">Active Doctors</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="overview-card longest-queue" *ngIf="getLongestQueue() as longestQueue">
+    <mat-card-content>
+      <div class="card-content">
+        <mat-icon class="card-icon">trending_up</mat-icon>
+        <div class="card-details">
+          <div class="card-number">{{ longestQueue.waitingCount }}</div>
+          <div class="card-label">Longest Queue</div>
+          <div class="card-subtitle">Dr. {{ getDoctorById(longestQueue.doctorId)?.name || longestQueue.doctorId }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Individual Doctor Queues -->
+<div class="doctor-queues" *ngIf="!isLoading">
+  <div class="queue-grid">
+    <mat-card class="doctor-queue-card" *ngFor="let queue of queueStatus">
+      <mat-card-header>
+        <div class="doctor-header">
+          <div class="doctor-info">
+            <div class="doctor-name">Dr. {{ getDoctorById(queue.doctorId)?.name || queue.doctorId }}</div>
+            <div class="doctor-specialization" *ngIf="getDoctorById(queue.doctorId) as doctor">
+              {{ doctor.specialization }}
+            </div>
+          </div>
+          <mat-chip [color]="getQueueStatusColor(queue.waitingCount)" class="queue-count-chip">
+            {{ queue.waitingCount }} waiting
+          </mat-chip>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Current Token -->
+        <div class="current-token-section">
+          <div class="section-title">
+            <mat-icon>play_arrow</mat-icon>
+            Current Token
+          </div>
+          <div class="current-token" *ngIf="queue.currentToken; else noCurrentToken">
+            <mat-chip class="token-chip current">{{ queue.currentToken }}</mat-chip>
+            <span class="token-label">Now Consulting</span>
+          </div>
+          <ng-template #noCurrentToken>
+            <div class="no-token">
+              <mat-icon>pause</mat-icon>
+              <span>No active consultation</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- Next Patient -->
+        <div class="next-patient-section" *ngIf="queue.nextPatient">
+          <div class="section-title">
+            <mat-icon>skip_next</mat-icon>
+            Next Patient
+          </div>
+          <div class="next-patient-info">
+            <div class="patient-details">
+              <div class="patient-name">{{ queue.nextPatient.name }}</div>
+              <div class="patient-token">Token: {{ queue.nextPatient.tokenNumber }}</div>
+            </div>
+            <div class="preparation-status">
+              <mat-chip 
+                [color]="queue.nextPatient.preparationStatus.patientReady ? 'primary' : 'warn'"
+                class="prep-status-chip">
+                {{ queue.nextPatient.preparationStatus.patientReady ? 'Ready' : 'Preparing' }}
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wait Time Information -->
+        <div class="wait-time-section">
+          <div class="wait-time-info">
+            <div class="wait-time-item">
+              <mat-icon>schedule</mat-icon>
+              <div class="wait-time-details">
+                <span class="wait-time-label">Estimated Wait</span>
+                <span class="wait-time-value" [ngClass]="'wait-time-' + getWaitTimeColor(queue.estimatedWaitTime)">
+                  {{ formatWaitTime(queue.estimatedWaitTime) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Queue Status Indicator -->
+        <div class="queue-status-indicator">
+          <div class="status-bar">
+            <div class="status-fill" 
+                 [style.width.%]="Math.min((queue.waitingCount / 10) * 100, 100)"
+                 [ngClass]="'status-' + getQueueStatusColor(queue.waitingCount)">
+            </div>
+          </div>
+          <div class="status-labels">
+            <span class="status-label">Queue Load</span>
+            <span class="status-value">{{ queue.waitingCount }}/10</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- No Queues State -->
+  <div class="no-queues" *ngIf="queueStatus.length === 0">
+    <mat-icon>queue_music</mat-icon>
+    <h3>No Active Queues</h3>
+    <p>No doctors are currently seeing patients or have active queues.</p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner diameter="40"></mat-spinner>
+  <p>Loading queue information...</p>
+</div>
+
+<!-- Read-Only Notice -->
+<mat-card class="notice-card">
+  <mat-card-content>
+    <div class="notice-content">
+      <mat-icon class="notice-icon">info</mat-icon>
+      <div class="notice-text">
+        <strong>Read-Only Queue View</strong>
+        <p>You can view real-time queue status but cannot modify queue order or call patients. 
+           Only doctors can control their queues.</p>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

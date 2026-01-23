@@ -1,0 +1,69 @@
+<div class="records-header">
+  <h2>
+    <mat-icon>folder_shared</mat-icon>
+    Medical Records (Read-Only)
+  </h2>
+</div>
+
+<div class="records-content">
+  <div class="patients-list">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Select Patient</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item *ngFor="let patient of patients" 
+                         (click)="selectPatient(patient)"
+                         [class.selected]="selectedPatient?.id === patient.id">
+            <div matListItemTitle>{{ patient.name }}</div>
+            <div matListItemLine>Token: {{ patient.tokenNumber }}</div>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="record-display" *ngIf="selectedPatient">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Medical Record - {{ selectedPatient.name }}</mat-card-title>
+        <mat-card-subtitle>Read-Only Access</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="medicalRecord; else noRecord">
+          <div class="record-section">
+            <h3>Basic Information</h3>
+            <p><strong>Age:</strong> {{ selectedPatient.age }} years</p>
+            <p><strong>Gender:</strong> {{ selectedPatient.gender }}</p>
+          </div>
+          
+          <div class="record-section">
+            <h3>Current Appointment</h3>
+            <p><strong>Doctor:</strong> Dr. {{ selectedPatient.doctorId }}</p>
+            <p><strong>Estimated Time:</strong> {{ selectedPatient.estimatedTime }}</p>
+          </div>
+        </div>
+        
+        <ng-template #noRecord>
+          <div class="no-record">
+            <mat-icon>description</mat-icon>
+            <p>Medical record not available or loading...</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<mat-card class="access-notice">
+  <mat-card-content>
+    <div class="notice-content">
+      <mat-icon class="notice-icon">lock</mat-icon>
+      <div>
+        <strong>Read-Only Access</strong>
+        <p>You have view-only access to basic patient information. Full medical records are restricted to doctors.</p>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

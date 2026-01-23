@@ -1,0 +1,177 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>{{ getCategoryInfo().icon }}</mat-icon>
+    {{ getCategoryInfo().title }}
+  </h2>
+  <button mat-icon-button mat-dialog-close>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- Checklist Information -->
+  <div class="checklist-info-section">
+    <mat-card class="info-card">
+      <mat-card-content>
+        <div class="checklist-header">
+          <div class="header-info">
+            <h3>{{ getCategoryInfo().title }}</h3>
+            <p>{{ getCategoryInfo().description }}</p>
+            <div class="checklist-meta">
+              <span class="checklist-id">ID: {{ data.checklist.id }}</span>
+              <mat-chip [color]="data.checklist.status === 'completed' ? 'primary' : 'accent'" selected>
+                {{ data.checklist.status | titlecase }}
+              </mat-chip>
+            </div>
+          </div>
+          <div class="completion-status">
+            <div class="completion-circle">
+              <mat-progress-spinner 
+                mode="determinate" 
+                [value]="getCompletionPercentage()"
+                [color]="getCompletionColor()"
+                diameter="80">
+              </mat-progress-spinner>
+              <div class="completion-text">{{ getCompletionPercentage() }}%</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Checklist Form -->
+  <form [formGroup]="checklistForm" class="checklist-form">
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions" *ngIf="!isReadOnly()">
+      <button mat-button 
+              type="button"
+              (click)="toggleAllItems(true)"
+              color="primary">
+        <mat-icon>check_box</mat-icon>
+        Check All
+      </button>
+      <button mat-button 
+              type="button"
+              (click)="toggleAllItems(false)"
+              color="accent">
+        <mat-icon>check_box_outline_blank</mat-icon>
+        Uncheck All
+      </button>
+    </div>
+
+    <!-- Checklist Items -->
+    <div class="items-section">
+      <h4>
+        <mat-icon>checklist</mat-icon>
+        Compliance Items
+      </h4>
+      
+      <div class="items-list" formArrayName="items">
+        <mat-card class="item-card" 
+                  *ngFor="let item of itemsArray.controls; let i = index"
+                  [formGroupName]="i">
+          <mat-card-content>
+            <div class="item-content">
+              <div class="item-checkbox">
+                <mat-checkbox 
+                  formControlName="completed"
+                  [disabled]="isReadOnly()"
+                  [color]="'primary'">
+                </mat-checkbox>
+              </div>
+              
+              <div class="item-details">
+                <div class="item-description">
+                  {{ item.get('description')?.value }}
+                </div>
+                
+                <mat-form-field appearance="outline" class="item-notes" *ngIf="!isReadOnly()">
+                  <mat-label>Notes (Optional)</mat-label>
+                  <input matInput 
+                         formControlName="notes"
+                         placeholder="Add any notes or observations...">
+                </mat-form-field>
+                
+                <div class="item-notes-display" *ngIf="isReadOnly() && item.get('notes')?.value">
+                  <strong>Notes:</strong> {{ item.get('notes')?.value }}
+                </div>
+              </div>
+              
+              <div class="item-status">
+                <mat-icon [color]="item.get('completed')?.value ? 'primary' : 'warn'">
+                  {{ item.get('completed')?.value ? 'check_circle' : 'radio_button_unchecked' }}
+                </mat-icon>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Completion Details -->
+    <div class="completion-section" *ngIf="!isReadOnly()">
+      <h4>
+        <mat-icon>person</mat-icon>
+        Completion Details
+      </h4>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Completed By</mat-label>
+        <input matInput 
+               formControlName="completedBy"
+               placeholder="Enter your name">
+        <mat-error *ngIf="checklistForm.get('completedBy')?.hasError('required')">
+          Please enter who completed this checklist
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Additional Notes</mat-label>
+        <textarea matInput 
+                  formControlName="notes" 
+                  rows="3"
+                  placeholder="Any additional notes or observations about the compliance check..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Read-only Completion Info -->
+    <div class="completion-info" *ngIf="isReadOnly() && data.checklist.completedBy">
+      <mat-card class="completion-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>info</mat-icon>
+            Completion Information
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="completion-details">
+            <div class="detail-item">
+              <span class="detail-label">Completed By:</span>
+              <span class="detail-value">{{ data.checklist.completedBy }}</span>
+            </div>
+            <div class="detail-item" *ngIf="data.checklist.completedAt">
+              <span class="detail-label">Completed At:</span>
+              <span class="detail-value">{{ data.checklist.completedAt | date:'MMM dd, yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    {{ isReadOnly() ? 'Close' : 'Cancel' }}
+  </button>
+  <button mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()"
+          [disabled]="checklistForm.invalid || isReadOnly()"
+          *ngIf="!isReadOnly()">
+    Save Checklist
+  </button>
+</mat-dialog-actions>

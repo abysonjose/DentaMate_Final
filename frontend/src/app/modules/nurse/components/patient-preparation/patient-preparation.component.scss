@@ -1,0 +1,306 @@
+.preparation-header {
+  margin-bottom: 20px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+
+      mat-icon {
+        color: #2196F3;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      button mat-icon.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+.filters-card {
+  margin-bottom: 20px;
+
+  .filters-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+
+    .filter-field {
+      width: 100%;
+    }
+  }
+}
+
+.priority-alert {
+  margin-bottom: 20px;
+  background: #fff3e0;
+  border-left: 4px solid #ff9800;
+
+  .alert-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+
+    .alert-icon {
+      color: #ff9800;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .alert-title {
+      font-weight: 500;
+      color: #e65100;
+    }
+  }
+
+  .priority-list {
+    mat-chip-listbox {
+      .priority-chip {
+        background: #ffcc02;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #ffb300;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+}
+
+.patients-table-card {
+  .table-container {
+    overflow-x: auto;
+
+    .preparation-table {
+      width: 100%;
+      min-width: 800px;
+
+      .token-chip {
+        background: #e3f2fd;
+        color: #1976d2;
+        font-weight: 500;
+      }
+
+      .patient-info {
+        .patient-name {
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 2px;
+        }
+
+        .patient-details {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .doctor-info {
+        .estimated-time {
+          font-size: 12px;
+          color: #666;
+          margin-top: 2px;
+        }
+      }
+
+      .room-chip {
+        background: #f3e5f5;
+        color: #7b1fa2;
+      }
+
+      .preparation-status {
+        min-width: 300px;
+
+        .status-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .progress-text {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+          }
+        }
+
+        .preparation-progress {
+          margin-bottom: 12px;
+          height: 6px;
+          border-radius: 3px;
+        }
+
+        .checklist-items {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .checklist-item {
+            .preparation-checkbox {
+              font-size: 12px;
+
+              .item-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+                margin-right: 6px;
+                vertical-align: middle;
+              }
+            }
+          }
+        }
+      }
+
+      .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        button {
+          min-width: auto;
+
+          &[mat-raised-button] {
+            font-size: 12px;
+            padding: 6px 12px;
+          }
+        }
+
+        mat-chip {
+          font-size: 12px;
+          
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+          }
+        }
+      }
+
+      .priority-row {
+        background: #fff8e1;
+        border-left: 3px solid #ff9800;
+
+        &:hover {
+          background: #fff3e0;
+        }
+      }
+
+      tr.mat-mdc-row:hover {
+        background: #f5f5f5;
+      }
+    }
+  }
+}
+
+.no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.5;
+    margin-bottom: 20px;
+  }
+
+  p {
+    margin: 0 0 20px 0;
+    font-size: 16px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #666;
+
+  p {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .filters-card .filters-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .preparation-table {
+    .preparation-status {
+      min-width: 250px;
+
+      .checklist-items {
+        .checklist-item .preparation-checkbox {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .preparation-header .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+
+    .header-actions {
+      align-self: flex-end;
+    }
+  }
+
+  .priority-alert {
+    .alert-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
+
+  .patients-table-card .table-container {
+    .preparation-table {
+      min-width: 600px;
+
+      .preparation-status {
+        min-width: 200px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+  }
+}

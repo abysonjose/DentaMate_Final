@@ -1,0 +1,172 @@
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid #e0e0e0;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
+
+mat-dialog-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+
+  .nurse-info-section {
+    margin-bottom: 24px;
+
+    .nurse-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+      .nurse-details {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .nurse-avatar {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background-color: #2196F3;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+
+          mat-icon {
+            font-size: 32px;
+            width: 32px;
+            height: 32px;
+          }
+        }
+
+        .nurse-info {
+          flex: 1;
+
+          h3 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+            font-weight: 600;
+          }
+
+          p {
+            margin: 0 0 8px 0;
+            color: #666;
+            font-size: 14px;
+          }
+
+          .nurse-skills {
+            mat-chip-listbox {
+              mat-chip {
+                font-size: 11px;
+                height: 24px;
+                line-height: 24px;
+              }
+            }
+          }
+        }
+
+        .nurse-status {
+          align-self: flex-start;
+        }
+      }
+    }
+  }
+
+  .assignment-form {
+    .form-section {
+      margin-bottom: 24px;
+
+      h4 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .full-width {
+        width: 100%;
+      }
+
+      .doctor-option, .room-option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 8px 0;
+
+        .doctor-info, .room-info {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+
+          .doctor-name, .room-number {
+            font-weight: 500;
+            margin-bottom: 2px;
+          }
+
+          .doctor-specialization, .room-type {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+      }
+    }
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  gap: 12px;
+
+  button {
+    min-width: 100px;
+  }
+}
+
+// Responsive Design
+@media (max-width: 600px) {
+  .dialog-header {
+    padding: 0 16px;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
+
+  mat-dialog-content {
+    padding: 16px;
+
+    .nurse-info-section {
+      .nurse-card {
+        .nurse-details {
+          flex-direction: column;
+          text-align: center;
+          gap: 12px;
+
+          .nurse-avatar {
+            align-self: center;
+          }
+        }
+      }
+    }
+  }
+
+  mat-dialog-actions {
+    padding: 12px 16px;
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+}

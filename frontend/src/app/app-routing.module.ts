@@ -43,7 +43,23 @@ const routes: Routes = [
     path: 'nurse',
     loadChildren: () => import('./modules/nurse/nurse.module').then(m => m.NurseModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['nurse', 'head-nurse'] }
+    data: { roles: ['nurse'] }
+  },
+  
+  // Head Nurse module
+  {
+    path: 'head-nurse',
+    loadChildren: () => import('./modules/head-nurse/head-nurse.module').then(m => m.HeadNurseModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['head-nurse'] }
+  },
+  
+  // Receptionist module
+  {
+    path: 'receptionist',
+    loadChildren: () => import('./modules/receptionist/receptionist.module').then(m => m.ReceptionistModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['receptionist'] }
   },
   
   // Appointments

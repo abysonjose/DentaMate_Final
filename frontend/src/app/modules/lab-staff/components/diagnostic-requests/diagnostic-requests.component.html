@@ -1,0 +1,260 @@
+<div class="diagnostic-requests-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h2>Diagnostic Requests</h2>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="loadRequests()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <!-- Status Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [(value)]="statusFilter" (selectionChange)="onFilterC
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading diagnostic requests...</p>
+  </div>
+
+  <!-- Worklist Table -->
+  <mat-card class="table-card" *ngIf="!isLoading">
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="worklist-table">
+          
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="patient-info">
+                <div class="patient-name">{{ request.patientName }}</div>
+                <div class="patient-id">ID: {{ request.patientId }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Test Type Column -->
+          <ng-container matColumnDef="testType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Test Type</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="test-type">
+                <mat-icon class="test-icon">{{ getTestTypeIcon(request.testType) }}</mat-icon>
+                <span>{{ request.testType }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Priority Column -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+            <td mat-cell *matCellDef="let request">
+              <mat-chip 
+                [color]="getPriorityColor(request.priority)"
+                [class]="'priority-' + request.priority.toLowerCase()">
+                {{ request.priority }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let request">
+              <mat-select 
+                [value]="request.status" 
+                (selectionChange)="updateStatus(request, $event.value)"
+                class="status-select">
+                <mat-option 
+                  *ngFor="let status of statusOptions" 
+                  [value]="status.value"
+                  [disabled]="!canUpdateStatus(request, status.value)">
+                  {{ status.label }}
+                </mat-option>
+              </mat-select>
+            </td>
+          </ng-container>
+
+          <!-- Doctor Column -->
+          <ng-container matColumnDef="doctorName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="doctor-info">
+                <div class="doctor-name">{{ request.doctorName }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Request Date Column -->
+          <ng-container matColumnDef="requestDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Requested</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="date-info">
+                {{ request.requestDate | date:'short' }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Due Date Column -->
+          <ng-container matColumnDef="dueDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Due Date</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="date-info" [class.overdue]="isOverdue(request.dueDate)">
+                {{ request.dueDate | date:'short' }}
+                <mat-icon *ngIf="isOverdue(request.dueDate)" class="overdue-icon">warning</mat-icon>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let request">
+              <div class="action-buttons">
+                <button 
+                  mat-icon-button 
+                  (click)="verifyPatient(request)"
+                  matTooltip="Verify Patient"
+                  color="primary">
+                  <mat-icon>verified_user</mat-icon>
+                </button>
+                
+                <button 
+                  mat-icon-button 
+                  (click)="uploadReport(request)"
+                  matTooltip="Upload Report"
+                  color="accent"
+                  [disabled]="request.status !== 'IN_PROGRESS'">
+                  <mat-icon>cloud_upload</mat-icon>
+                </button>
+                
+                <button 
+                  mat-icon-button 
+                  (click)="selectRequest(request)"
+                  matTooltip="View Details"
+                  color="primary">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr 
+            mat-row 
+            *matRowDef="let row; columns: displayedColumns;"
+            [class.selected-row]="selectedRequest?.id === row.id"
+            [class.urgent-row]="row.priority === 'URGENT'"
+            [class.overdue-row]="isOverdue(row.dueDate)"
+            (click)="selectRequest(row)">
+          </tr>
+        </table>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Request Details Panel -->
+  <mat-card class="details-panel" *ngIf="selectedRequest">
+    <mat-card-header>
+      <mat-card-title>Request Details</mat-card-title>
+      <button mat-icon-button (click)="selectedRequest = null">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="details-grid">
+        <div class="detail-item">
+          <label>Patient:</label>
+          <span>{{ selectedRequest.patientName }} ({{ selectedRequest.patientId }})</span>
+        </div>
+        <div class="detail-item">
+          <label>Test Type:</label>
+          <span>{{ selectedRequest.testType }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Priority:</label>
+          <mat-chip [color]="getPriorityColor(selectedRequest.priority)">
+            {{ selectedRequest.priority }}
+          </mat-chip>
+        </div>
+        <div class="detail-item">
+          <label>Status:</label>
+          <mat-chip [color]="getStatusColor(selectedRequest.status)">
+            {{ selectedRequest.status }}
+          </mat-chip>
+        </div>
+        <div class="detail-item">
+          <label>Doctor:</label>
+          <span>{{ selectedRequest.doctorName }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Appointment ID:</label>
+          <span>{{ selectedRequest.appointmentId }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Request Date:</label>
+          <span>{{ selectedRequest.requestDate | date:'medium' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Due Date:</label>
+          <span [class.overdue]="isOverdue(selectedRequest.dueDate)">
+            {{ selectedRequest.dueDate | date:'medium' }}
+          </span>
+        </div>
+        <div class="detail-item full-width" *ngIf="selectedRequest.notes">
+          <label>Notes:</label>
+          <p class="notes">{{ selectedRequest.notes }}</p>
+        </div>
+      </div>
+      
+      <div class="detail-actions">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="verifyPatient(selectedRequest)">
+          <mat-icon>verified_user</mat-icon>
+          Verify Patient
+        </button>
+        <button 
+          mat-raised-button 
+          color="accent" 
+          (click)="uploadReport(selectedRequest)"
+          [disabled]="selectedRequest.status !== 'IN_PROGRESS'">
+          <mat-icon>cloud_upload</mat-icon>
+          Upload Report
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Empty State -->
+  <mat-card class="empty-state" *ngIf="!isLoading && dataSource.data.length === 0">
+    <mat-card-content>
+      <div class="empty-content">
+        <mat-icon class="empty-icon">assignment</mat-icon>
+        <h3>No Diagnostic Requests</h3>
+        <p>There are no diagnostic requests in your worklist at the moment.</p>
+        <button mat-raised-button color="primary" (click)="refreshWorklist()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

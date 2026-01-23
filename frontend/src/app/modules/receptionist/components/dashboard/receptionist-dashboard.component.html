@@ -1,0 +1,243 @@
+<div class="receptionist-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <mat-icon>desktop_mac</mat-icon>
+        Reception Desk
+      </h1>
+      <div class="header-actions">
+        <button mat-icon-button (click)="refreshDashboard()" [disabled]="loading">
+          <mat-icon [class.spinning]="loading">refresh</mat-icon>
+        </button>
+        <span class="last-updated">Last updated: {{ formatTime(new Date()) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Banner -->
+  <div class="alert-banner" *ngIf="alerts.length > 0">
+    <mat-card *ngFor="let alert of alerts.slice(0, 3)" 
+              class="alert-card" 
+              [ngClass]="'alert-' + alert.type">
+      <div class="alert-content">
+        <mat-icon [color]="getAlertColor(alert.type)">{{ getAlertIcon(alert.type) }}</mat-icon>
+        <span class="alert-message">{{ alert.message }}</span>
+        <div class="alert-actions">
+          <button mat-button *ngIf="alert.actionable" (click)="handleAlertAction(alert)">
+            Action
+          </button>
+          <button mat-icon-button (click)="dismissAlert(alert.id)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <!-- Stats Overview -->
+    <div class="stats-section">
+      <div class="stats-grid">
+        <mat-card class="stat-card primary">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-value">{{ stats.totalAppointments }}</div>
+              <div class="stat-label">Today's Appointments</div>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card success">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-value">{{ stats.checkedInPatients }}</div>
+              <div class="stat-label">Checked In</div>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card warning">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>directions_walk</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-value">{{ stats.walkInPatients }}</div>
+              <div class="stat-label">Walk-ins</div>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card info">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>queue</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-value">{{ stats.activeQueues }}</div>
+              <div class="stat-label">Active Queues</div>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <mat-card class="quick-actions-card">
+        <mat-card-header>
+          <mat-card-title>Quick Actions</mat-card-title>
+          <mat-card-subtitle>Keyboard shortcuts available</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="quick-actions-grid">
+            <button mat-raised-button 
+                    *ngFor="let action of quickActions"
+                    [color]="action.color"
+                    class="quick-action-btn"
+                    (click)="executeQuickAction(action.action)"
+                    [matTooltip]="action.shortcut">
+              <mat-icon>{{ action.icon }}</mat-icon>
+              <span>{{ action.label }}</span>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Upcoming Appointments -->
+      <mat-card class="appointments-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>schedule</mat-icon>
+            Upcoming Appointments
+          </mat-card-title>
+          <mat-card-subtitle>Next 5 appointments</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="appointments-list" *ngIf="upcomingAppointments.length > 0; else noAppointments">
+            <div class="appointment-item" *ngFor="let appointment of upcomingAppointments.slice(0, 5)">
+              <div class="appointment-time">
+                {{ formatTime(appointment.scheduledTime) }}
+              </div>
+              <div class="appointment-details">
+                <div class="patient-name">{{ appointment.patientName }}</div>
+                <div class="doctor-name">Dr. {{ appointment.doctorName }}</div>
+              </div>
+              <div class="appointment-status">
+                <mat-chip [ngClass]="'status-' + appointment.status">
+                  {{ appointment.status }}
+                </mat-chip>
+              </div>
+              <div class="appointment-actions">
+                <button mat-icon-button 
+                        *ngIf="appointment.status === 'scheduled'"
+                        (click)="executeQuickAction('checkInPatient')"
+                        matTooltip="Check In">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <ng-template #noAppointments>
+            <div class="no-data">
+              <mat-icon>event_available</mat-icon>
+              <p>No upcoming appointments</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Current Queues -->
+      <mat-card class="queues-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>queue</mat-icon>
+            Live Queues
+          </mat-card-title>
+          <mat-card-subtitle>Real-time queue status</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="queues-list" *ngIf="currentQueues.length > 0; else noQueues">
+            <div class="queue-item" *ngFor="let queue of currentQueues">
+              <div class="queue-header">
+                <div class="queue-name">{{ queue.doctorName }}</div>
+                <div class="queue-status">
+                  <mat-chip [ngClass]="'status-' + queue.status">
+                    {{ queue.status }}
+                  </mat-chip>
+                </div>
+              </div>
+              <div class="queue-stats">
+                <div class="stat">
+                  <span class="label">Current:</span>
+                  <span class="value">{{ queue.currentToken || 'None' }}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Waiting:</span>
+                  <span class="value">{{ queue.waitingCount }}</span>
+                </div>
+                <div class="stat">
+                  <span class="label">ETA:</span>
+                  <span class="value">{{ queue.estimatedWaitTime }}min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ng-template #noQueues>
+            <div class="no-data">
+              <mat-icon>queue_play_next</mat-icon>
+              <p>No active queues</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Recent Activities -->
+      <mat-card class="activities-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>history</mat-icon>
+            Recent Activities
+          </mat-card-title>
+          <mat-card-subtitle>Your recent actions</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="activities-list" *ngIf="recentActivities.length > 0; else noActivities">
+            <div class="activity-item" *ngFor="let activity of recentActivities.slice(0, 8)">
+              <div class="activity-icon">
+                <mat-icon [ngClass]="'activity-' + activity.type">{{ activity.icon }}</mat-icon>
+              </div>
+              <div class="activity-details">
+                <div class="activity-description">{{ activity.description }}</div>
+                <div class="activity-time">{{ formatTime(activity.timestamp) }}</div>
+              </div>
+            </div>
+          </div>
+          <ng-template #noActivities>
+            <div class="no-data">
+              <mat-icon>history</mat-icon>
+              <p>No recent activities</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading dashboard...</p>
+  </div>
+</div>

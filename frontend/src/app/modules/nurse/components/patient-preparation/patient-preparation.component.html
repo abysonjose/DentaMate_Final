@@ -1,0 +1,204 @@
+<!-- Patient Preparation Header -->
+<div class="preparation-header">
+  <div class="header-content">
+    <h2>
+      <mat-icon>person_add</mat-icon>
+      Patient Preparation Workflow
+    </h2>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportPreparationReport()">
+        <mat-icon>download</mat-icon>
+        Export Report
+      </button>
+      <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
+        <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Filters Section -->
+<mat-card class="filters-card">
+  <mat-card-content>
+    <div class="filters-row">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Search Patients</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" 
+               placeholder="Search by name or token">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Status Filter</mat-label>
+        <mat-select [(value)]="statusFilter" (selectionChange)="applyFilters()">
+          <mat-option value="all">All Patients</mat-option>
+          <mat-option value="needs-preparation">Needs Preparation</mat-option>
+          <mat-option value="ready">Ready</mat-option>
+          <mat-option value="waiting">Waiting</mat-option>
+          <mat-option value="in-consultation">In Consultation</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Doctor Filter</mat-label>
+        <mat-select [(value)]="doctorFilter" (selectionChange)="applyFilters()">
+          <mat-option value="all">All Doctors</mat-option>
+          <mat-option *ngFor="let doctorId of getUniqueValues('doctorId')" [value]="doctorId">
+            Doctor {{ doctorId }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Priority Patients Alert -->
+<mat-card class="priority-alert" *ngIf="getPriorityPatients().length">
+  <mat-card-content>
+    <div class="alert-header">
+      <mat-icon class="alert-icon">priority_high</mat-icon>
+      <span class="alert-title">Priority Patients Requiring Immediate Preparation</span>
+    </div>
+    <div class="priority-list">
+      <mat-chip-listbox>
+        <mat-chip *ngFor="let patient of getPriorityPatients()" 
+                  class="priority-chip"
+                  (click)="openPreparationDialog(patient)">
+          {{ patient.name }} ({{ patient.tokenNumber }})
+        </mat-chip>
+      </mat-chip-listbox>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Patients Table -->
+<mat-card class="patients-table-card">
+  <mat-card-header>
+    <mat-card-title>Patient Preparation Status ({{ filteredPatients.length }})</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="table-container" *ngIf="!isLoading">
+      <table mat-table [dataSource]="filteredPatients" class="preparation-table">
+        
+        <!-- Token Number Column -->
+        <ng-container matColumnDef="tokenNumber">
+          <th mat-header-cell *matHeaderCellDef>Token</th>
+          <td mat-cell *matCellDef="let patient">
+            <mat-chip class="token-chip">{{ patient.tokenNumber }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Patient Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Patient</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="patient-info">
+              <div class="patient-name">{{ patient.name }}</div>
+              <div class="patient-details">{{ patient.age }}y, {{ patient.gender }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Doctor Column -->
+        <ng-container matColumnDef="doctor">
+          <th mat-header-cell *matHeaderCellDef>Doctor</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="doctor-info">
+              <div>Dr. {{ patient.doctorId }}</div>
+              <div class="estimated-time">{{ patient.estimatedTime }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Room Column -->
+        <ng-container matColumnDef="room">
+          <th mat-header-cell *matHeaderCellDef>Room</th>
+          <td mat-cell *matCellDef="let patient">
+            <mat-chip class="room-chip">{{ patient.roomId }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Preparation Status Column -->
+        <ng-container matColumnDef="preparation">
+          <th mat-header-cell *matHeaderCellDef>Preparation Status</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="preparation-status">
+              <div class="status-header">
+                <mat-chip [color]="getStatusColor(getPreparationStatus(patient.preparationStatus))">
+                  {{ getPreparationStatus(patient.preparationStatus) }}
+                </mat-chip>
+                <span class="progress-text">{{ getPreparationProgress(patient.preparationStatus) | number:'1.0-0' }}%</span>
+              </div>
+              
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="getPreparationProgress(patient.preparationStatus)"
+                class="preparation-progress">
+              </mat-progress-bar>
+              
+              <div class="checklist-items">
+                <div class="checklist-item" *ngFor="let item of preparationItems">
+                  <mat-checkbox 
+                    [checked]="(patient.preparationStatus as any)[item.key]"
+                    [disabled]="item.key === 'patientReady' && !canMarkReady(patient)"
+                    (change)="updatePreparationItem(patient, item.key, $event.checked)"
+                    class="preparation-checkbox">
+                    <mat-icon class="item-icon">{{ item.icon }}</mat-icon>
+                    {{ item.label }}
+                  </mat-checkbox>
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="action-buttons">
+              <button mat-icon-button 
+                      (click)="openPreparationDialog(patient)"
+                      matTooltip="Open Preparation Details">
+                <mat-icon>edit</mat-icon>
+              </button>
+              
+              <button mat-raised-button 
+                      color="primary"
+                      [disabled]="!canMarkReady(patient)"
+                      (click)="markPatientReady(patient)"
+                      *ngIf="!patient.preparationStatus.patientReady">
+                <mat-icon>check</mat-icon>
+                Mark Ready
+              </button>
+              
+              <mat-chip color="primary" *ngIf="patient.preparationStatus.patientReady">
+                <mat-icon>check_circle</mat-icon>
+                Ready
+              </mat-chip>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            [class.priority-row]="!row.preparationStatus.patientReady"></tr>
+      </table>
+
+      <!-- No Data State -->
+      <div class="no-data" *ngIf="filteredPatients.length === 0">
+        <mat-icon>person_off</mat-icon>
+        <p>No patients found matching the current filters</p>
+        <button mat-raised-button (click)="statusFilter = 'all'; doctorFilter = 'all'; searchTerm = ''; applyFilters()">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading patient preparation data...</p>
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,233 @@
+<!-- Header -->
+<div class="page-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h2>
+        <mat-icon>forum</mat-icon>
+        Communication Center
+      </h2>
+      <p class="subtitle">Internal messaging with doctors, nurses, and staff</p>
+    </div>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshMessages()" matTooltip="Refresh Messages">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Communication Metrics -->
+<div class="metrics-grid">
+  <mat-card class="metric-card total">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>message</mat-icon>
+        <span class="metric-title">Total Messages</span>
+      </div>
+      <div class="metric-value">{{ communicationMetrics.totalMessages }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card unread">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>mark_email_unread</mat-icon>
+        <span class="metric-title">Unread</span>
+      </div>
+      <div class="metric-value">{{ communicationMetrics.unreadMessages }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card urgent">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>emergency</mat-icon>
+        <span class="metric-title">Urgent</span>
+      </div>
+      <div class="metric-value">{{ communicationMetrics.urgentMessages }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card today">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>today</mat-icon>
+        <span class="metric-title">Today</span>
+      </div>
+      <div class="metric-value">{{ communicationMetrics.todayMessages }}</div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<div class="communication-layout">
+  <!-- Send Message Section -->
+  <mat-card class="send-message-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>send</mat-icon>
+        Send Message
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="message-form">
+        
+        <!-- Recipient Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Send To</mat-label>
+          <mat-select formControlName="recipientId">
+            <mat-option *ngFor="let recipient of recipients" [value]="recipient.id">
+              <div class="recipient-option">
+                <div class="recipient-info">
+                  <span class="recipient-name">{{ recipient.name }}</span>
+                  <span class="recipient-role">{{ recipient.role }} - {{ recipient.department }}</span>
+                </div>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="messageForm.get('recipientId')?.hasError('required')">
+            Please select a recipient
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Priority Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Priority</mat-label>
+          <mat-select formControlName="priority">
+            <mat-option *ngFor="let priority of priorityOptions.slice(1)" [value]="priority.value">
+              <div class="priority-option">
+                <mat-icon [color]="getPriorityColor(priority.value)">{{ getPriorityIcon(priority.value) }}</mat-icon>
+                <span>{{ priority.label }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Message Content -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Message</mat-label>
+          <textarea matInput 
+                    formControlName="message" 
+                    rows="4"
+                    placeholder="Type your message here..."></textarea>
+          <mat-error *ngIf="messageForm.get('message')?.hasError('required')">
+            Message is required
+          </mat-error>
+          <mat-error *ngIf="messageForm.get('message')?.hasError('minlength')">
+            Message must be at least 5 characters long
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Send Button -->
+        <div class="form-actions">
+          <button mat-raised-button 
+                  color="primary" 
+                  type="submit"
+                  [disabled]="messageForm.invalid">
+            <mat-icon>send</mat-icon>
+            Send Message
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Messages Section -->
+  <mat-card class="messages-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>inbox</mat-icon>
+        Messages
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      
+      <!-- Filters -->
+      <div class="filters-section">
+        <div class="filters-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Search Messages</mat-label>
+            <input matInput 
+                   [(ngModel)]="filterOptions.searchTerm" 
+                   (ngModelChange)="applyFilters()"
+                   placeholder="Search messages...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Type</mat-label>
+            <mat-select [(value)]="filterOptions.type" (selectionChange)="applyFilters()">
+              <mat-option *ngFor="let type of typeOptions" [value]="type.value">
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select [(value)]="filterOptions.priority" (selectionChange)="applyFilters()">
+              <mat-option *ngFor="let priority of priorityOptions" [value]="priority.value">
+                {{ priority.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select [(value)]="filterOptions.read" (selectionChange)="applyFilters()">
+              <mat-option *ngFor="let read of readOptions" [value]="read.value">
+                {{ read.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Messages List -->
+      <div class="messages-list">
+        <div class="message-item" 
+             *ngFor="let message of filteredMessages"
+             [class.unread]="!message.read && message.type === 'received'"
+             [class.urgent]="message.priority === 'urgent'"
+             (click)="markAsRead(message)">
+          
+          <div class="message-header">
+            <div class="message-participants">
+              <div class="participant-info" *ngIf="message.type === 'received'">
+                <mat-icon>person</mat-icon>
+                <span class="participant-name">From: {{ message.senderName }}</span>
+              </div>
+              <div class="participant-info" *ngIf="message.type === 'sent'">
+                <mat-icon>send</mat-icon>
+                <span class="participant-name">To: {{ message.recipientName }}</span>
+              </div>
+            </div>
+            
+            <div class="message-meta">
+              <mat-chip [color]="getPriorityColor(message.priority)" selected>
+                <mat-icon>{{ getPriorityIcon(message.priority) }}</mat-icon>
+                {{ message.priority | titlecase }}
+              </mat-chip>
+              <span class="message-time">{{ message.timestamp | date:'MMM dd, HH:mm' }}</span>
+              <mat-icon class="read-indicator" 
+                        *ngIf="!message.read && message.type === 'received'"
+                        color="accent">
+                fiber_manual_record
+              </mat-icon>
+            </div>
+          </div>
+          
+          <div class="message-content">
+            {{ message.message }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredMessages.length === 0">
+        <mat-icon>inbox</mat-icon>
+        <h3>No Messages Found</h3>
+        <p>Try adjusting your filters or send a new message.</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

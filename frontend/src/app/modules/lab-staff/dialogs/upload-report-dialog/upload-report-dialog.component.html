@@ -1,0 +1,176 @@
+<div class="upload-dialog">
+  <h2 mat-dialog-title>Upload Diagnostic Report</h2>
+  
+  <mat-dialog-content>
+    <!-- Request Information -->
+    <div class="request-info">
+      <div class="info-item">
+        <label>Patient:</label>
+        <span>{{ data.patientName }}</span>
+      </div>
+      <div class="info-item">
+        <label>Test Type:</label>
+        <span>{{ data.testType }}</span>
+      </div>
+      <div class="info-item">
+        <label>Request ID:</label>
+        <span>{{ data.requestId }}</span>
+      </div>
+    </div>
+
+    <form [formGroup]="uploadForm" class="upload-form">
+      <!-- File Upload Section -->
+      <div class="file-upload-section">
+        <h3>Select Files</h3>
+        
+        <!-- Drag and Drop Area -->
+        <div 
+          class="drop-zone"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          [class.has-files]="selectedFiles.length > 0">
+          
+          <div class="drop-content" *ngIf="selectedFiles.length === 0">
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <p>Drag and drop files here or click to browse</p>
+            <p class="file-requirements">
+              Supported: JPEG, PNG, TIFF, PDF, DICOM<br>
+              Max size: 50MB per file, Max files: {{ maxFiles }}
+            </p>
+          </div>
+
+          <!-- File Input -->
+          <input 
+            type="file" 
+            #fileInput
+            multiple
+            [accept]="allowedFileTypes.join(',')"
+            (change)="onFileSelected($event)"
+            style="display: none;">
+          
+          <button 
+            type="button" 
+            mat-raised-button 
+            color="primary"
+            (click)="fileInput.click()"
+            [class.hidden]="selectedFiles.length > 0">
+            <mat-icon>add</mat-icon>
+            Select Files
+          </button>
+        </div>
+
+        <!-- Selected Files List -->
+        <div class="selected-files" *ngIf="selectedFiles.length > 0">
+          <h4>Selected Files ({{ selectedFiles.length }})</h4>
+          
+          <div class="file-list">
+            <div 
+              *ngFor="let file of selectedFiles; let i = index" 
+              class="file-item">
+              
+              <div class="file-info">
+                <mat-icon class="file-icon">{{ getFileIcon(file) }}</mat-icon>
+                <div class="file-details">
+                  <div class="file-name">{{ file.name }}</div>
+                  <div class="file-meta">
+                    {{ formatFileSize(file.size) }} • {{ file.type }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="file-actions">
+                <button 
+                  type="button"
+                  mat-icon-button 
+                  (click)="previewFile(file)"
+                  matTooltip="Preview"
+                  *ngIf="file.type.startsWith('image/')">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <button 
+                  type="button"
+                  mat-icon-button 
+                  color="warn"
+                  (click)="removeFile(i)"
+                  matTooltip="Remove">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add More Files Button -->
+          <button 
+            type="button" 
+            mat-stroked-button 
+            (click)="fileInput.click()"
+            [disabled]="selectedFiles.length >= maxFiles">
+            <mat-icon>add</mat-icon>
+            Add More Files
+          </button>
+        </div>
+      </div>
+
+      <!-- Remarks Section -->
+      <div class="remarks-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Lab Remarks</mat-label>
+          <textarea 
+            matInput 
+            formControlName="remarks"
+            rows="4"
+            placeholder="Enter any relevant notes about the diagnostic procedure or findings...">
+          </textarea>
+          <mat-hint>Minimum 10 characters required</mat-hint>
+          <mat-error *ngIf="uploadForm.get('remarks')?.hasError('required')">
+            Remarks are required
+          </mat-error>
+          <mat-error *ngIf="uploadForm.get('remarks')?.hasError('minlength')">
+            Minimum 10 characters required
+          </mat-error>
+        </mat-form-field>
+
+        <div class="important-note">
+          <mat-icon>info</mat-icon>
+          <div class="note-content">
+            <strong>Important:</strong> Lab staff cannot add medical interpretations or diagnoses. 
+            Only technical notes about the procedure and image quality are permitted.
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div class="upload-progress" *ngIf="isUploading">
+        <div class="progress-info">
+          <span>Uploading files...</span>
+          <span>{{ uploadProgress }}%</span>
+        </div>
+        <mat-progress-bar 
+          mode="determinate" 
+          [value]="uploadProgress">
+        </mat-progress-bar>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button 
+      mat-button 
+      (click)="cancel()"
+      [disabled]="isUploading">
+      Cancel
+    </button>
+    
+    <button 
+      mat-raised-button 
+      color="primary"
+      (click)="uploadFiles()"
+      [disabled]="uploadForm.invalid || selectedFiles.length === 0 || isUploading">
+      <mat-icon *ngIf="!isUploading">cloud_upload</mat-icon>
+      <mat-icon *ngIf="isUploading" class="spinning">hourglass_empty</mat-icon>
+      {{ isUploading ? 'Uploading...' : 'Upload Files' }}
+    </button>
+  </mat-dialog-actions>
+</div>

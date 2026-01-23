@@ -1,0 +1,218 @@
+<div class="patient-verify-dialog">
+  <h2 mat-dialog-title>Patient Identity Verification</h2>
+  
+  <mat-dialog-content>
+    <!-- Patient Information Display -->
+    <div class="patient-info-section" *ngIf="patientDetails && !isLoading">
+      <h3>Patient Information</h3>
+      <div class="patient-info-grid">
+        <div class="info-item">
+          <label>Name:</label>
+          <span class="patient-name">{{ data.patientName }}</span>
+        </div>
+        <div class="info-item">
+          <label>Patient ID:</label>
+          <span>{{ data.patientId }}</span>
+        </div>
+        <div class="info-item">
+          <label>Appointment ID:</label>
+          <span>{{ data.appointmentId }}</span>
+        </div>
+        <div class="info-item" *ngIf="patientDetails.age">
+          <label>Age:</label>
+          <span>{{ patientDetails.age }} years</span>
+        </div>
+        <div class="info-item" *ngIf="patientDetails.gender">
+          <label>Gender:</label>
+          <span>{{ patientDetails.gender }}</span>
+        </div>
+        <div class="info-item" *ngIf="patientDetails.lastVisit">
+          <label>Last Visit:</label>
+          <span>{{ patientDetails.lastVisit | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-section" *ngIf="isLoading">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Loading patient details...</p>
+    </div>
+
+    <!-- Verification Form -->
+    <form [formGroup]="verificationForm" class="verification-form" *ngIf="!isLoading">
+      <!-- Verification Method Selection -->
+      <div class="form-section">
+        <h3>Verification Method</h3>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Verification Method</mat-label>
+          <mat-select formControlName="verificationMethod">
+            <mat-option *ngFor="let method of verificationMethods" [value]="method.value">
+              <div class="method-option">
+                <mat-icon>{{ method.icon }}</mat-icon>
+                <span>{{ method.label }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="verificationForm.get('verificationMethod')?.hasError('required')">
+            Please select a verification method
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Dynamic Verification Fields -->
+      <div class="form-section" *ngIf="verificationForm.get('verificationMethod')?.value">
+        <h3>Verification Details</h3>
+        
+        <!-- ID Number Field -->
+        <mat-form-field 
+          appearance="outline" 
+          class="full-width"
+          *ngIf="verificationForm.get('verificationMethod')?.value === 'ID_CARD' || 
+                 verificationForm.get('verificationMethod')?.value === 'INSURANCE_CARD'">
+          <mat-label>
+            {{ verificationForm.get('verificationMethod')?.value === 'ID_CARD' ? 'Government ID Number' : 'Insurance Card Number' }}
+          </mat-label>
+          <input matInput formControlName="idNumber" placeholder="Enter ID number">
+          <mat-icon matSuffix>{{ getVerificationMethodIcon(verificationForm.get('verificationMethod')?.value) }}</mat-icon>
+          <mat-error *ngIf="verificationForm.get('idNumber')?.hasError('required')">
+            ID number is required
+          </mat-error>
+          <mat-error *ngIf="verificationForm.get('idNumber')?.hasError('minlength')">
+            ID number must be at least 5 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Date of Birth Field -->
+        <mat-form-field 
+          appearance="outline" 
+          class="full-width"
+          *ngIf="verificationForm.get('verificationMethod')?.value === 'ID_CARD' || 
+                 verificationForm.get('verificationMethod')?.value === 'INSURANCE_CARD' ||
+                 verificationForm.get('verificationMethod')?.value === 'VERBAL_CONFIRMATION'">
+          <mat-label>Date of Birth</mat-label>
+          <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth" placeholder="Select date of birth">
+          <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+          <mat-datepicker #dobPicker></mat-datepicker>
+          <mat-error *ngIf="verificationForm.get('dateOfBirth')?.hasError('required')">
+            Date of birth is required for verification
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Phone Number Field -->
+        <mat-form-field 
+          appearance="outline" 
+          class="full-width"
+          *ngIf="verificationForm.get('verificationMethod')?.value === 'APPOINTMENT_CONFIRMATION' ||
+                 verificationForm.get('verificationMethod')?.value === 'VERBAL_CONFIRMATION'">
+          <mat-label>Phone Number</mat-label>
+          <input matInput formControlName="phoneNumber" placeholder="Enter phone number">
+          <mat-icon matSuffix>phone</mat-icon>
+          <mat-error *ngIf="verificationForm.get('phoneNumber')?.hasError('required')">
+            Phone number is required
+          </mat-error>
+          <mat-error *ngIf="verificationForm.get('phoneNumber')?.hasError('pattern')">
+            Please enter a valid phone number
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Address Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Address (Optional)</mat-label>
+          <textarea matInput formControlName="address" rows="2" placeholder="Enter address for additional verification"></textarea>
+          <mat-icon matSuffix>home</mat-icon>
+        </mat-form-field>
+
+        <!-- Emergency Contact Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Emergency Contact (Optional)</mat-label>
+          <input matInput formControlName="emergencyContact" placeholder="Enter emergency contact">
+          <mat-icon matSuffix>contact_emergency</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Verification Notes -->
+      <div class="form-section">
+        <h3>Verification Notes</h3>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Verification Notes</mat-label>
+          <textarea 
+            matInput 
+            formControlName="verificationNotes"
+            rows="3"
+            placeholder="Document the verification process, any discrepancies, or additional notes...">
+          </textarea>
+          <mat-hint>Minimum 10 characters required</mat-hint>
+          <mat-error *ngIf="verificationForm.get('verificationNotes')?.hasError('required')">
+            Verification notes are required
+          </mat-error>
+          <mat-error *ngIf="verificationForm.get('verificationNotes')?.hasError('minlength')">
+            Please provide more detailed notes (minimum 10 characters)
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Confirmation Checkboxes -->
+      <div class="form-section">
+        <h3>Verification Confirmation</h3>
+        <div class="confirmation-checks">
+          <mat-checkbox formControlName="confirmIdentity" class="confirmation-checkbox">
+            <span class="checkbox-label">
+              I confirm that I have verified the patient's identity using the selected method
+            </span>
+          </mat-checkbox>
+          
+          <mat-checkbox formControlName="confirmAppointment" class="confirmation-checkbox">
+            <span class="checkbox-label">
+              I confirm that the patient has a valid appointment for the requested diagnostic test
+            </span>
+          </mat-checkbox>
+        </div>
+        
+        <div class="error-messages">
+          <mat-error *ngIf="verificationForm.get('confirmIdentity')?.hasError('required') && verificationForm.get('confirmIdentity')?.touched">
+            Identity confirmation is required
+          </mat-error>
+          <mat-error *ngIf="verificationForm.get('confirmAppointment')?.hasError('required') && verificationForm.get('confirmAppointment')?.touched">
+            Appointment confirmation is required
+          </mat-error>
+        </div>
+      </div>
+
+      <!-- Security Notice -->
+      <div class="security-notice">
+        <mat-icon>security</mat-icon>
+        <div class="notice-content">
+          <strong>Security Notice:</strong> Patient verification is required by HIPAA regulations. 
+          Ensure proper identification before proceeding with any diagnostic procedures. 
+          All verification activities are logged for audit purposes.
+        </div>
+      </div>
+
+      <!-- Verification Progress -->
+      <div class="verification-progress" *ngIf="isVerifying">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <p>Verifying patient identity...</p>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button 
+      mat-button 
+      (click)="cancel()"
+      [disabled]="isVerifying">
+      Cancel
+    </button>
+    
+    <button 
+      mat-raised-button 
+      color="primary"
+      (click)="verifyPatient()"
+      [disabled]="verificationForm.invalid || isVerifying || isLoading">
+      <mat-icon *ngIf="!isVerifying">verified_user</mat-icon>
+      <mat-icon *ngIf="isVerifying" class="spinning">hourglass_empty</mat-icon>
+      {{ isVerifying ? 'Verifying...' : 'Verify Patient' }}
+    </button>
+  </mat-dialog-actions>
+</div>

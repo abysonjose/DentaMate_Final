@@ -1,0 +1,57 @@
+<div class="notes-header">
+  <h2>
+    <mat-icon>note_add</mat-icon>
+    Nursing Notes & Observations
+  </h2>
+  <button mat-raised-button color="primary" 
+          (click)="openNotesDialog()" 
+          [disabled]="!selectedPatient">
+    <mat-icon>add</mat-icon>
+    Add Note
+  </button>
+</div>
+
+<div class="notes-content">
+  <div class="patients-list">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Select Patient</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item *ngFor="let patient of patients" 
+                         (click)="selectPatient(patient)"
+                         [class.selected]="selectedPatient?.id === patient.id">
+            <div matListItemTitle>{{ patient.name }}</div>
+            <div matListItemLine>Token: {{ patient.tokenNumber }}</div>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="notes-display" *ngIf="selectedPatient">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Notes for {{ selectedPatient.name }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="notes-list" *ngIf="nursingNotes.length; else noNotes">
+          <div *ngFor="let note of nursingNotes" class="note-item">
+            <div class="note-header">
+              <mat-chip [color]="'primary'">{{ note.type | titlecase }}</mat-chip>
+              <span class="note-time">{{ note.timestamp | date:'short' }}</span>
+            </div>
+            <div class="note-content">{{ note.content }}</div>
+          </div>
+        </div>
+        <ng-template #noNotes>
+          <div class="no-notes">
+            <mat-icon>note</mat-icon>
+            <p>No nursing notes recorded for this patient</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+.full-width {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.vital-signs-section {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+
+  h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+  }
+
+  .vital-signs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 600px) {
+  .vital-signs-section .vital-signs-grid {
+    grid-template-columns: 1fr;
+  }
+}

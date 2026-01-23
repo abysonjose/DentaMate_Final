@@ -1,0 +1,75 @@
+.dialog-content {
+  min-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+.message-preview {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #2196F3;
+
+  h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+  }
+
+  .preview-content {
+    .preview-item {
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+
+      strong {
+        color: #333;
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.dialog-actions {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  .cancel-btn,
+  .send-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+// Responsive Design
+@media (max-width: 600px) {
+  .dialog-content {
+    min-width: auto;
+    width: 90vw;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+
+    .cancel-btn,
+    .send-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

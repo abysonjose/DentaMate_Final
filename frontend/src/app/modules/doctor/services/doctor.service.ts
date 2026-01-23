@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { ClinicalIntegrationService, PatientHandoff, ClinicalMessage, TaskAssignment, ClinicalAlert } from '../../../shared/services/clinical-integration.service';
 
 export interface DoctorProfile {
   id: string;
@@ -49,9 +50,10 @@ export class DoctorService {
   private doctorProfile$ = new BehaviorSubject<DoctorProfile | null>(null);
   private notifications$ = new BehaviorSubject<Notification[]>([]);
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private clinicalIntegration: ClinicalIntegrationService) {
     this.loadDoctorProfile();
     this.loadNotifications();
+    this.subscribeToIntegrationEvents();
   }
 
   // Profile Management
@@ -87,6 +89,81 @@ export class DoctorService {
         next: (notifications) => this.notifications$.next(notifications),
         error: (error) => console.error('Error loading notifications:', error)
       });
+  }
+
+  private subscribeToIntegrationEvents(): void {
+    // Subscribe to clinical integration events
+    this.clinicalIntegration.newHandoff$.subscribe(handoff => {
+      if (handoff.toRole === 'doctor') {
+        // Handle incoming patient handoffs from nurses
+        this.handleIncomingHandoff(handoff);
+      }
+    });
+
+    this.clinicalIntegration.newMessage$.subscribe(message => {
+      if (message.recipientRole === 'doctor') {
+        // Handle incoming messages from nurses/head nurses
+        this.handleIncomingMessage(message);
+      }
+    });
+
+    this.clinicalIntegration.newAlert$.subscribe(alert => {
+      if (alert.targetRoles.includes('doctor')) {
+        // Handle clinical alerts
+        this.handleClinicalAlert(alert);
+      }
+    });
+  }
+
+  private handleIncomingHandoff(handoff: PatientHandoff): void {
+    // Convert handoff to notification
+    const notification: Notification = {
+      id: `handoff-${handoff.id}`,
+      type: 'queue',
+      title: 'Patient Ready for Consultation',
+      message: `${handoff.patientName} (Token: ${handoff.tokenNumber}) is ready for consultation. ${handoff.notes}`,
+      timestamp: new Date(handoff.timestamp),
+      read: false,
+      priority: handoff.priority === 'urgent' ? 'urgent' : 'medium',
+      actionUrl: `/doctor/queue`
+    };
+
+    const currentNotifications = this.notifications$.value;
+    this.notifications$.next([notification, ...currentNotifications]);
+  }
+
+  private handleIncomingMessage(message: ClinicalMessage): void {
+    // Convert message to notification
+    const notification: Notification = {
+      id: `message-${message.id}`,
+      type: 'collaboration',
+      title: `Message from ${message.senderName}`,
+      message: message.message,
+      timestamp: new Date(message.timestamp),
+      read: false,
+      priority: message.messageType === 'urgent' ? 'urgent' : 'medium',
+      actionUrl: `/doctor/messages`
+    };
+
+    const currentNotifications = this.notifications$.value;
+    this.notifications$.next([notification, ...currentNotifications]);
+  }
+
+  private handleClinicalAlert(alert: ClinicalAlert): void {
+    // Convert alert to notification
+    const notification: Notification = {
+      id: `alert-${alert.id}`,
+      type: alert.alertType === 'emergency' ? 'system' : 'queue',
+      title: alert.title,
+      message: alert.message,
+      timestamp: new Date(alert.timestamp),
+      read: false,
+      priority: alert.priority === 'emergency' ? 'urgent' : 'high',
+      actionUrl: `/doctor/alerts`
+    };
+
+    const currentNotifications = this.notifications$.value;
+    this.notifications$.next([notification, ...currentNotifications]);
   }
 
   markNotificationAsRead(notificationId: string): Observable<void> {
@@ -175,5 +252,127 @@ export class DoctorService {
 
   disableVoiceCommands(): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/voice/disable`, {});
+  }
+
+  // Integration Methods for Clinical Workflow
+
+  // Request nurse assistance
+  requestNurseAssistance(patientId: string, patientName: string, nurseId: string, assistanceType: string, notes?: string): Observable<any> {
+    return this.clinicalIntegration.requestNurseAssistance(
+      patientId,
+      patientName,
+      nurseId,
+      assistanceType,
+      notes
+    );
+  }
+
+  // Send message to nurse
+  sendMessageToNurse(nurseId: string, subject: string, message: string, patientId?: string, messageType: 'info' | 'request' | 'urgent' = 'info'): Observable<any> {
+    return this.clinicalIntegration.sendClinicalMessage({
+      recipientId: nurseId,
+      recipientRole: 'nurse',
+      subject,
+      message,
+      messageType,
+      patientId
+    });
+  }
+
+  // Send message to head nurse
+  sendMessageToHeadNurse(headNurseId: string, subject: string, message: string, patientId?: string, messageType: 'info' | 'request' | 'urgent' = 'info'): Observable<any> {
+    return this.clinicalIntegration.sendClinicalMessage({
+      recipientId: headNurseId,
+      recipientRole: 'head-nurse',
+      subject,
+      message,
+      messageType,
+      patientId
+    });
+  }
+
+  // Handoff patient to nurse for post-procedure care
+  handoffPatientToNurse(patientId: string, patientName: string, nurseId: string, notes: string): Observable<any> {
+    return this.clinicalIntegration.createPatientHandoff({
+      patientId,
+      patientName,
+      toStaffId: nurseId,
+      toRole: 'nurse',
+      handoffType: 'post-procedure',
+      notes,
+      priority: 'normal'
+    });
+  }
+
+  // Request head nurse intervention
+  requestHeadNurseIntervention(patientId: string, patientName: string, reason: string, priority: 'normal' | 'urgent' = 'normal'): Observable<any> {
+    return this.clinicalIntegration.createTaskAssignment({
+      title: 'Doctor Intervention Request',
+      description: reason,
+      assignedToRole: 'head-nurse',
+      patientId,
+      patientName,
+      taskType: 'assistance',
+      priority: priority === 'urgent' ? 'urgent' : 'high'
+    });
+  }
+
+  // Trigger emergency alert
+  triggerEmergencyAlert(patientId: string, patientName: string, roomId: string, description: string): Observable<any> {
+    return this.clinicalIntegration.triggerEmergencyAlert(patientId, patientName, roomId, description);
+  }
+
+  // Report equipment issue
+  reportEquipmentIssue(roomId: string, equipmentName: string, issueDescription: string): Observable<any> {
+    return this.clinicalIntegration.reportEquipmentIssue(roomId, equipmentName, issueDescription);
+  }
+
+  // Acknowledge handoff from nurse
+  acknowledgeHandoff(handoffId: string): Observable<any> {
+    return this.clinicalIntegration.acknowledgeHandoff(handoffId);
+  }
+
+  // Complete handoff
+  completeHandoff(handoffId: string, notes?: string): Observable<any> {
+    return this.clinicalIntegration.completeHandoff(handoffId, notes);
+  }
+
+  // Update status for other staff
+  updateMyStatus(status: 'available' | 'busy' | 'break', location?: string): Observable<any> {
+    return this.clinicalIntegration.updateStaffStatus(status, location);
+  }
+
+  // Get clinical integration data
+  getClinicalMessages(): Observable<ClinicalMessage[]> {
+    return this.clinicalIntegration.messages$;
+  }
+
+  getTaskAssignments(): Observable<TaskAssignment[]> {
+    return this.clinicalIntegration.tasks$;
+  }
+
+  getClinicalAlerts(): Observable<ClinicalAlert[]> {
+    return this.clinicalIntegration.alerts$;
+  }
+
+  getPatientHandoffs(): Observable<PatientHandoff[]> {
+    return this.clinicalIntegration.handoffs$;
+  }
+
+  // Get integration counts for dashboard
+  getUnreadMessageCount(): number {
+    return this.clinicalIntegration.getUnreadMessageCount();
+  }
+
+  getPendingTaskCount(): number {
+    return this.clinicalIntegration.getPendingTaskCount();
+  }
+
+  getActiveAlertCount(): number {
+    return this.clinicalIntegration.getActiveAlertCount();
+  }
+
+  getPendingHandoffCount(): number {
+    return this.clinicalIntegration.getPendingHandoffCount();
   }
 }

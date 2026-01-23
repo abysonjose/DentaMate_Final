@@ -1,0 +1,44 @@
+<div class="assistance-header">
+  <h2>
+    <mat-icon>medical_services</mat-icon>
+    Chairside Assistance Tracking
+  </h2>
+  <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
+    <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+  </button>
+</div>
+
+<div class="assistance-content" *ngIf="!isLoading">
+  <div class="active-patients" *ngIf="activePatients.length; else noActivePatients">
+    <mat-card *ngFor="let patient of activePatients" class="patient-card">
+      <mat-card-header>
+        <mat-card-title>{{ patient.name }}</mat-card-title>
+        <mat-card-subtitle>Token: {{ patient.tokenNumber }} | Dr. {{ patient.doctorId }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="assistance-actions">
+          <button *ngFor="let type of assistanceTypes" 
+                  mat-raised-button 
+                  [color]="'primary'"
+                  (click)="logAssistance(patient, type.value, type.label)"
+                  class="assistance-btn">
+            <mat-icon>{{ type.icon }}</mat-icon>
+            {{ type.label }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <ng-template #noActivePatients>
+    <div class="no-patients">
+      <mat-icon>event_seat</mat-icon>
+      <p>No patients currently in consultation</p>
+    </div>
+  </ng-template>
+</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <mat-spinner></mat-spinner>
+  <p>Loading assistance data...</p>
+</div>

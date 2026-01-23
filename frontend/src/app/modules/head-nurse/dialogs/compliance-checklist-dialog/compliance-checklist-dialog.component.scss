@@ -1,0 +1,299 @@
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid #e0e0e0;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
+
+mat-dialog-content {
+  padding: 24px;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  .checklist-info-section {
+    margin-bottom: 24px;
+
+    .info-card {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+
+      .checklist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .header-info {
+          flex: 1;
+
+          h3 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            font-weight: 600;
+          }
+
+          p {
+            margin: 0 0 12px 0;
+            color: #666;
+            font-size: 16px;
+          }
+
+          .checklist-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .checklist-id {
+              font-size: 14px;
+              color: #666;
+            }
+          }
+        }
+
+        .completion-status {
+          .completion-circle {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .completion-text {
+              position: absolute;
+              font-size: 16px;
+              font-weight: 600;
+              color: #333;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .checklist-form {
+    .quick-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    .items-section {
+      margin-bottom: 24px;
+
+      h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 16px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .items-list {
+        .item-card {
+          margin-bottom: 12px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+
+          .item-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+
+            .item-checkbox {
+              margin-top: 8px;
+            }
+
+            .item-details {
+              flex: 1;
+
+              .item-description {
+                font-size: 16px;
+                font-weight: 500;
+                margin-bottom: 12px;
+                color: #333;
+              }
+
+              .item-notes {
+                width: 100%;
+                margin-bottom: 8px;
+              }
+
+              .item-notes-display {
+                font-size: 14px;
+                color: #666;
+                padding: 8px;
+                background-color: #f5f5f5;
+                border-radius: 4px;
+                border-left: 4px solid #2196F3;
+              }
+            }
+
+            .item-status {
+              margin-top: 8px;
+            }
+          }
+        }
+      }
+    }
+
+    .completion-section {
+      margin-bottom: 24px;
+
+      h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 16px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .full-width {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+    }
+
+    .completion-info {
+      .completion-card {
+        background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+
+        mat-card-header {
+          mat-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+          }
+        }
+
+        .completion-details {
+          .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .detail-label {
+              font-weight: 500;
+              color: #666;
+            }
+
+            .detail-value {
+              font-weight: 600;
+              color: #333;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  gap: 12px;
+
+  button {
+    min-width: 100px;
+  }
+}
+
+// Responsive Design
+@media (max-width: 600px) {
+  .dialog-header {
+    padding: 0 16px;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
+
+  mat-dialog-content {
+    padding: 16px;
+
+    .checklist-info-section {
+      .info-card {
+        .checklist-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+
+          .completion-status {
+            align-self: center;
+          }
+        }
+      }
+    }
+
+    .checklist-form {
+      .quick-actions {
+        flex-direction: column;
+
+        button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      .items-section {
+        .items-list {
+          .item-card {
+            .item-content {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 12px;
+
+              .item-checkbox {
+                margin-top: 0;
+              }
+
+              .item-status {
+                margin-top: 0;
+                align-self: flex-end;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  mat-dialog-actions {
+    padding: 12px 16px;
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+}

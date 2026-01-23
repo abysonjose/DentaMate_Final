@@ -1,0 +1,353 @@
+.page-header {
+  margin-bottom: 24px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .title-section {
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .subtitle {
+        margin: 8px 0 0 0;
+        color: #666;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .metric-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    &.total {
+      border-left: 4px solid #2196F3;
+    }
+
+    &.ok {
+      border-left: 4px solid #4CAF50;
+    }
+
+    &.low {
+      border-left: 4px solid #FF9800;
+    }
+
+    &.critical {
+      border-left: 4px solid #F44336;
+    }
+
+    &.expiring {
+      border-left: 4px solid #9C27B0;
+    }
+
+    mat-card-content {
+      .metric-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        mat-icon {
+          color: #666;
+        }
+
+        .metric-title {
+          font-weight: 500;
+          color: #666;
+        }
+      }
+
+      .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #333;
+      }
+    }
+  }
+}
+
+.filters-card {
+  margin-bottom: 24px;
+
+  .filters-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+
+    mat-form-field {
+      min-width: 200px;
+    }
+
+    .filter-summary {
+      margin-left: auto;
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+}
+
+.inventory-table-card {
+  margin-bottom: 24px;
+
+  .table-container {
+    overflow-x: auto;
+
+    .inventory-table {
+      width: 100%;
+      min-width: 1000px;
+
+      th {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .item-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .category-icon {
+          color: #666;
+          font-size: 20px;
+        }
+
+        .item-details {
+          .item-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+          }
+
+          .item-id {
+            font-size: 12px;
+            color: #999;
+          }
+        }
+      }
+
+      .stock-info {
+        .stock-numbers {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+          margin-bottom: 4px;
+
+          .current-stock {
+            font-weight: 600;
+            font-size: 16px;
+          }
+
+          .min-stock {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+
+        mat-progress-bar {
+          width: 100px;
+          height: 6px;
+        }
+      }
+
+      .expiry-info {
+        .expiry-date {
+          font-weight: 500;
+          margin-bottom: 2px;
+        }
+
+        .expiry-status {
+          font-size: 12px;
+          color: #666;
+
+          &.warning {
+            color: #F44336;
+            font-weight: 500;
+          }
+        }
+      }
+
+      .no-expiry {
+        color: #999;
+        font-style: italic;
+      }
+
+      .location-info {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        mat-icon {
+          font-size: 16px;
+          color: #666;
+        }
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 4px;
+      }
+
+      // Row highlighting
+      .low-stock-row {
+        background-color: #fff3e0;
+        border-left: 3px solid #ff9800;
+      }
+
+      .critical-stock-row {
+        background-color: #ffebee;
+        border-left: 3px solid #f44336;
+      }
+
+      .expiring-row {
+        background-color: #f3e5f5;
+        border-left: 3px solid #9c27b0;
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0;
+      opacity: 0.8;
+    }
+  }
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+
+  .category-card {
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    mat-card-header {
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+      }
+    }
+
+    .category-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .stat-item {
+        text-align: center;
+
+        .stat-label {
+          display: block;
+          font-size: 12px;
+          color: #666;
+          margin-bottom: 4px;
+        }
+
+        .stat-value {
+          display: block;
+          font-size: 20px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        &.critical {
+          .stat-value {
+            color: #F44336;
+          }
+        }
+
+        &.low {
+          .stat-value {
+            color: #FF9800;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .page-header {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filters-card {
+    .filters-row {
+      flex-direction: column;
+      align-items: stretch;
+
+      mat-form-field {
+        min-width: auto;
+        width: 100%;
+      }
+
+      .filter-summary {
+        margin-left: 0;
+        text-align: center;
+      }
+    }
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,261 @@
+<!-- Header -->
+<div class="page-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h2>
+        <mat-icon>medical_services</mat-icon>
+        Treatment Assistance Records
+      </h2>
+      <p class="subtitle">Track nursing assistance during procedures and patient care</p>
+    </div>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshData()" matTooltip="Refresh Data">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Assistance Metrics -->
+<div class="metrics-grid">
+  <mat-card class="metric-card total">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>assignment</mat-icon>
+        <span class="metric-title">Total Records</span>
+      </div>
+      <div class="metric-value">{{ assistanceMetrics.totalRecords }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card pending">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>schedule</mat-icon>
+        <span class="metric-title">Pending</span>
+      </div>
+      <div class="metric-value">{{ assistanceMetrics.pendingAssistance }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card progress">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>play_circle</mat-icon>
+        <span class="metric-title">In Progress</span>
+      </div>
+      <div class="metric-value">{{ assistanceMetrics.inProgressAssistance }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card completed">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>check_circle</mat-icon>
+        <span class="metric-title">Completed Today</span>
+      </div>
+      <div class="metric-value">{{ assistanceMetrics.completedToday }}</div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Filters -->
+<mat-card class="filters-card">
+  <mat-card-content>
+    <div class="filters-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Search Records</mat-label>
+        <input matInput 
+               [(ngModel)]="filterOptions.searchTerm" 
+               (ngModelChange)="applyFilters()"
+               placeholder="Search by patient, doctor, or nurse...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(value)]="filterOptions.status" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Assistance Type</mat-label>
+        <mat-select [(value)]="filterOptions.assistanceType" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let type of assistanceTypeOptions" [value]="type.value">
+            {{ type.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date Range</mat-label>
+        <mat-select [(value)]="filterOptions.dateRange" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let range of dateRangeOptions" [value]="range.value">
+            {{ range.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-summary">
+        Showing {{ filteredRecords.length }} of {{ treatmentRecords.length }} records
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Treatment Records Table -->
+<mat-card class="records-table-card">
+  <mat-card-content>
+    <div class="table-container">
+      <table mat-table [dataSource]="filteredRecords" class="records-table">
+        
+        <!-- Timestamp Column -->
+        <ng-container matColumnDef="timestamp">
+          <th mat-header-cell *matHeaderCellDef>Time</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="timestamp-info">
+              <div class="time">{{ record.timestamp | date:'HH:mm' }}</div>
+              <div class="date">{{ record.timestamp | date:'MMM dd' }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Patient Name Column -->
+        <ng-container matColumnDef="patientName">
+          <th mat-header-cell *matHeaderCellDef>Patient</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="patient-info">
+              <span class="patient-name">{{ record.patientName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Doctor Name Column -->
+        <ng-container matColumnDef="doctorName">
+          <th mat-header-cell *matHeaderCellDef>Doctor</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="doctor-info">
+              <span class="doctor-name">Dr. {{ record.doctorName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Nurse Name Column -->
+        <ng-container matColumnDef="nurseName">
+          <th mat-header-cell *matHeaderCellDef>Nurse</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="nurse-info">
+              <span class="nurse-name">{{ record.nurseName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Room Number Column -->
+        <ng-container matColumnDef="roomNumber">
+          <th mat-header-cell *matHeaderCellDef>Room</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="room-info">
+              <mat-icon>place</mat-icon>
+              <span>Room {{ record.roomNumber }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Assistance Type Column -->
+        <ng-container matColumnDef="assistanceType">
+          <th mat-header-cell *matHeaderCellDef>Assistance Type</th>
+          <td mat-cell *matCellDef="let record">
+            <mat-chip color="accent" selected>
+              <mat-icon>{{ getAssistanceTypeIcon(record.assistanceType) }}</mat-icon>
+              {{ record.assistanceType | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let record">
+            <mat-chip [color]="getStatusColor(record.status)" selected>
+              <mat-icon>{{ getStatusIcon(record.status) }}</mat-icon>
+              {{ record.status | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="action-buttons">
+              <button mat-icon-button 
+                      (click)="addTreatmentNotes(record)"
+                      matTooltip="Add/Edit Notes">
+                <mat-icon>note_add</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      [matMenuTriggerFor]="statusMenu"
+                      [disabled]="!canUpdateStatus(record)"
+                      matTooltip="Update Status">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              
+              <mat-menu #statusMenu="matMenu">
+                <button mat-menu-item 
+                        *ngFor="let status of statusOptions.slice(1)"
+                        (click)="updateRecordStatus(record, status.value)"
+                        [disabled]="record.status === status.value">
+                  <mat-icon>{{ getStatusIcon(status.value) }}</mat-icon>
+                  {{ status.label }}
+                </button>
+              </mat-menu>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            [class.pending-row]="row.status === 'pending'"
+            [class.progress-row]="row.status === 'in_progress'"></tr>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredRecords.length === 0">
+      <mat-icon>assignment_late</mat-icon>
+      <h3>No Treatment Records Found</h3>
+      <p>Try adjusting your filters or check back later.</p>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Recent Notes -->
+<mat-card class="recent-notes-card" *ngIf="filteredRecords.length > 0">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>notes</mat-icon>
+      Recent Treatment Notes
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="notes-list">
+      <div class="note-item" *ngFor="let record of filteredRecords.slice(0, 5)">
+        <div class="note-header">
+          <span class="note-time">{{ record.timestamp | date:'HH:mm' }}</span>
+          <span class="note-patient">{{ record.patientName }}</span>
+          <span class="note-type">{{ record.assistanceType | titlecase }}</span>
+        </div>
+        <div class="note-content" *ngIf="record.notes">
+          {{ record.notes }}
+        </div>
+        <div class="note-empty" *ngIf="!record.notes">
+          <em>No notes added yet</em>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

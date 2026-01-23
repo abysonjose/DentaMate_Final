@@ -1,0 +1,145 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>assignment_ind</mat-icon>
+    Assign Nurse to Doctor
+  </h2>
+  <button mat-icon-button mat-dialog-close>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- Nurse Information -->
+  <div class="nurse-info-section">
+    <mat-card class="nurse-card">
+      <mat-card-content>
+        <div class="nurse-details">
+          <div class="nurse-avatar">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="nurse-info">
+            <h3>{{ data.nurse.name }}</h3>
+            <p>{{ data.nurse.role | titlecase }}</p>
+            <div class="nurse-skills" *ngIf="data.nurse.skills?.length">
+              <mat-chip-listbox>
+                <mat-chip *ngFor="let skill of data.nurse.skills">{{ skill }}</mat-chip>
+              </mat-chip-listbox>
+            </div>
+          </div>
+          <div class="nurse-status">
+            <mat-chip color="primary" selected>{{ data.nurse.status | titlecase }}</mat-chip>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Assignment Form -->
+  <form [formGroup]="assignmentForm" class="assignment-form">
+    
+    <!-- Doctor Selection -->
+    <div class="form-section">
+      <h4>Select Doctor</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Available Doctors</mat-label>
+        <mat-select formControlName="doctorId" (selectionChange)="onDoctorChange()">
+          <mat-option *ngFor="let doctor of availableDoctors" [value]="doctor.id">
+            <div class="doctor-option">
+              <div class="doctor-info">
+                <span class="doctor-name">{{ doctor.name }}</span>
+                <span class="doctor-specialization">{{ doctor.specialization }}</span>
+              </div>
+              <mat-chip [color]="getDoctorStatusColor(doctor.status)" selected>
+                {{ doctor.status | titlecase }}
+              </mat-chip>
+            </div>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="assignmentForm.get('doctorId')?.hasError('required')">
+          Please select a doctor
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Room Selection -->
+    <div class="form-section">
+      <h4>Select Room</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Available Rooms</mat-label>
+        <mat-select formControlName="roomNumber">
+          <mat-option *ngFor="let room of availableRooms" [value]="room.number">
+            <div class="room-option">
+              <div class="room-info">
+                <span class="room-number">Room {{ room.number }}</span>
+                <span class="room-type">{{ room.type | titlecase }}</span>
+              </div>
+              <mat-chip [color]="getRoomStatusColor(room.status)" selected>
+                {{ room.status | titlecase }}
+              </mat-chip>
+            </div>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="assignmentForm.get('roomNumber')?.hasError('required')">
+          Please select a room
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Assignment Type -->
+    <div class="form-section">
+      <h4>Assignment Type</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Type of Assistance</mat-label>
+        <mat-select formControlName="assignmentType">
+          <mat-option value="general_assistance">General Assistance</mat-option>
+          <mat-option value="chairside_assistance">Chairside Assistance</mat-option>
+          <mat-option value="procedure_assistance">Procedure Assistance</mat-option>
+          <mat-option value="patient_preparation">Patient Preparation</mat-option>
+          <mat-option value="post_procedure_care">Post-Procedure Care</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Duration -->
+    <div class="form-section">
+      <h4>Expected Duration</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Duration</mat-label>
+        <mat-select formControlName="duration">
+          <mat-option value="30">30 minutes</mat-option>
+          <mat-option value="60">1 hour</mat-option>
+          <mat-option value="90">1.5 hours</mat-option>
+          <mat-option value="120">2 hours</mat-option>
+          <mat-option value="180">3 hours</mat-option>
+          <mat-option value="full_shift">Full shift</mat-option>
+        </mat-select>
+        <mat-error *ngIf="assignmentForm.get('duration')?.hasError('required')">
+          Please select duration
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-section">
+      <h4>Additional Notes</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Notes (Optional)</mat-label>
+        <textarea matInput 
+                  formControlName="notes" 
+                  rows="3"
+                  placeholder="Any special instructions or requirements..."></textarea>
+      </mat-form-field>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()"
+          [disabled]="assignmentForm.invalid">
+    Assign Nurse
+  </button>
+</mat-dialog-actions>

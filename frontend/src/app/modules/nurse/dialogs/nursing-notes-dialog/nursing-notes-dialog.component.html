@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>Add Nursing Note - {{ patient.name }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="notesForm">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Note Type</mat-label>
+      <mat-select formControlName="type">
+        <mat-option *ngFor="let type of noteTypes" [value]="type.value">
+          {{ type.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div *ngIf="isVitalSigns()" class="vital-signs-section">
+      <h3>Vital Signs</h3>
+      <div class="vital-signs-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Blood Pressure</mat-label>
+          <input matInput formControlName="bloodPressure" placeholder="120/80">
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Heart Rate (bpm)</mat-label>
+          <input matInput type="number" formControlName="heartRate">
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Temperature (°F)</mat-label>
+          <input matInput type="number" formControlName="temperature">
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Oxygen Saturation (%)</mat-label>
+          <input matInput type="number" formControlName="oxygenSaturation">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Notes</mat-label>
+      <textarea matInput formControlName="content" rows="4" 
+                placeholder="Enter your observations or notes..."></textarea>
+      <mat-hint>{{ notesForm.get('content')?.value?.length || 0 }}/1000 characters</mat-hint>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="notesForm.invalid">
+    Save Note
+  </button>
+</mat-dialog-actions>

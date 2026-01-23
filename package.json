@@ -4,6 +4,9 @@
   "description": "Comprehensive Healthcare Management System",
   "scripts": {
     "setup": "node scripts/setup.js",
+    "seed:admin": "node scripts/seed-central-admin.js",
+    "seed:admin:reset": "node scripts/seed-central-admin.js --reset",
+    "validate:admin": "node scripts/validate-central-admin.js",
     "dev": "docker-compose up",
     "dev:build": "docker-compose up --build",
     "stop": "docker-compose down",
@@ -37,6 +40,11 @@
     "npm": ">=10.0.0"
   },
   "dependencies": {
-    "axios": "^1.13.2"
+    "axios": "^1.13.2",
+    "mongoose": "^8.8.4",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "uuid": "^9.0.1",
+    "joi": "^17.13.3"
   }
 }

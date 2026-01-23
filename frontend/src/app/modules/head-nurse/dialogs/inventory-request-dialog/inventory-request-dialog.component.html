@@ -1,0 +1,163 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>add_shopping_cart</mat-icon>
+    Request Inventory Restock
+  </h2>
+  <button mat-icon-button mat-dialog-close>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- Item Information -->
+  <div class="item-info-section">
+    <mat-card class="item-card">
+      <mat-card-content>
+        <div class="item-details">
+          <div class="item-icon">
+            <mat-icon>{{ getCategoryIcon(data.item.category) }}</mat-icon>
+          </div>
+          <div class="item-info">
+            <h3>{{ data.item.name }}</h3>
+            <p>{{ data.item.category | titlecase }}</p>
+            <div class="item-location">
+              <mat-icon>place</mat-icon>
+              <span>{{ data.item.location }}</span>
+            </div>
+          </div>
+          <div class="item-status">
+            <mat-chip [color]="getStatusColor(data.item.status)" selected>
+              {{ data.item.status | titlecase }}
+            </mat-chip>
+          </div>
+        </div>
+        
+        <div class="stock-details">
+          <div class="stock-item">
+            <span class="stock-label">Current Stock:</span>
+            <span class="stock-value current">{{ data.item.currentStock }}</span>
+          </div>
+          <div class="stock-item">
+            <span class="stock-label">Minimum Stock:</span>
+            <span class="stock-value minimum">{{ data.item.minimumStock }}</span>
+          </div>
+          <div class="stock-item" *ngIf="data.item.currentStock < data.item.minimumStock">
+            <span class="stock-label">Shortage:</span>
+            <span class="stock-value shortage">{{ data.item.minimumStock - data.item.currentStock }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Request Form -->
+  <form [formGroup]="requestForm" class="request-form">
+    
+    <!-- Quantity -->
+    <div class="form-section">
+      <h4>Request Quantity</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Quantity to Request</mat-label>
+        <input matInput 
+               type="number" 
+               formControlName="quantity"
+               min="1"
+               placeholder="Enter quantity">
+        <mat-error *ngIf="requestForm.get('quantity')?.hasError('required')">
+          Quantity is required
+        </mat-error>
+        <mat-error *ngIf="requestForm.get('quantity')?.hasError('min')">
+          Quantity must be at least 1
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Urgency -->
+    <div class="form-section">
+      <h4>Request Urgency</h4>
+      <mat-radio-group formControlName="urgency" class="urgency-group">
+        <mat-radio-button *ngFor="let urgency of urgencyOptions" 
+                          [value]="urgency.value"
+                          [color]="getUrgencyColor(urgency.value)">
+          <div class="urgency-option">
+            <div class="urgency-label">{{ urgency.label }}</div>
+            <div class="urgency-description">{{ urgency.description }}</div>
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Justification -->
+    <div class="form-section">
+      <h4>Justification</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Reason for Request</mat-label>
+        <mat-select formControlName="justification">
+          <mat-option value="low_stock">Low stock level</mat-option>
+          <mat-option value="critical_shortage">Critical shortage</mat-option>
+          <mat-option value="increased_usage">Increased usage</mat-option>
+          <mat-option value="upcoming_procedures">Upcoming procedures</mat-option>
+          <mat-option value="equipment_maintenance">Equipment maintenance</mat-option>
+          <mat-option value="quality_issue">Quality issue with current stock</mat-option>
+          <mat-option value="expiry_replacement">Expiry replacement</mat-option>
+          <mat-option value="other">Other</mat-option>
+        </mat-select>
+        <mat-error *ngIf="requestForm.get('justification')?.hasError('required')">
+          Please select a justification
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Additional Notes -->
+    <div class="form-section">
+      <h4>Additional Notes</h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Notes (Optional)</mat-label>
+        <textarea matInput 
+                  formControlName="notes" 
+                  rows="3"
+                  placeholder="Any additional information or special requirements..."></textarea>
+      </mat-form-field>
+    </div>
+
+  </form>
+
+  <!-- Request Summary -->
+  <div class="request-summary" *ngIf="requestForm.valid">
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Request Summary</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-item">
+          <span class="summary-label">Item:</span>
+          <span class="summary-value">{{ data.item.name }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Quantity:</span>
+          <span class="summary-value">{{ requestForm.get('quantity')?.value }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Urgency:</span>
+          <span class="summary-value">{{ requestForm.get('urgency')?.value | titlecase }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">After Restock:</span>
+          <span class="summary-value projected">
+            {{ data.item.currentStock + requestForm.get('quantity')?.value }} units
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()"
+          [disabled]="requestForm.invalid">
+    Submit Request
+  </button>
+</mat-dialog-actions>

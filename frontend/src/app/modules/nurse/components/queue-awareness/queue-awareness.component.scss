@@ -1,0 +1,443 @@
+.queue-header {
+  margin-bottom: 20px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+
+      mat-icon {
+        color: #2196F3;
+      }
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      .current-time {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+        padding: 8px 12px;
+        background: #f5f5f5;
+        border-radius: 20px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      button mat-icon.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+.queue-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+
+  .overview-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+
+    .card-content {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      .card-icon {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+        opacity: 0.8;
+      }
+
+      .card-details {
+        .card-number {
+          font-size: 28px;
+          font-weight: 600;
+          line-height: 1;
+        }
+
+        .card-label {
+          font-size: 12px;
+          color: #666;
+          margin-top: 2px;
+        }
+
+        .card-subtitle {
+          font-size: 10px;
+          color: #888;
+          margin-top: 2px;
+        }
+      }
+    }
+
+    &.total-patients {
+      .card-icon { color: #2196F3; }
+      .card-number { color: #2196F3; }
+    }
+
+    &.average-wait {
+      .card-icon { color: #FF9800; }
+      .card-number { color: #FF9800; }
+    }
+
+    &.active-doctors {
+      .card-icon { color: #4CAF50; }
+      .card-number { color: #4CAF50; }
+    }
+
+    &.longest-queue {
+      .card-icon { color: #9C27B0; }
+      .card-number { color: #9C27B0; }
+    }
+  }
+}
+
+.doctor-queues {
+  .queue-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+  }
+
+  .doctor-queue-card {
+    border-left: 4px solid #2196F3;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .doctor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+
+      .doctor-info {
+        .doctor-name {
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 2px;
+        }
+
+        .doctor-specialization {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .queue-count-chip {
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .current-token-section {
+      margin-bottom: 20px;
+
+      .current-token {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .token-chip {
+          &.current {
+            background: #4caf50;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+          }
+        }
+
+        .token-label {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .no-token {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #999;
+        font-size: 14px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+
+    .next-patient-section {
+      margin-bottom: 20px;
+
+      .next-patient-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+
+        .patient-details {
+          .patient-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+          }
+
+          .patient-token {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+
+        .prep-status-chip {
+          font-size: 11px;
+        }
+      }
+    }
+
+    .wait-time-section {
+      margin-bottom: 20px;
+
+      .wait-time-info {
+        .wait-time-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          mat-icon {
+            color: #666;
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+
+          .wait-time-details {
+            display: flex;
+            flex-direction: column;
+
+            .wait-time-label {
+              font-size: 12px;
+              color: #666;
+            }
+
+            .wait-time-value {
+              font-size: 16px;
+              font-weight: 600;
+
+              &.wait-time-primary { color: #2196F3; }
+              &.wait-time-accent { color: #FF9800; }
+              &.wait-time-warn { color: #f44336; }
+            }
+          }
+        }
+      }
+    }
+
+    .queue-status-indicator {
+      .status-bar {
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+
+        .status-fill {
+          height: 100%;
+          transition: width 0.3s ease;
+
+          &.status-primary { background: #2196F3; }
+          &.status-accent { background: #FF9800; }
+          &.status-warn { background: #f44336; }
+        }
+      }
+
+      .status-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+
+        .status-label {
+          color: #666;
+        }
+
+        .status-value {
+          color: #333;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .no-queues {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      opacity: 0.5;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      margin: 0 0 10px 0;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #666;
+
+  p {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+}
+
+.notice-card {
+  margin-top: 30px;
+  background: #e3f2fd;
+  border-left: 4px solid #2196F3;
+
+  .notice-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+
+    .notice-icon {
+      color: #2196F3;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+    }
+
+    .notice-text {
+      strong {
+        color: #1976d2;
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .queue-header .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+
+    .header-info {
+      align-self: flex-end;
+    }
+  }
+
+  .queue-overview {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .doctor-queues .queue-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .doctor-queue-card {
+    .doctor-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .next-patient-section .next-patient-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+  }
+
+  .notice-card .notice-content {
+    flex-direction: column;
+    gap: 10px;
+
+    .notice-icon {
+      align-self: flex-start;
+    }
+  }
+}

@@ -1,0 +1,281 @@
+<!-- Header -->
+<div class="page-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h2>
+        <mat-icon>timeline</mat-icon>
+        Patient Flow Monitoring
+      </h2>
+      <p class="subtitle">Track patient readiness and treatment workflow coordination</p>
+    </div>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshData()" matTooltip="Refresh Data">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Flow Metrics -->
+<div class="metrics-grid">
+  <mat-card class="metric-card total">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>people</mat-icon>
+        <span class="metric-title">Total Patients</span>
+      </div>
+      <div class="metric-value">{{ flowMetrics.totalPatients }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card waiting">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>schedule</mat-icon>
+        <span class="metric-title">Waiting</span>
+      </div>
+      <div class="metric-value">{{ flowMetrics.waitingPatients }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card preparation">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>build</mat-icon>
+        <span class="metric-title">In Preparation</span>
+      </div>
+      <div class="metric-value">{{ flowMetrics.inPreparation }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="metric-card consultation">
+    <mat-card-content>
+      <div class="metric-header">
+        <mat-icon>medical_services</mat-icon>
+        <span class="metric-title">In Consultation</span>
+      </div>
+      <div class="metric-value">{{ flowMetrics.inConsultation }}</div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Bottlenecks Alert -->
+<mat-card class="bottlenecks-card" *ngIf="flowMetrics.bottlenecks.length > 0">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon color="warn">warning</mat-icon>
+      Flow Bottlenecks Detected
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="bottleneck-list">
+      <div class="bottleneck-item" *ngFor="let bottleneck of flowMetrics.bottlenecks">
+        <mat-icon color="warn">error_outline</mat-icon>
+        <span>{{ bottleneck }}</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Status Tabs -->
+<mat-card class="status-tabs-card">
+  <mat-card-content>
+    <mat-tab-group [(selectedIndex)]="0" (selectedTabChange)="applyFilters()">
+      <mat-tab *ngFor="let status of statusOptions" [label]="status.label + ' (' + status.count + ')'">
+        <ng-container *ngIf="status.value !== 'all'">
+          <div class="tab-content" (click)="filterOptions.status = status.value; applyFilters()">
+            <!-- Tab content will be handled by the main table below -->
+          </div>
+        </ng-container>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card-content>
+</mat-card>
+
+<!-- Filters -->
+<mat-card class="filters-card">
+  <mat-card-content>
+    <div class="filters-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Search Patients</mat-label>
+        <input matInput 
+               [(ngModel)]="filterOptions.searchTerm" 
+               (ngModelChange)="applyFilters()"
+               placeholder="Search by name or token...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(value)]="filterOptions.status" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select [(value)]="filterOptions.priority" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let priority of priorityOptions" [value]="priority.value">
+            {{ priority.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-summary">
+        Showing {{ filteredPatients.length }} of {{ patientFlow.length }} patients
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Patient Flow Table -->
+<mat-card class="patient-table-card">
+  <mat-card-content>
+    <div class="table-container">
+      <table mat-table [dataSource]="filteredPatients" class="patient-table">
+        
+        <!-- Token Number Column -->
+        <ng-container matColumnDef="tokenNumber">
+          <th mat-header-cell *matHeaderCellDef>Token</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="token-info">
+              <span class="token-number">{{ patient.tokenNumber }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Patient Name Column -->
+        <ng-container matColumnDef="patientName">
+          <th mat-header-cell *matHeaderCellDef>Patient Name</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="patient-info">
+              <span class="patient-name">{{ patient.patientName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let patient">
+            <mat-chip [color]="getStatusColor(patient.status)" selected>
+              {{ patient.status | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let patient">
+            <mat-chip [color]="getPriorityColor(patient.priority)" selected>
+              {{ patient.priority | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Doctor Assigned Column -->
+        <ng-container matColumnDef="doctorAssigned">
+          <th mat-header-cell *matHeaderCellDef>Doctor</th>
+          <td mat-cell *matCellDef="let patient">
+            <span *ngIf="patient.doctorAssigned; else noDoctor">
+              Dr. {{ patient.doctorAssigned }}
+            </span>
+            <ng-template #noDoctor>
+              <span class="not-assigned">Not assigned</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Nurse Assigned Column -->
+        <ng-container matColumnDef="nurseAssigned">
+          <th mat-header-cell *matHeaderCellDef>Nurse</th>
+          <td mat-cell *matCellDef="let patient">
+            <span *ngIf="patient.nurseAssigned; else noNurse">
+              {{ patient.nurseAssigned }}
+            </span>
+            <ng-template #noNurse>
+              <span class="not-assigned">Not assigned</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Room Number Column -->
+        <ng-container matColumnDef="roomNumber">
+          <th mat-header-cell *matHeaderCellDef>Room</th>
+          <td mat-cell *matCellDef="let patient">
+            <span *ngIf="patient.roomNumber; else noRoom">
+              Room {{ patient.roomNumber }}
+            </span>
+            <ng-template #noRoom>
+              <span class="not-assigned">-</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Estimated Time Column -->
+        <ng-container matColumnDef="estimatedTime">
+          <th mat-header-cell *matHeaderCellDef>Est. Wait</th>
+          <td mat-cell *matCellDef="let patient">
+            <span *ngIf="patient.status === 'waiting'">
+              {{ getEstimatedWaitTime(patient) }}
+            </span>
+            <span *ngIf="patient.status !== 'waiting'" class="not-applicable">
+              -
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let patient">
+            <div class="action-buttons">
+              <button mat-icon-button 
+                      [matMenuTriggerFor]="preparationMenu"
+                      [disabled]="!canUpdatePreparation(patient)"
+                      matTooltip="Update Preparation Status">
+                <mat-icon>build</mat-icon>
+              </button>
+              
+              <mat-menu #preparationMenu="matMenu">
+                <button mat-menu-item 
+                        (click)="updatePreparationStatus(patient, 'prepared')"
+                        [disabled]="patient.status === 'completed'">
+                  <mat-icon>check_circle</mat-icon>
+                  Mark as Prepared
+                </button>
+                <button mat-menu-item 
+                        (click)="updatePreparationStatus(patient, 'pending_preparation')"
+                        [disabled]="patient.status === 'completed'">
+                  <mat-icon>schedule</mat-icon>
+                  Pending Preparation
+                </button>
+                <button mat-menu-item 
+                        (click)="updatePreparationStatus(patient, 'needs_assistance')"
+                        [disabled]="patient.status === 'completed'">
+                  <mat-icon>help</mat-icon>
+                  Needs Assistance
+                </button>
+              </mat-menu>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            [class.urgent-row]="row.priority === 'urgent'"
+            [class.emergency-row]="row.priority === 'emergency'"></tr>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredPatients.length === 0">
+      <mat-icon>people_outline</mat-icon>
+      <h3>No Patients Found</h3>
+      <p>Try adjusting your filters or check back later.</p>
+    </div>
+  </mat-card-content>
+</mat-card>

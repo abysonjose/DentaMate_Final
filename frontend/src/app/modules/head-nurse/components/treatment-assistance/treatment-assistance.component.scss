@@ -1,0 +1,317 @@
+.page-header {
+  margin-bottom: 24px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .title-section {
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .subtitle {
+        margin: 8px 0 0 0;
+        color: #666;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .metric-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    &.total {
+      border-left: 4px solid #2196F3;
+    }
+
+    &.pending {
+      border-left: 4px solid #FF9800;
+    }
+
+    &.progress {
+      border-left: 4px solid #9C27B0;
+    }
+
+    &.completed {
+      border-left: 4px solid #4CAF50;
+    }
+
+    mat-card-content {
+      .metric-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        mat-icon {
+          color: #666;
+        }
+
+        .metric-title {
+          font-weight: 500;
+          color: #666;
+        }
+      }
+
+      .metric-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #333;
+      }
+    }
+  }
+}
+
+.filters-card {
+  margin-bottom: 24px;
+
+  .filters-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+
+    mat-form-field {
+      min-width: 180px;
+    }
+
+    .filter-summary {
+      margin-left: auto;
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+}
+
+.records-table-card {
+  margin-bottom: 24px;
+
+  .table-container {
+    overflow-x: auto;
+
+    .records-table {
+      width: 100%;
+      min-width: 1000px;
+
+      th {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .timestamp-info {
+        text-align: center;
+
+        .time {
+          font-weight: 600;
+          font-family: 'Courier New', monospace;
+        }
+
+        .date {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+
+      .patient-info, .doctor-info, .nurse-info {
+        .patient-name, .doctor-name, .nurse-name {
+          font-weight: 500;
+        }
+      }
+
+      .room-info {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        mat-icon {
+          font-size: 16px;
+          color: #666;
+        }
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 4px;
+
+        button {
+          &:disabled {
+            opacity: 0.5;
+          }
+        }
+      }
+
+      // Row highlighting
+      .pending-row {
+        background-color: #fff3e0;
+        border-left: 3px solid #ff9800;
+      }
+
+      .progress-row {
+        background-color: #f3e5f5;
+        border-left: 3px solid #9c27b0;
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0;
+      opacity: 0.8;
+    }
+  }
+}
+
+.recent-notes-card {
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+    }
+  }
+
+  .notes-list {
+    .note-item {
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .note-header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .note-time {
+          font-family: 'Courier New', monospace;
+          font-weight: 600;
+          color: #2196F3;
+          min-width: 60px;
+        }
+
+        .note-patient {
+          font-weight: 500;
+          color: #333;
+        }
+
+        .note-type {
+          font-size: 12px;
+          color: #666;
+          background-color: #f5f5f5;
+          padding: 2px 8px;
+          border-radius: 12px;
+        }
+      }
+
+      .note-content {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.4;
+        margin-left: 76px;
+      }
+
+      .note-empty {
+        font-size: 14px;
+        color: #999;
+        font-style: italic;
+        margin-left: 76px;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .page-header {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filters-card {
+    .filters-row {
+      flex-direction: column;
+      align-items: stretch;
+
+      mat-form-field {
+        min-width: auto;
+        width: 100%;
+      }
+
+      .filter-summary {
+        margin-left: 0;
+        text-align: center;
+      }
+    }
+  }
+
+  .recent-notes-card {
+    .notes-list {
+      .note-item {
+        .note-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+
+        .note-content, .note-empty {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

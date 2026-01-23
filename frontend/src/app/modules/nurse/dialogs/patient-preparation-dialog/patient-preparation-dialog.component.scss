@@ -1,0 +1,324 @@
+.dialog-header {
+  padding: 20px 24px 0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 15px 0;
+    color: #333;
+    font-weight: 500;
+
+    mat-icon {
+      color: #2196F3;
+    }
+  }
+
+  .patient-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+
+    .token-chip {
+      background: #e3f2fd;
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .patient-details {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .doctor-info {
+      font-size: 14px;
+      color: #666;
+      font-weight: 500;
+    }
+  }
+}
+
+.dialog-content {
+  padding: 0 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.progress-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #2196F3;
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+
+    .progress-label {
+      font-weight: 500;
+      color: #333;
+    }
+  }
+
+  .progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  .progress-percentage {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+  }
+}
+
+.preparation-form {
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+
+    mat-icon {
+      color: #2196F3;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .checklist-section {
+    margin-bottom: 30px;
+
+    .checklist-items {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 25px;
+
+      .checklist-item {
+        padding: 15px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #f5f5f5;
+          border-color: #2196F3;
+        }
+
+        .item-checkbox {
+          width: 100%;
+
+          .item-content {
+            .item-header {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 5px;
+
+              .item-icon {
+                color: #2196F3;
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+              }
+
+              .item-label {
+                font-weight: 500;
+                color: #333;
+              }
+            }
+
+            .item-description {
+              font-size: 12px;
+              color: #666;
+              margin-left: 30px;
+            }
+          }
+        }
+      }
+    }
+
+    .patient-ready-section {
+      padding: 20px;
+      background: #e8f5e8;
+      border: 2px solid #4caf50;
+      border-radius: 8px;
+
+      .patient-ready-checkbox {
+        width: 100%;
+
+        .ready-content {
+          .ready-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+
+            .ready-icon {
+              color: #4caf50;
+              font-size: 24px;
+              width: 24px;
+              height: 24px;
+            }
+
+            .ready-label {
+              font-weight: 600;
+              color: #2e7d32;
+              font-size: 16px;
+            }
+          }
+
+          .ready-description {
+            font-size: 12px;
+            color: #388e3c;
+            margin-left: 34px;
+          }
+        }
+
+        &.mat-mdc-checkbox-disabled {
+          opacity: 0.6;
+        }
+      }
+
+      .ready-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 15px;
+        padding: 10px;
+        background: #fff3e0;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #f57c00;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+
+  .notes-section {
+    margin-bottom: 30px;
+
+    .notes-field {
+      width: 100%;
+    }
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    .quick-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+  }
+}
+
+.dialog-actions {
+  padding: 20px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  .cancel-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .save-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .dialog-header {
+    padding: 15px 20px 0;
+
+    .patient-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
+
+  .dialog-content {
+    padding: 0 20px;
+  }
+
+  .progress-section {
+    padding: 15px;
+
+    .progress-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+  }
+
+  .preparation-form {
+    .checklist-section .checklist-items .checklist-item {
+      padding: 12px;
+
+      .item-checkbox .item-content {
+        .item-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
+        }
+
+        .item-description {
+          margin-left: 0;
+        }
+      }
+    }
+
+    .quick-actions {
+      flex-direction: column;
+      gap: 8px;
+
+      .quick-action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  .dialog-actions {
+    padding: 15px 20px;
+    flex-direction: column-reverse;
+    gap: 8px;
+
+    .cancel-btn,
+    .save-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

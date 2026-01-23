@@ -1,0 +1,228 @@
+<!-- Header -->
+<div class="page-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h2>
+        <mat-icon>group</mat-icon>
+        Nursing Staff Management
+      </h2>
+      <p class="subtitle">Supervise and coordinate nursing staff assignments</p>
+    </div>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshData()" matTooltip="Refresh Data">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<mat-card class="filters-card">
+  <mat-card-content>
+    <div class="filters-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Search Staff</mat-label>
+        <input matInput 
+               [(ngModel)]="filterOptions.searchTerm" 
+               (ngModelChange)="applyFilters()"
+               placeholder="Search by name...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Role</mat-label>
+        <mat-select [(value)]="filterOptions.role" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let role of roleOptions" [value]="role.value">
+            {{ role.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(value)]="filterOptions.status" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-summary">
+        Showing {{ filteredStaff.length }} of {{ nursingStaff.length }} staff members
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Staff Table -->
+<mat-card class="staff-table-card">
+  <mat-card-content>
+    <div class="table-container">
+      <table mat-table [dataSource]="filteredStaff" class="staff-table">
+        
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Staff Member</th>
+          <td mat-cell *matCellDef="let staff">
+            <div class="staff-info">
+              <div class="staff-name">{{ staff.name }}</div>
+              <div class="staff-skills" *ngIf="staff.skills?.length">
+                <mat-chip-listbox>
+                  <mat-chip *ngFor="let skill of staff.skills.slice(0, 2)">{{ skill }}</mat-chip>
+                </mat-chip-listbox>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Role Column -->
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef>Role</th>
+          <td mat-cell *matCellDef="let staff">
+            <mat-chip [color]="staff.role === 'nurse' ? 'primary' : 'accent'" selected>
+              {{ staff.role | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let staff">
+            <mat-chip [color]="getStatusColor(staff.status)" selected>
+              {{ staff.status | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Current Assignment Column -->
+        <ng-container matColumnDef="currentAssignment">
+          <th mat-header-cell *matHeaderCellDef>Current Assignment</th>
+          <td mat-cell *matCellDef="let staff">
+            <div class="assignment-info" *ngIf="staff.currentAssignment; else noAssignment">
+              <div class="assignment-text">{{ staff.currentAssignment }}</div>
+            </div>
+            <ng-template #noAssignment>
+              <span class="no-assignment">Not assigned</span>
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <!-- Shift Column -->
+        <ng-container matColumnDef="shift">
+          <th mat-header-cell *matHeaderCellDef>Shift</th>
+          <td mat-cell *matCellDef="let staff">
+            <div class="shift-info">
+              <div class="shift-time">{{ staff.shiftStart }} - {{ staff.shiftEnd }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Workload Column -->
+        <ng-container matColumnDef="workload">
+          <th mat-header-cell *matHeaderCellDef>Workload</th>
+          <td mat-cell *matCellDef="let staff">
+            <div class="workload-info">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="staff.workload"
+                [color]="getWorkloadColor(staff.workload)">
+              </mat-progress-bar>
+              <span class="workload-text">{{ staff.workload }}%</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let staff">
+            <div class="action-buttons">
+              <button mat-icon-button 
+                      [disabled]="!canAssign(staff)"
+                      (click)="assignNurse(staff)"
+                      matTooltip="Assign to Doctor">
+                <mat-icon>assignment_ind</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      [matMenuTriggerFor]="statusMenu"
+                      [disabled]="!canChangeStatus(staff)"
+                      matTooltip="Change Status">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              
+              <mat-menu #statusMenu="matMenu">
+                <button mat-menu-item 
+                        *ngFor="let status of statusOptions.slice(1)"
+                        (click)="updateStatus(staff, status.value)"
+                        [disabled]="staff.status === status.value">
+                  {{ status.label }}
+                </button>
+              </mat-menu>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredStaff.length === 0">
+      <mat-icon>group_off</mat-icon>
+      <h3>No Staff Members Found</h3>
+      <p>Try adjusting your filters or check back later.</p>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Summary Cards -->
+<div class="summary-grid">
+  <mat-card class="summary-card">
+    <mat-card-content>
+      <div class="summary-header">
+        <mat-icon color="primary">people</mat-icon>
+        <span class="summary-title">Total Staff</span>
+      </div>
+      <div class="summary-value">{{ nursingStaff.length }}</div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="summary-card">
+    <mat-card-content>
+      <div class="summary-header">
+        <mat-icon color="accent">assignment_ind</mat-icon>
+        <span class="summary-title">Currently Assigned</span>
+      </div>
+      <div class="summary-value">
+        {{ (nursingStaff | filter: 'status':'assigned').length }}
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="summary-card">
+    <mat-card-content>
+      <div class="summary-header">
+        <mat-icon color="primary">schedule</mat-icon>
+        <span class="summary-title">On Duty</span>
+      </div>
+      <div class="summary-value">
+        {{ (nursingStaff | filter: 'status':'on_duty').length }}
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="summary-card">
+    <mat-card-content>
+      <div class="summary-header">
+        <mat-icon color="warn">coffee</mat-icon>
+        <span class="summary-title">On Break</span>
+      </div>
+      <div class="summary-value">
+        {{ (nursingStaff | filter: 'status':'break').length }}
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

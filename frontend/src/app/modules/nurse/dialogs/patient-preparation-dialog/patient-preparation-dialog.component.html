@@ -1,0 +1,138 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>person_add</mat-icon>
+    Patient Preparation - {{ patient.name }}
+  </h2>
+  <div class="patient-info">
+    <mat-chip class="token-chip">{{ patient.tokenNumber }}</mat-chip>
+    <span class="patient-details">{{ patient.age }}y, {{ patient.gender }}</span>
+    <span class="doctor-info">Dr. {{ patient.doctorId }} | Room {{ patient.roomId }}</span>
+  </div>
+</div>
+
+<mat-dialog-content class="dialog-content">
+  <!-- Progress Overview -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-label">Preparation Progress</span>
+      <mat-chip [color]="getStatusColor()">{{ getStatusText() }}</mat-chip>
+    </div>
+    <mat-progress-bar 
+      mode="determinate" 
+      [value]="getCompletionPercentage()"
+      class="progress-bar">
+    </mat-progress-bar>
+    <span class="progress-percentage">{{ getCompletionPercentage() | number:'1.0-0' }}% Complete</span>
+  </div>
+
+  <!-- Preparation Form -->
+  <form [formGroup]="preparationForm" class="preparation-form">
+    
+    <!-- Preparation Checklist -->
+    <div class="checklist-section">
+      <h3 class="section-title">
+        <mat-icon>checklist</mat-icon>
+        Preparation Checklist
+      </h3>
+      
+      <div class="checklist-items">
+        <div class="checklist-item" *ngFor="let item of preparationItems">
+          <mat-checkbox 
+            [formControlName]="item.key"
+            class="item-checkbox">
+            <div class="item-content">
+              <div class="item-header">
+                <mat-icon class="item-icon">{{ item.icon }}</mat-icon>
+                <span class="item-label">{{ item.label }}</span>
+              </div>
+              <div class="item-description">{{ item.description }}</div>
+            </div>
+          </mat-checkbox>
+        </div>
+      </div>
+
+      <!-- Patient Ready Checkbox -->
+      <div class="patient-ready-section">
+        <mat-checkbox 
+          formControlName="patientReady"
+          [disabled]="!canMarkPatientReady()"
+          class="patient-ready-checkbox">
+          <div class="ready-content">
+            <div class="ready-header">
+              <mat-icon class="ready-icon">person_check</mat-icon>
+              <span class="ready-label">Patient Ready for Consultation</span>
+            </div>
+            <div class="ready-description">
+              All preparation items completed and patient is ready to see the doctor
+            </div>
+          </div>
+        </mat-checkbox>
+        
+        <div class="ready-note" *ngIf="!canMarkPatientReady()">
+          <mat-icon>info</mat-icon>
+          Complete all preparation items above before marking patient as ready
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="notes-section">
+      <h3 class="section-title">
+        <mat-icon>note</mat-icon>
+        Preparation Notes
+      </h3>
+      
+      <mat-form-field appearance="outline" class="notes-field">
+        <mat-label>Additional Notes (Optional)</mat-label>
+        <textarea 
+          matInput 
+          formControlName="notes"
+          rows="4"
+          placeholder="Add any special instructions or observations...">
+        </textarea>
+        <mat-hint>{{ preparationForm.get('notes')?.value?.length || 0 }}/500 characters</mat-hint>
+        <mat-error *ngIf="preparationForm.get('notes')?.hasError('maxlength')">
+          Notes cannot exceed 500 characters
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button 
+        type="button"
+        mat-stroked-button 
+        (click)="markAllItemsComplete()"
+        class="quick-action-btn">
+        <mat-icon>done_all</mat-icon>
+        Mark All Complete
+      </button>
+      
+      <button 
+        type="button"
+        mat-stroked-button 
+        (click)="resetPreparation()"
+        class="quick-action-btn">
+        <mat-icon>refresh</mat-icon>
+        Reset All
+      </button>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+  <button mat-button (click)="onCancel()" class="cancel-btn">
+    <mat-icon>close</mat-icon>
+    Cancel
+  </button>
+  
+  <button 
+    mat-raised-button 
+    color="primary" 
+    (click)="onSave()"
+    [disabled]="preparationForm.invalid"
+    class="save-btn">
+    <mat-icon>save</mat-icon>
+    Save Preparation Status
+  </button>
+</mat-dialog-actions>

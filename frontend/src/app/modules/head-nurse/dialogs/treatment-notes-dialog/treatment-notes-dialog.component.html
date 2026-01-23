@@ -1,0 +1,181 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>note_add</mat-icon>
+    Treatment Assistance Notes
+  </h2>
+  <button mat-icon-button mat-dialog-close>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <!-- Record Information -->
+  <div class="record-info-section">
+    <mat-card class="record-card">
+      <mat-card-content>
+        <div class="record-details">
+          <div class="record-header">
+            <h3>{{ data.record.patientName }}</h3>
+            <mat-chip [color]="getStatusColor(data.record.status)" selected>
+              {{ data.record.status | titlecase }}
+            </mat-chip>
+          </div>
+          
+          <div class="record-meta">
+            <div class="meta-item">
+              <mat-icon>medical_services</mat-icon>
+              <span>Dr. {{ data.record.doctorName }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>local_hospital</mat-icon>
+              <span>{{ data.record.nurseName }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>place</mat-icon>
+              <span>Room {{ data.record.roomNumber }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ data.record.timestamp | date:'MMM dd, yyyy HH:mm' }}</span>
+            </div>
+          </div>
+          
+          <div class="assistance-type">
+            <mat-chip color="accent" selected>
+              <mat-icon>{{ getAssistanceTypeIcon(data.record.assistanceType) }}</mat-icon>
+              {{ data.record.assistanceType | titlecase }}
+            </mat-chip>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Notes Form -->
+  <form [formGroup]="notesForm" class="notes-form">
+    
+    <!-- Assistance Provided -->
+    <div class="form-section">
+      <h4>
+        <mat-icon>medical_services</mat-icon>
+        Assistance Provided
+      </h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Describe the assistance provided</mat-label>
+        <textarea matInput 
+                  formControlName="assistanceProvided" 
+                  rows="3"
+                  placeholder="Detail the specific assistance provided during the procedure..."></textarea>
+        <mat-error *ngIf="notesForm.get('assistanceProvided')?.hasError('required')">
+          Please describe the assistance provided
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Patient Response -->
+    <div class="form-section">
+      <h4>
+        <mat-icon>person</mat-icon>
+        Patient Response
+      </h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Patient's response and cooperation</mat-label>
+        <textarea matInput 
+                  formControlName="patientResponse" 
+                  rows="2"
+                  placeholder="How did the patient respond? Any concerns or comfort issues?"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Complications/Issues -->
+    <div class="form-section">
+      <h4>
+        <mat-icon>warning</mat-icon>
+        Complications or Issues
+      </h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Any complications or issues encountered</mat-label>
+        <textarea matInput 
+                  formControlName="complications" 
+                  rows="2"
+                  placeholder="Document any complications, equipment issues, or unexpected situations..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="form-section">
+      <h4>
+        <mat-icon>lightbulb</mat-icon>
+        Recommendations
+      </h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Recommendations for future procedures</mat-label>
+        <textarea matInput 
+                  formControlName="recommendations" 
+                  rows="2"
+                  placeholder="Any recommendations for future similar procedures or patient care..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Status Update -->
+    <div class="form-section">
+      <h4>
+        <mat-icon>update</mat-icon>
+        Update Status
+      </h4>
+      <mat-radio-group formControlName="status" class="status-group">
+        <mat-radio-button *ngFor="let status of statusOptions" 
+                          [value]="status.value"
+                          [color]="getStatusColor(status.value)">
+          <div class="status-option">
+            <div class="status-label">{{ status.label }}</div>
+            <div class="status-description">{{ status.description }}</div>
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Additional Notes -->
+    <div class="form-section">
+      <h4>
+        <mat-icon>notes</mat-icon>
+        Additional Notes
+      </h4>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Additional notes or observations</mat-label>
+        <textarea matInput 
+                  formControlName="notes" 
+                  rows="3"
+                  placeholder="Any additional notes, observations, or important information..."></textarea>
+      </mat-form-field>
+    </div>
+
+  </form>
+
+  <!-- Existing Notes -->
+  <div class="existing-notes" *ngIf="data.record.notes">
+    <mat-card class="notes-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Previous Notes
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="previous-notes">
+          {{ data.record.notes }}
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button 
+          color="primary" 
+          (click)="onSubmit()"
+          [disabled]="notesForm.invalid">
+    Save Notes
+  </button>
+</mat-dialog-actions>
