@@ -1,0 +1,308 @@
+<!-- Header Section -->
+<div class="dashboard-header">
+  <div class="header-content">
+    <div class="title-section">
+      <h1>Cashier Dashboard</h1>
+      <p class="current-time">{{ currentTime | date:'medium' }}</p>
+    </div>
+    
+    <div class="shift-status">
+      <mat-chip-set>
+        <mat-chip [color]="isShiftActive ? 'primary' : 'warn'" selected>
+          <mat-icon>{{ isShiftActive ? 'schedule' : 'schedule_send' }}</mat-icon>
+          {{ isShiftActive ? 'Shift Active' : 'No Active Shift' }}
+        </mat-chip>
+        
+        <!-- Billing Integration Status -->
+        <mat-chip [color]="getIntegrationStatusColor()" selected *ngIf="getPendingHandoffCount() > 0">
+          <mat-icon>sync</mat-icon>
+          {{ getPendingHandoffCount() }} Pending from Billing
+        </mat-chip>
+      </mat-chip-set>
+      
+      <div class="shift-actions">
+        <button mat-raised-button color="primary" *ngIf="!isShiftActive" (click)="startShift()">
+          <mat-icon>play_arrow</mat-icon>
+          Start Shift
+        </button>
+        <button mat-raised-button color="warn" *ngIf="isShiftActive" (click)="endShift()">
+          <mat-icon>stop</mat-icon>
+          End Shift
+        </button>
+        
+        <!-- Billing Notifications Button -->
+        <button mat-raised-button color="accent" (click)="showBillingNotifications()" 
+                *ngIf="getBillingNotificationCount() > 0"
+                [matBadge]="getBillingNotificationCount()" matBadgeColor="warn">
+          <mat-icon>notifications</mat-icon>
+          Billing Updates
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Search Section -->
+<mat-card class="quick-search-card">
+  <mat-card-header>
+    <mat-card-title>Quick Invoice Search</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="search-form">
+      <mat-form-field appearance="outline" class="search-type">
+        <mat-label>Search By</mat-label>
+        <mat-select [(value)]="searchType">
+          <mat-option *ngFor="let type of searchTypes" [value]="type.value">
+            {{ type.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="search-input">
+        <mat-label>Enter {{ searchTypes.find(t => t.value === searchType)?.label }}</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (keyup.enter)="quickSearch()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      
+      <button mat-raised-button color="primary" (click)="quickSearch()" [disabled]="!searchTerm.trim()">
+        <mat-icon>search</mat-icon>
+        Search & Pay
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Summary Cards -->
+<div class="summary-grid" *ngIf="!loading">
+  <!-- Payment Summary -->
+  <mat-card class="summary-card payment-summary">
+    <mat-card-header>
+      <mat-card-title>Today's Payments</mat-card-title>
+      <mat-icon class="card-icon">payments</mat-icon>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Collected</span>
+          <span class="stat-value primary">₹{{ paymentSummary?.totalCollected | number:'1.2-2' }}</span>
+        </div>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-label">Cash</span>
+            <span class="stat-value">₹{{ paymentSummary?.cashCollected | number:'1.2-2' }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Digital</span>
+            <span class="stat-value">₹{{ paymentSummary?.digitalCollected | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-label">Transactions</span>
+            <span class="stat-value">{{ paymentSummary?.transactionCount }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Pending</span>
+            <span class="stat-value warn">₹{{ paymentSummary?.pendingPayments | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Cash Summary -->
+  <mat-card class="summary-card cash-summary">
+    <mat-card-header>
+      <mat-card-title>Cash Handling</mat-card-title>
+      <mat-icon class="card-icon">account_balance_wallet</mat-icon>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="stat-label">Current Balance</span>
+          <span class="stat-value primary">₹{{ cashSummary?.currentBalance | number:'1.2-2' }}</span>
+        </div>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-label">Received</span>
+            <span class="stat-value success">₹{{ cashSummary?.todayReceived | number:'1.2-2' }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Paid Out</span>
+            <span class="stat-value">₹{{ cashSummary?.todayPaid | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Transactions</span>
+          <span class="stat-value">{{ cashSummary?.transactionCount }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="primary" (click)="navigateToCashHandling()">
+        <mat-icon>visibility</mat-icon>
+        View Details
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Quick Stats -->
+  <mat-card class="summary-card quick-stats" *ngIf="quickStats">
+    <mat-card-header>
+      <mat-card-title>Quick Stats</mat-card-title>
+      <mat-icon class="card-icon">analytics</mat-icon>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="stat-label">Failed Transactions</span>
+          <span class="stat-value warn">{{ quickStats.failedTransactions || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Avg. Transaction</span>
+          <span class="stat-value">₹{{ quickStats.avgTransaction | number:'1.2-2' }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Last Payment</span>
+          <span class="stat-value">{{ quickStats.lastPayment | date:'short' }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Billing Integration Stats -->
+  <mat-card class="summary-card integration-stats" *ngIf="integrationMetrics">
+    <mat-card-header>
+      <mat-card-title>Billing Integration</mat-card-title>
+      <mat-icon class="card-icon">sync</mat-icon>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="stat-label">Pending Handoffs</span>
+          <span class="stat-value warn">{{ getPendingHandoffCount() }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Processed Today</span>
+          <span class="stat-value success">{{ integrationMetrics.processedToday || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Avg. Processing Time</span>
+          <span class="stat-value">{{ integrationMetrics.avgProcessingTime || '0' }}min</span>
+        </div>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="primary" (click)="showBillingNotifications()">
+        <mat-icon>visibility</mat-icon>
+        View Updates
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+
+<!-- Billing Integration Notifications -->
+<mat-card class="billing-notifications-card" *ngIf="billingNotifications.length > 0">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>sync</mat-icon>
+      Billing Staff Updates
+      <mat-chip class="notification-count">{{ billingNotifications.length }}</mat-chip>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="notifications-list">
+      <div class="notification-item" *ngFor="let notification of billingNotifications.slice(0, 3)" 
+           [class]="'notification-' + notification.priority.toLowerCase()">
+        <div class="notification-content">
+          <mat-icon [color]="integrationService.getNotificationColor(notification.priority)">
+            {{ integrationService.getNotificationIcon(notification.type) }}
+          </mat-icon>
+          <div class="notification-text">
+            <span class="notification-message">{{ integrationService.formatNotificationMessage(notification) }}</span>
+            <span class="notification-time">{{ notification.createdAt | date:'short' }}</span>
+          </div>
+        </div>
+        <div class="notification-actions">
+          <button mat-icon-button color="primary" (click)="processInvoiceFromBilling(notification.invoiceId)" 
+                  *ngIf="notification.type === 'PAYMENT_REQUIRED'" matTooltip="Process Payment">
+            <mat-icon>payment</mat-icon>
+          </button>
+          <button mat-icon-button (click)="requestInvoiceClarification(notification.invoiceId)" 
+                  *ngIf="notification.type === 'INVOICE_GENERATED'" matTooltip="Request Clarification">
+            <mat-icon>help</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="view-all-notifications" *ngIf="billingNotifications.length > 3">
+      <button mat-button color="primary" (click)="showBillingNotifications()">
+        View All {{ billingNotifications.length }} Notifications
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Alerts Section -->
+<mat-card class="alerts-card" *ngIf="alerts.length > 0">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>notifications</mat-icon>
+      Alerts & Notifications
+      <mat-chip class="alert-count">{{ alerts.length }}</mat-chip>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="alerts-list">
+      <div class="alert-item" *ngFor="let alert of alerts" [class]="'alert-' + alert.priority.toLowerCase()">
+        <div class="alert-content">
+          <mat-icon [color]="getAlertColor(alert.priority)">{{ getAlertIcon(alert.type) }}</mat-icon>
+          <div class="alert-text">
+            <span class="alert-message">{{ alert.message }}</span>
+            <span class="alert-time">{{ alert.createdAt | date:'short' }}</span>
+          </div>
+        </div>
+        <div class="alert-actions">
+          <button mat-icon-button color="primary" (click)="handleAlert(alert)" *ngIf="alert.invoiceId" matTooltip="Handle">
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+          <button mat-icon-button (click)="dismissAlert(alert)" matTooltip="Dismiss">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <h3>Quick Actions</h3>
+  <div class="action-buttons">
+    <button mat-raised-button color="primary" (click)="openPaymentDialog()">
+      <mat-icon>payment</mat-icon>
+      Collect Payment
+    </button>
+    
+    <button mat-raised-button color="accent" (click)="navigateToInvoiceLookup()">
+      <mat-icon>search</mat-icon>
+      Invoice Lookup
+    </button>
+    
+    <button mat-raised-button (click)="navigateToPaymentHistory()">
+      <mat-icon>history</mat-icon>
+      Payment History
+    </button>
+    
+    <button mat-raised-button (click)="navigateToCashHandling()" *ngIf="isShiftActive">
+      <mat-icon>account_balance_wallet</mat-icon>
+      Cash Management
+    </button>
+  </div>
+</div>
+
+<!-- Loading Spinner -->
+<div class="loading-container" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+  <p>Loading dashboard data...</p>
+</div>

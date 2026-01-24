@@ -1,0 +1,407 @@
+.inventory-management {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h2 {
+      margin: 0;
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 20px;
+
+    .filters-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 20px;
+      align-items: end;
+
+      .search-field {
+        min-width: 300px;
+      }
+
+      mat-form-field {
+        width: 100%;
+      }
+    }
+  }
+
+  .results-summary {
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .table-card {
+    margin-bottom: 30px;
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 20px;
+
+      p {
+        color: #666;
+        margin: 0;
+      }
+    }
+
+    .table-container {
+      .inventory-table {
+        width: 100%;
+
+        .mat-mdc-header-cell {
+          font-weight: 600;
+          color: #333;
+        }
+
+        .mat-mdc-cell {
+          padding: 12px 8px;
+        }
+
+        // Medicine Info Column
+        .medicine-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .medicine-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+          }
+
+          .generic-name {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+          }
+
+          .manufacturer {
+            font-size: 11px;
+            color: #999;
+          }
+        }
+
+        // Stock Info Column
+        .stock-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .current-stock {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+          }
+
+          .stock-range {
+            font-size: 11px;
+            color: #666;
+          }
+        }
+
+        // Expiry Info Column
+        .expiry-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .expiry-date {
+            color: #333;
+
+            &.expiring-soon {
+              color: #ff9800;
+              font-weight: 500;
+            }
+
+            &.expired {
+              color: #f44336;
+              font-weight: 500;
+              text-decoration: line-through;
+            }
+          }
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+
+        // Unit Price Column
+        .unit-price {
+          font-weight: 500;
+          color: #2e7d32;
+        }
+
+        // Location Info Column
+        .location-info {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #666;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        // Action Buttons Column
+        .action-buttons {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+
+          button {
+            min-width: 40px;
+            height: 40px;
+          }
+        }
+
+        // Row Styling
+        .mat-mdc-row {
+          &.low-stock {
+            background-color: #fff3e0;
+            border-left: 3px solid #ff9800;
+          }
+
+          &.out-of-stock {
+            background-color: #ffebee;
+            border-left: 3px solid #f44336;
+          }
+
+          &.expired {
+            background-color: #fce4ec;
+            border-left: 3px solid #e91e63;
+            opacity: 0.8;
+          }
+
+          &:hover {
+            background-color: #f5f5f5;
+          }
+        }
+      }
+
+      .no-data {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+        color: #666;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          font-weight: 500;
+        }
+
+        p {
+          margin: 0;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  // Summary Section
+  .summary-section {
+    h3 {
+      margin: 0 0 15px 0;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+
+      .summary-card {
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        &.available {
+          border-left: 4px solid #4caf50;
+        }
+
+        &.low-stock {
+          border-left: 4px solid #ff9800;
+        }
+
+        &.out-of-stock {
+          border-left: 4px solid #f44336;
+        }
+
+        &.expired {
+          border-left: 4px solid #e91e63;
+        }
+
+        mat-card-content {
+          padding: 20px;
+
+          .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+
+            mat-icon {
+              font-size: 24px;
+              width: 24px;
+              height: 24px;
+              color: #666;
+            }
+
+            .card-title {
+              font-size: 14px;
+              color: #666;
+              font-weight: 500;
+            }
+          }
+
+          .card-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #333;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .inventory-management {
+    .filters-card .filters-container {
+      grid-template-columns: 1fr;
+      gap: 15px;
+
+      .search-field {
+        min-width: auto;
+      }
+    }
+
+    .table-card .table-container .inventory-table {
+      .action-buttons {
+        flex-direction: column;
+        gap: 2px;
+
+        button {
+          min-width: 36px;
+          height: 36px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .inventory-management {
+    padding: 15px;
+
+    .section-header {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+    }
+
+    .summary-section .summary-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    // Hide less important columns on mobile
+    .inventory-table {
+      .mat-column-category,
+      .mat-column-location,
+      .mat-column-unitPrice {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .inventory-management {
+    .summary-section .summary-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Material Design Overrides
+::ng-deep {
+  .mat-mdc-chip.mat-mdc-standard-chip {
+    font-size: 12px;
+    height: 24px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+  }
+
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+
+  .mat-mdc-table {
+    .mat-mdc-header-row {
+      background-color: #fafafa;
+    }
+  }
+
+  .mat-mdc-paginator {
+    background-color: transparent;
+    border-top: 1px solid #e0e0e0;
+  }
+}

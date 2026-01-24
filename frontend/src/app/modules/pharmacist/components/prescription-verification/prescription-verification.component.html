@@ -1,0 +1,235 @@
+<div class="prescription-verification">
+  <!-- Header Section -->
+  <div class="section-header">
+    <h2>Prescription Verification</h2>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshPrescriptions()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-button (click)="exportPrescriptions()" matTooltip="Export Data">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-container">
+        
+        <!-- Search Filter -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search prescriptions</mat-label>
+          <input matInput [formControl]="searchControl" 
+                 placeholder="Patient name, doctor, or prescription ID">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Status Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [formControl]="statusFilter">
+            <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Payment Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Payment Status</mat-label>
+          <mat-select [formControl]="paymentFilter">
+            <mat-option *ngFor="let option of paymentOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Results Summary -->
+  <div class="results-summary">
+    <span>Showing {{ dataSource.filteredData.length }} of {{ totalPrescriptions }} prescriptions</span>
+  </div>
+
+  <!-- Prescriptions Table -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading prescriptions...</p>
+      </div>
+
+      <!-- Data Table -->
+      <div *ngIf="!isLoading" class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="prescriptions-table">
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="patient-info">
+                <span class="patient-name">{{ prescription.patientName }}</span>
+                <span class="patient-id">ID: {{ prescription.patientId }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Doctor Name Column -->
+          <ng-container matColumnDef="doctorName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="doctor-info">
+                <span class="doctor-name">Dr. {{ prescription.doctorName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Prescription Date Column -->
+          <ng-container matColumnDef="prescriptionDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="date-info">
+                <span class="date">{{ prescription.prescriptionDate | date:'short' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Medicine Count Column -->
+          <ng-container matColumnDef="medicineCount">
+            <th mat-header-cell *matHeaderCellDef>Medicines</th>
+            <td mat-cell *matCellDef="let prescription">
+              <mat-chip-set>
+                <mat-chip>{{ prescription.medicines.length }} items</mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <!-- Total Amount Column -->
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="amount-info">
+                <span class="amount">₹{{ prescription.totalAmount | number:'1.2-2' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Payment Status Column -->
+          <ng-container matColumnDef="paymentStatus">
+            <th mat-header-cell *matHeaderCellDef>Payment</th>
+            <td mat-cell *matCellDef="let prescription">
+              <mat-chip [color]="getPaymentStatusColor(prescription.paymentStatus)" selected>
+                {{ prescription.paymentStatus | titlecase }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let prescription">
+              <mat-chip [color]="getStatusColor(prescription.status)" selected>
+                {{ prescription.status | titlecase }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="action-buttons">
+                
+                <!-- View Details Button -->
+                <button mat-icon-button color="primary" 
+                        (click)="viewPrescriptionDetails(prescription)"
+                        matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+
+                <!-- Payment Check Button -->
+                <button mat-icon-button color="accent" 
+                        (click)="checkPaymentStatus(prescription)"
+                        matTooltip="Check Payment"
+                        *ngIf="prescription.paymentStatus !== 'paid'">
+                  <mat-icon>payment</mat-icon>
+                </button>
+
+                <!-- Verify Button -->
+                <button mat-icon-button color="primary" 
+                        (click)="verifyPrescription(prescription)"
+                        matTooltip="Verify Prescription"
+                        [disabled]="!canVerifyPrescription(prescription)"
+                        *ngIf="prescription.status === 'pending'">
+                  <mat-icon>verified</mat-icon>
+                </button>
+
+                <!-- Authenticity Warning -->
+                <mat-icon *ngIf="!prescription.isAuthentic" 
+                          color="warn" 
+                          matTooltip="Prescription authenticity needs verification">
+                  warning
+                </mat-icon>
+
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [class.pending-payment]="row.paymentStatus !== 'paid'"
+              [class.verified]="row.status === 'verified'"
+              [class.dispensed]="row.status === 'dispensed'"></tr>
+
+        </table>
+
+        <!-- No Data Message -->
+        <div *ngIf="dataSource.filteredData.length === 0" class="no-data">
+          <mat-icon>receipt_long</mat-icon>
+          <h3>No prescriptions found</h3>
+          <p>Try adjusting your search criteria or filters</p>
+        </div>
+
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                     [pageSize]="25"
+                     showFirstLastButtons>
+      </mat-paginator>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Legend -->
+  <mat-card class="legend-card">
+    <mat-card-content>
+      <h4>Status Legend</h4>
+      <div class="legend-items">
+        <div class="legend-item">
+          <mat-chip color="warn" selected>Pending</mat-chip>
+          <span>Awaiting verification</span>
+        </div>
+        <div class="legend-item">
+          <mat-chip color="primary" selected>Verified</mat-chip>
+          <span>Ready for dispensing</span>
+        </div>
+        <div class="legend-item">
+          <mat-chip color="accent" selected>Dispensed</mat-chip>
+          <span>Medicines issued</span>
+        </div>
+        <div class="legend-item">
+          <mat-icon color="warn">warning</mat-icon>
+          <span>Authenticity check required</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>

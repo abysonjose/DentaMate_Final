@@ -1,0 +1,297 @@
+.prescription-verification {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    h2 {
+      margin: 0;
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 20px;
+
+    .filters-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 20px;
+      align-items: end;
+
+      .search-field {
+        min-width: 300px;
+      }
+
+      mat-form-field {
+        width: 100%;
+      }
+    }
+  }
+
+  .results-summary {
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .table-card {
+    margin-bottom: 20px;
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 20px;
+
+      p {
+        color: #666;
+        margin: 0;
+      }
+    }
+
+    .table-container {
+      .prescriptions-table {
+        width: 100%;
+
+        .mat-mdc-header-cell {
+          font-weight: 600;
+          color: #333;
+        }
+
+        .mat-mdc-cell {
+          padding: 12px 8px;
+        }
+
+        // Patient Info Column
+        .patient-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .patient-name {
+            font-weight: 500;
+            color: #333;
+          }
+
+          .patient-id {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+
+        // Doctor Info Column
+        .doctor-info {
+          .doctor-name {
+            font-weight: 500;
+            color: #333;
+          }
+        }
+
+        // Date Info Column
+        .date-info {
+          .date {
+            color: #333;
+          }
+        }
+
+        // Amount Info Column
+        .amount-info {
+          .amount {
+            font-weight: 600;
+            color: #2e7d32;
+          }
+        }
+
+        // Action Buttons Column
+        .action-buttons {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+
+          button {
+            min-width: 40px;
+            height: 40px;
+          }
+        }
+
+        // Row Styling
+        .mat-mdc-row {
+          &.pending-payment {
+            background-color: #fff3e0;
+            border-left: 3px solid #ff9800;
+          }
+
+          &.verified {
+            background-color: #e8f5e8;
+            border-left: 3px solid #4caf50;
+          }
+
+          &.dispensed {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+          }
+
+          &:hover {
+            background-color: #f5f5f5;
+          }
+        }
+      }
+
+      .no-data {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+        color: #666;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          font-weight: 500;
+        }
+
+        p {
+          margin: 0;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .legend-card {
+    h4 {
+      margin: 0 0 15px 0;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #666;
+
+        mat-chip {
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .prescription-verification {
+    .filters-card .filters-container {
+      grid-template-columns: 1fr;
+      gap: 15px;
+
+      .search-field {
+        min-width: auto;
+      }
+    }
+
+    .table-card .table-container .prescriptions-table {
+      .action-buttons {
+        flex-direction: column;
+        gap: 2px;
+
+        button {
+          min-width: 36px;
+          height: 36px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .prescription-verification {
+    padding: 15px;
+
+    .section-header {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+    }
+
+    .legend-card .legend-items {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    // Hide less important columns on mobile
+    .prescriptions-table {
+      .mat-column-doctorName,
+      .mat-column-prescriptionDate,
+      .mat-column-medicineCount {
+        display: none;
+      }
+    }
+  }
+}
+
+// Material Design Overrides
+::ng-deep {
+  .mat-mdc-chip.mat-mdc-standard-chip {
+    font-size: 12px;
+    height: 24px;
+  }
+
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+
+  .mat-mdc-table {
+    .mat-mdc-header-row {
+      background-color: #fafafa;
+    }
+  }
+
+  .mat-mdc-paginator {
+    background-color: transparent;
+    border-top: 1px solid #e0e0e0;
+  }
+}

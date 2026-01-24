@@ -1,0 +1,202 @@
+<div class="invoice-lookup-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h2>
+      <mat-icon>search</mat-icon>
+      Invoice Lookup & Payment
+    </h2>
+    <p>Search and process payments for patient invoices</p>
+  </div>
+
+  <!-- Search Form -->
+  <mat-card class="search-card">
+    <mat-card-header>
+      <mat-card-title>Search Invoices</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="searchForm" class="search-form">
+        <div class="search-row">
+          <mat-form-field appearance="outline" class="search-type">
+            <mat-label>Search By</mat-label>
+            <mat-select formControlName="searchType">
+              <mat-option *ngFor="let type of searchTypes" [value]="type.value">
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="search-input">
+            <mat-label>Enter {{ searchTypes.find(t => t.value === searchForm.get('searchType')?.value)?.label }}</mat-label>
+            <input matInput formControlName="searchTerm" (keyup.enter)="searchInvoices()">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="status-filter">
+            <mat-label>Status Filter</mat-label>
+            <mat-select formControlName="statusFilter">
+              <mat-option *ngFor="let status of statusFilters" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="search-actions">
+          <button mat-raised-button color="primary" (click)="searchInvoices()" [disabled]="loading">
+            <mat-icon>search</mat-icon>
+            Search
+          </button>
+          <button mat-button (click)="clearSearch()" [disabled]="loading">
+            <mat-icon>clear</mat-icon>
+            Clear
+          </button>
+          <button mat-button (click)="loadPendingInvoices()" [disabled]="loading">
+            <mat-icon>refresh</mat-icon>
+            Load Pending
+          </button>
+          <button mat-button (click)="exportToCSV()" [disabled]="dataSource.data.length === 0">
+            <mat-icon>download</mat-icon>
+            Export CSV
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Results Table -->
+  <mat-card class="results-card">
+    <mat-card-header>
+      <mat-card-title>
+        Invoice Results
+        <mat-chip class="result-count" *ngIf="dataSource.data.length > 0">
+          {{ dataSource.data.length }} invoices
+        </mat-chip>
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <!-- Loading Spinner -->
+      <div class="loading-container" *ngIf="loading">
+        <mat-spinner></mat-spinner>
+        <p>Searching invoices...</p>
+      </div>
+
+      <!-- Results Table -->
+      <div class="table-container" *ngIf="!loading">
+        <table mat-table [dataSource]="dataSource" matSort class="invoice-table">
+          <!-- Invoice Number Column -->
+          <ng-container matColumnDef="invoiceNumber">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Invoice Number</th>
+            <td mat-cell *matCellDef="let invoice">
+              <span class="invoice-number">{{ invoice.invoiceNumber }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient Name</th>
+            <td mat-cell *matCellDef="let invoice">
+              <div class="patient-info">
+                <span class="patient-name">{{ invoice.patientName }}</span>
+                <span class="patient-id">ID: {{ invoice.patientId }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Total Amount Column -->
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Total Amount</th>
+            <td mat-cell *matCellDef="let invoice">
+              <span class="amount total">₹{{ invoice.totalAmount | number:'1.2-2' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Paid Amount Column -->
+          <ng-container matColumnDef="paidAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Paid Amount</th>
+            <td mat-cell *matCellDef="let invoice">
+              <span class="amount paid">₹{{ invoice.paidAmount | number:'1.2-2' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Pending Amount Column -->
+          <ng-container matColumnDef="pendingAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Pending Amount</th>
+            <td mat-cell *matCellDef="let invoice">
+              <span class="amount pending" [class.zero]="invoice.pendingAmount === 0">
+                ₹{{ invoice.pendingAmount | number:'1.2-2' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let invoice">
+              <mat-chip [color]="getStatusColor(invoice.status)" selected>
+                <mat-icon>{{ getStatusIcon(invoice.status) }}</mat-icon>
+                {{ invoice.status | titlecase }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Created Date Column -->
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Created Date</th>
+            <td mat-cell *matCellDef="let invoice">
+              <div class="date-info">
+                <span class="date">{{ invoice.createdAt | date:'shortDate' }}</span>
+                <span class="time">{{ invoice.createdAt | date:'shortTime' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let invoice">
+              <div class="action-buttons">
+                <button mat-icon-button color="primary" 
+                        (click)="openPaymentDialog(invoice)"
+                        [disabled]="!canCollectPayment(invoice)"
+                        matTooltip="Collect Payment">
+                  <mat-icon>payment</mat-icon>
+                </button>
+                
+                <button mat-icon-button 
+                        (click)="viewInvoiceDetails(invoice)"
+                        matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <button mat-icon-button color="accent"
+                        (click)="markAsPaid(invoice)"
+                        [disabled]="invoice.status === 'PAID'"
+                        matTooltip="Mark as Paid">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [class.overdue-row]="row.status === 'OVERDUE'"></tr>
+        </table>
+
+        <!-- No Data Message -->
+        <div class="no-data" *ngIf="dataSource.data.length === 0 && !loading">
+          <mat-icon>inbox</mat-icon>
+          <h3>No invoices found</h3>
+          <p>Try adjusting your search criteria or load pending invoices</p>
+        </div>
+
+        <!-- Paginator -->
+        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                       [pageSize]="25"
+                       showFirstLastButtons
+                       *ngIf="dataSource.data.length > 0">
+        </mat-paginator>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

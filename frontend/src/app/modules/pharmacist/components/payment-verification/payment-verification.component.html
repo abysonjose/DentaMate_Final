@@ -1,0 +1,149 @@
+<div class="payment-verification">
+  
+  <!-- Dialog Header -->
+  <div mat-dialog-title class="dialog-header">
+    <h2>Payment Verification</h2>
+    <button mat-icon-button (click)="onClose()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Dialog Content -->
+  <div mat-dialog-content class="dialog-content">
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Verifying payment status...</p>
+    </div>
+
+    <!-- Payment Information -->
+    <div *ngIf="!isLoading && paymentInfo" class="payment-info">
+      
+      <!-- Payment Status Card -->
+      <mat-card class="status-card">
+        <mat-card-content>
+          <div class="status-header">
+            <mat-icon [color]="getPaymentStatusColor(paymentInfo.status)" class="status-icon">
+              {{ getPaymentStatusIcon(paymentInfo.status) }}
+            </mat-icon>
+            <div class="status-details">
+              <h3>Payment Status</h3>
+              <mat-chip [color]="getPaymentStatusColor(paymentInfo.status)" selected>
+                {{ paymentInfo.status | titlecase }}
+              </mat-chip>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Payment Details -->
+      <mat-card class="details-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>receipt</mat-icon>
+          <mat-card-title>Payment Details</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="payment-details">
+            <div class="detail-item">
+              <span class="label">Prescription ID:</span>
+              <span class="value">{{ data.prescriptionId }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Amount:</span>
+              <span class="value amount">₹{{ paymentInfo.amount | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Payment Method:</span>
+              <span class="value">{{ paymentInfo.paymentMethod || 'Not specified' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="paymentInfo.transactionId">
+              <span class="label">Transaction ID:</span>
+              <span class="value">{{ paymentInfo.transactionId }}</span>
+            </div>
+            <div class="detail-item" *ngIf="paymentInfo.paidAt">
+              <span class="label">Payment Date:</span>
+              <span class="value">{{ paymentInfo.paidAt | date:'medium' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Status Messages -->
+      <div class="status-messages">
+        
+        <!-- Paid Status -->
+        <mat-card *ngIf="paymentInfo.status === 'paid'" class="success-card">
+          <mat-card-content>
+            <div class="message-content">
+              <mat-icon color="accent">check_circle</mat-icon>
+              <div class="message-text">
+                <h4>Payment Confirmed</h4>
+                <p>Payment has been successfully processed. You can proceed with medicine dispensing.</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Pending Status -->
+        <mat-card *ngIf="paymentInfo.status === 'pending'" class="warning-card">
+          <mat-card-content>
+            <div class="message-content">
+              <mat-icon color="warn">schedule</mat-icon>
+              <div class="message-text">
+                <h4>Payment Pending</h4>
+                <p>Payment is still being processed. Please wait for confirmation before dispensing medicines.</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Failed Status -->
+        <mat-card *ngIf="paymentInfo.status === 'failed'" class="error-card">
+          <mat-card-content>
+            <div class="message-content">
+              <mat-icon color="warn">error</mat-icon>
+              <div class="message-text">
+                <h4>Payment Failed</h4>
+                <p>Payment could not be processed. Please contact the billing department or ask the patient to retry payment.</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!isLoading && !paymentInfo" class="error-state">
+      <mat-icon color="warn">error_outline</mat-icon>
+      <h3>Unable to Load Payment Information</h3>
+      <p>There was an error loading the payment status. Please try again.</p>
+      <button mat-raised-button color="primary" (click)="refreshPaymentStatus()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Dialog Actions -->
+  <div mat-dialog-actions class="dialog-actions">
+    <div class="action-buttons">
+      
+      <!-- Refresh Button -->
+      <button mat-button (click)="refreshPaymentStatus()" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
+        Refresh Status
+      </button>
+
+      <!-- Close Button -->
+      <button mat-raised-button color="primary" (click)="onConfirm()">
+        Close
+      </button>
+
+    </div>
+  </div>
+
+</div>

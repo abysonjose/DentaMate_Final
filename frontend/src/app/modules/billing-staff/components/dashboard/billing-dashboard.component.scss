@@ -1,0 +1,373 @@
+.billing-dashboard {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .dashboard-header {
+    margin-bottom: 20px;
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+      .dashboard-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        color: #333;
+        font-size: 24px;
+        font-weight: 500;
+
+        mat-icon {
+          color: #1976d2;
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+    }
+  }
+
+  .quick-search-section {
+    margin-bottom: 20px;
+
+    .search-container {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+
+      .search-field {
+        flex: 1;
+        max-width: 400px;
+      }
+    }
+  }
+
+  .summary-section {
+    margin-bottom: 30px;
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+
+      .summary-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        mat-card-content {
+          padding: 20px;
+
+          .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+
+            mat-icon {
+              font-size: 24px;
+              width: 24px;
+              height: 24px;
+            }
+
+            .card-title {
+              font-weight: 500;
+              color: #666;
+            }
+          }
+
+          .card-value {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 5px;
+          }
+
+          .card-subtitle {
+            color: #888;
+            font-size: 14px;
+          }
+        }
+
+        &.bills-generated {
+          .card-header mat-icon {
+            color: #2196f3;
+          }
+          .card-value {
+            color: #2196f3;
+          }
+        }
+
+        &.payments-received {
+          .card-header mat-icon {
+            color: #4caf50;
+          }
+          .card-value {
+            color: #4caf50;
+          }
+        }
+
+        &.pending-payments {
+          .card-header mat-icon {
+            color: #ff9800;
+          }
+          .card-value {
+            color: #ff9800;
+          }
+        }
+
+        &.total-revenue {
+          .card-header mat-icon {
+            color: #9c27b0;
+          }
+          .card-value {
+            color: #9c27b0;
+          }
+        }
+      }
+    }
+  }
+
+  .alerts-section {
+    margin-bottom: 30px;
+
+    mat-card-header {
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        mat-icon {
+          color: #ff9800;
+        }
+
+        mat-chip-list {
+          margin-left: 10px;
+        }
+      }
+    }
+
+    .alerts-container {
+      .alert-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 4px solid;
+
+        &.alert-high {
+          background-color: #ffebee;
+          border-left-color: #f44336;
+        }
+
+        &.alert-medium {
+          background-color: #fff3e0;
+          border-left-color: #ff9800;
+        }
+
+        &.alert-low {
+          background-color: #e8f5e8;
+          border-left-color: #4caf50;
+        }
+
+        .alert-icon {
+          margin-right: 15px;
+
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+          }
+        }
+
+        .alert-content {
+          flex: 1;
+
+          .alert-message {
+            font-weight: 500;
+            margin-bottom: 5px;
+          }
+
+          .alert-details {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+
+            .patient-name {
+              font-weight: 500;
+            }
+
+            .amount {
+              color: #f44336;
+              font-weight: 500;
+            }
+          }
+        }
+
+        .alert-actions {
+          margin-left: 15px;
+        }
+      }
+    }
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
+
+    .content-section {
+      mat-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          mat-icon {
+            color: #1976d2;
+          }
+
+          mat-chip-list {
+            margin-left: 10px;
+          }
+        }
+
+        .card-actions {
+          margin-left: auto;
+        }
+      }
+
+      .table-container {
+        .bills-table {
+          width: 100%;
+
+          .bill-number {
+            font-family: monospace;
+            font-weight: 500;
+          }
+
+          .amount {
+            font-weight: 500;
+            color: #2e7d32;
+          }
+
+          mat-chip {
+            font-size: 12px;
+            min-height: 24px;
+          }
+        }
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 10px;
+          opacity: 0.5;
+        }
+
+        p {
+          margin: 0;
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: #666;
+
+    mat-spinner {
+      margin-bottom: 20px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 16px;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .billing-dashboard {
+    padding: 10px;
+
+    .dashboard-header .header-content {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+
+      .header-actions {
+        justify-content: center;
+      }
+    }
+
+    .quick-search-section .search-container {
+      flex-direction: column;
+
+      .search-field {
+        max-width: none;
+        width: 100%;
+      }
+    }
+
+    .summary-section .summary-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .alerts-section .alert-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 10px;
+
+      .alert-details {
+        justify-content: center;
+      }
+    }
+  }
+}
+
+// Print Styles
+@media print {
+  .billing-dashboard {
+    .header-actions,
+    .alert-actions,
+    .card-actions,
+    button {
+      display: none !important;
+    }
+  }
+}

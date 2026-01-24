@@ -1,0 +1,191 @@
+<div class="pharmacist-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Pharmacy Dashboard</h1>
+      <div class="header-actions">
+        <span class="current-time">{{ currentTime | date:'medium' }}</span>
+        <button mat-icon-button (click)="refreshDashboard()" matTooltip="Refresh Dashboard">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading pharmacy data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="dashboard-content">
+    
+    <!-- Overview Cards -->
+    <div class="overview-section">
+      <h2>Today's Overview</h2>
+      <div class="overview-cards">
+        
+        <mat-card class="overview-card pending-prescriptions" (click)="navigateToSection('prescriptions')">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon>receipt_long</mat-icon>
+              <span class="card-title">Pending Prescriptions</span>
+            </div>
+            <div class="card-value">{{ overview.pendingPrescriptions }}</div>
+            <div class="card-subtitle">Awaiting dispensing</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="overview-card medicines-dispensed" (click)="navigateToSection('history')">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon>medication</mat-icon>
+              <span class="card-title">Medicines Dispensed</span>
+            </div>
+            <div class="card-value">{{ overview.medicinesDispensed }}</div>
+            <div class="card-subtitle">Today's total</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="overview-card stock-alerts" (click)="navigateToSection('alerts')">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon [matBadge]="overview.lowStockAlerts" matBadgeColor="warn">inventory</mat-icon>
+              <span class="card-title">Stock Alerts</span>
+            </div>
+            <div class="card-value">{{ overview.lowStockAlerts }}</div>
+            <div class="card-subtitle">Low stock items</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="overview-card expiry-alerts" (click)="navigateToSection('alerts')">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon [matBadge]="overview.expiryAlerts" matBadgeColor="accent">schedule</mat-icon>
+              <span class="card-title">Expiry Alerts</span>
+            </div>
+            <div class="card-value">{{ overview.expiryAlerts }}</div>
+            <div class="card-subtitle">Expiring soon</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="overview-card revenue">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon>attach_money</mat-icon>
+              <span class="card-title">Today's Revenue</span>
+            </div>
+            <div class="card-value">₹{{ overview.todayRevenue | number:'1.2-2' }}</div>
+            <div class="card-subtitle">Medicines sold</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="overview-card pending-payments">
+          <mat-card-content>
+            <div class="card-header">
+              <mat-icon>payment</mat-icon>
+              <span class="card-title">Pending Payments</span>
+            </div>
+            <div class="card-value">{{ overview.pendingPayments }}</div>
+            <div class="card-subtitle">Awaiting clearance</div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+
+    <!-- Critical Alerts Section -->
+    <div class="alerts-section" *ngIf="criticalAlerts.length > 0">
+      <h2>Critical Alerts</h2>
+      <mat-card class="alerts-card">
+        <mat-card-content>
+          <div class="alert-item" *ngFor="let alert of criticalAlerts">
+            <div class="alert-info">
+              <mat-icon [color]="getAlertColor(alert.severity)">{{ getAlertIcon(alert.alertType) }}</mat-icon>
+              <div class="alert-details">
+                <span class="alert-medicine">{{ alert.medicineName }}</span>
+                <span class="alert-message">
+                  <ng-container [ngSwitch]="alert.alertType">
+                    <span *ngSwitchCase="'low_stock'">Low stock: {{ alert.currentStock }} remaining</span>
+                    <span *ngSwitchCase="'out_of_stock'">Out of stock</span>
+                    <span *ngSwitchCase="'expiry_warning'">Expires on {{ alert.expiryDate | date:'shortDate' }}</span>
+                    <span *ngSwitchCase="'expired'">Expired on {{ alert.expiryDate | date:'shortDate' }}</span>
+                  </ng-container>
+                </span>
+              </div>
+            </div>
+            <div class="alert-actions">
+              <button mat-button color="primary" (click)="requestStockRefill(alert)" 
+                      *ngIf="alert.alertType === 'low_stock' || alert.alertType === 'out_of_stock'">
+                Request Refill
+              </button>
+              <button mat-icon-button (click)="acknowledgeAlert(alert)" matTooltip="Acknowledge Alert">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Prescriptions Section -->
+    <div class="prescriptions-section" *ngIf="recentPrescriptions.length > 0">
+      <h2>Recent Prescriptions</h2>
+      <mat-card class="prescriptions-card">
+        <mat-card-content>
+          <div class="prescription-item" *ngFor="let prescription of recentPrescriptions">
+            <div class="prescription-info">
+              <div class="prescription-header">
+                <span class="patient-name">{{ prescription.patientName }}</span>
+                <mat-chip [color]="getPrescriptionStatusColor(prescription.status)">
+                  {{ prescription.status | titlecase }}
+                </mat-chip>
+              </div>
+              <div class="prescription-details">
+                <span class="doctor-name">Dr. {{ prescription.doctorName }}</span>
+                <span class="prescription-date">{{ prescription.prescriptionDate | date:'short' }}</span>
+                <span class="medicine-count">{{ prescription.medicines.length }} medicines</span>
+              </div>
+              <div class="payment-status">
+                <mat-chip [color]="getPaymentStatusColor(prescription.paymentStatus)" selected>
+                  Payment: {{ prescription.paymentStatus | titlecase }}
+                </mat-chip>
+                <span class="amount">₹{{ prescription.totalAmount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="prescription-actions">
+              <button mat-button color="primary" (click)="viewPrescriptionDetails(prescription)">
+                View Details
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section">
+      <h2>Quick Actions</h2>
+      <div class="quick-actions">
+        <button mat-raised-button color="primary" (click)="navigateToSection('prescriptions')">
+          <mat-icon>receipt_long</mat-icon>
+          View All Prescriptions
+        </button>
+        <button mat-raised-button color="accent" (click)="navigateToSection('dispensing')">
+          <mat-icon>medication</mat-icon>
+          Dispense Medicines
+        </button>
+        <button mat-raised-button (click)="navigateToSection('inventory')">
+          <mat-icon>inventory</mat-icon>
+          Manage Inventory
+        </button>
+        <button mat-raised-button (click)="navigateToSection('history')">
+          <mat-icon>history</mat-icon>
+          Dispensing History
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

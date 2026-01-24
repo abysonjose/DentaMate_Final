@@ -1,0 +1,186 @@
+.payment-dialog {
+  min-width: 500px;
+  max-width: 600px;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: #1976d2;
+
+    mat-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+}
+
+mat-dialog-content {
+  padding: 0 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.invoice-card {
+  margin-bottom: 24px;
+  background: #f8f9fa;
+
+  .invoice-info {
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 4px 0;
+
+      .label {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.7);
+      }
+
+      .value {
+        font-weight: 500;
+
+        &.amount {
+          color: #1976d2;
+          font-size: 1.1rem;
+        }
+
+        &.paid {
+          color: #4caf50;
+        }
+
+        &.pending {
+          color: #ff9800;
+          font-size: 1.1rem;
+        }
+      }
+    }
+  }
+}
+
+.payment-form {
+  .form-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+
+    .amount-field {
+      flex: 1;
+    }
+
+    .amount-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      button {
+        min-width: 80px;
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .payment-details {
+    background: #f5f5f5;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+
+    mat-form-field {
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.payment-summary {
+  background: #e3f2fd;
+  margin-top: 16px;
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+      padding-top: 8px;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      font-weight: 500;
+    }
+
+    .amount {
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .remaining {
+      color: #ff9800;
+      font-weight: 500;
+    }
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  margin: 0;
+
+  button {
+    margin-left: 8px;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+
+    mat-spinner {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 600px) {
+  .payment-dialog {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .payment-form .form-row {
+    flex-direction: column;
+    align-items: stretch;
+
+    .amount-buttons {
+      flex-direction: row;
+      justify-content: space-around;
+    }
+  }
+
+  mat-dialog-actions {
+    flex-direction: column-reverse;
+
+    button {
+      margin: 4px 0;
+      width: 100%;
+    }
+  }
+}
+
+// Animation for processing state
+.processing {
+  mat-spinner {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

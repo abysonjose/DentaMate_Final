@@ -1,0 +1,311 @@
+<div class="bill-generation">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>receipt_long</mat-icon>
+        Bill Generation
+      </h1>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="generateBillForAppointment({} as any)">
+          <mat-icon>add</mat-icon>
+          Generate New Bill
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group animationDuration="0ms">
+    <!-- Completed Appointments Tab -->
+    <mat-tab label="Completed Appointments">
+      <div class="tab-content">
+        <!-- Search and Filters -->
+        <div class="search-filters-section">
+          <mat-card>
+            <mat-card-content>
+              <div class="search-filters">
+                <mat-form-field appearance="outline" class="search-field">
+                  <mat-label>Search Appointments</mat-label>
+                  <input matInput [formControl]="appointmentSearchControl" 
+                         placeholder="Search by patient name, doctor, or treatment">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Date Range</mat-label>
+                  <mat-select [(value)]="selectedDateRange" (selectionChange)="applyDateFilter()">
+                    <mat-option value="">All Dates</mat-option>
+                    <mat-option value="today">Today</mat-option>
+                    <mat-option value="yesterday">Yesterday</mat-option>
+                    <mat-option value="week">This Week</mat-option>
+                    <mat-option value="month">This Month</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <button mat-button (click)="clearFilters()">
+                  <mat-icon>clear</mat-icon>
+                  Clear Filters
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Appointments Table -->
+        <div class="table-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>event_available</mat-icon>
+                Completed Appointments Ready for Billing
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="appointmentsDataSource" 
+                       matSort class="appointments-table">
+                  
+                  <!-- Appointment Date Column -->
+                  <ng-container matColumnDef="appointmentDate">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Date & Time</th>
+                    <td mat-cell *matCellDef="let appointment">
+                      <div class="date-time">
+                        <div class="date">{{ appointment.appointmentDate | date:'mediumDate' }}</div>
+                        <div class="time">{{ appointment.appointmentDate | date:'shortTime' }}</div>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Patient Name Column -->
+                  <ng-container matColumnDef="patientName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+                    <td mat-cell *matCellDef="let appointment">
+                      <div class="patient-info">
+                        <div class="name">{{ appointment.patientName }}</div>
+                        <div class="id">ID: {{ appointment.patientId }}</div>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Doctor Name Column -->
+                  <ng-container matColumnDef="doctorName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+                    <td mat-cell *matCellDef="let appointment">{{ appointment.doctorName }}</td>
+                  </ng-container>
+
+                  <!-- Treatment Type Column -->
+                  <ng-container matColumnDef="treatmentType">
+                    <th mat-header-cell *matHeaderCellDef>Treatment</th>
+                    <td mat-cell *matCellDef="let appointment">
+                      <mat-chip>{{ appointment.treatmentType }}</mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <!-- Consultation Fee Column -->
+                  <ng-container matColumnDef="consultationFee">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Consultation Fee</th>
+                    <td mat-cell *matCellDef="let appointment">
+                      <span class="amount">{{ formatCurrency(appointment.consultationFee) }}</span>
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let appointment">
+                      <button mat-raised-button color="primary" 
+                              (click)="generateBillForAppointment(appointment)">
+                        <mat-icon>receipt</mat-icon>
+                        Generate Bill
+                      </button>
+                      <button mat-icon-button (click)="viewAppointmentDetails(appointment)"
+                              matTooltip="View Details">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="appointmentColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: appointmentColumns;"></tr>
+                </table>
+
+                <!-- No Data Message -->
+                <div class="no-data" *ngIf="appointmentsDataSource.data.length === 0 && !loadingAppointments">
+                  <mat-icon>event_busy</mat-icon>
+                  <p>No completed appointments found</p>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="loading-container" *ngIf="loadingAppointments">
+                  <mat-spinner></mat-spinner>
+                  <p>Loading appointments...</p>
+                </div>
+              </div>
+
+              <!-- Paginator -->
+              <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                           showFirstLastButtons></mat-paginator>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Generated Bills Tab -->
+    <mat-tab label="Generated Bills">
+      <div class="tab-content">
+        <!-- Search and Filters -->
+        <div class="search-filters-section">
+          <mat-card>
+            <mat-card-content>
+              <div class="search-filters">
+                <mat-form-field appearance="outline" class="search-field">
+                  <mat-label>Search Bills</mat-label>
+                  <input matInput [formControl]="billSearchControl" 
+                         placeholder="Search by bill number or patient name">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Status</mat-label>
+                  <mat-select [(value)]="selectedStatus" (selectionChange)="applyStatusFilter()">
+                    <mat-option value="">All Status</mat-option>
+                    <mat-option value="DRAFT">Draft</mat-option>
+                    <mat-option value="GENERATED">Generated</mat-option>
+                    <mat-option value="PAID">Paid</mat-option>
+                    <mat-option value="CANCELLED">Cancelled</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Date Range</mat-label>
+                  <mat-select [(value)]="selectedDateRange" (selectionChange)="applyDateFilter()">
+                    <mat-option value="">All Dates</mat-option>
+                    <mat-option value="today">Today</mat-option>
+                    <mat-option value="week">This Week</mat-option>
+                    <mat-option value="month">This Month</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <button mat-button (click)="clearFilters()">
+                  <mat-icon>clear</mat-icon>
+                  Clear Filters
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Bills Table -->
+        <div class="table-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>description</mat-icon>
+                Generated Bills
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="billsDataSource" 
+                       matSort class="bills-table">
+                  
+                  <!-- Bill Number Column -->
+                  <ng-container matColumnDef="billNumber">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Bill Number</th>
+                    <td mat-cell *matCellDef="let bill">
+                      <span class="bill-number">{{ bill.billNumber }}</span>
+                    </td>
+                  </ng-container>
+
+                  <!-- Patient Name Column -->
+                  <ng-container matColumnDef="patientName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+                    <td mat-cell *matCellDef="let bill">{{ bill.patientName }}</td>
+                  </ng-container>
+
+                  <!-- Total Amount Column -->
+                  <ng-container matColumnDef="totalAmount">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+                    <td mat-cell *matCellDef="let bill">
+                      <span class="amount">{{ formatCurrency(bill.totalAmount) }}</span>
+                    </td>
+                  </ng-container>
+
+                  <!-- Status Column -->
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                    <td mat-cell *matCellDef="let bill">
+                      <mat-chip [style.background-color]="getStatusColor(bill.status)" 
+                               [style.color]="'white'">
+                        {{ bill.status }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <!-- Created Date Column -->
+                  <ng-container matColumnDef="createdDate">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+                    <td mat-cell *matCellDef="let bill">
+                      {{ bill.createdDate | date:'short' }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let bill">
+                      <button mat-icon-button [matMenuTriggerFor]="billMenu">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      <mat-menu #billMenu="matMenu">
+                        <button mat-menu-item (click)="viewBillDetails(bill)">
+                          <mat-icon>visibility</mat-icon>
+                          View Details
+                        </button>
+                        <button mat-menu-item (click)="editBillDraft(bill)" 
+                                *ngIf="bill.status === 'DRAFT'">
+                          <mat-icon>edit</mat-icon>
+                          Edit Draft
+                        </button>
+                        <button mat-menu-item (click)="printBill(bill)">
+                          <mat-icon>print</mat-icon>
+                          Print
+                        </button>
+                        <button mat-menu-item (click)="deleteBillDraft(bill)" 
+                                *ngIf="bill.status === 'DRAFT'" class="delete-action">
+                          <mat-icon>delete</mat-icon>
+                          Delete Draft
+                        </button>
+                      </mat-menu>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="billColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: billColumns;"></tr>
+                </table>
+
+                <!-- No Data Message -->
+                <div class="no-data" *ngIf="billsDataSource.data.length === 0 && !loadingBills">
+                  <mat-icon>description</mat-icon>
+                  <p>No bills found</p>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="loading-container" *ngIf="loadingBills">
+                  <mat-spinner></mat-spinner>
+                  <p>Loading bills...</p>
+                </div>
+              </div>
+
+              <!-- Paginator -->
+              <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                           showFirstLastButtons></mat-paginator>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

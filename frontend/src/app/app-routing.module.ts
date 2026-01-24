@@ -85,6 +85,30 @@ const routes: Routes = [
     data: { roles: ['lab-staff'] }
   },
 
+  // Pharmacist module
+  {
+    path: 'pharmacist',
+    loadChildren: () => import('./modules/pharmacist/pharmacist.module').then(m => m.PharmacistModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['pharmacist'] }
+  },
+
+  // Billing Staff module
+  {
+    path: 'billing-staff',
+    loadChildren: () => import('./modules/billing-staff/billing-staff.module').then(m => m.BillingStaffModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['billing-staff'] }
+  },
+
+  // Cashier module
+  {
+    path: 'cashier',
+    loadChildren: () => import('./modules/cashier/cashier.module').then(m => m.CashierModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['cashier'] }
+  },
+
   // Admin modules
   {
     path: 'branch-admin',

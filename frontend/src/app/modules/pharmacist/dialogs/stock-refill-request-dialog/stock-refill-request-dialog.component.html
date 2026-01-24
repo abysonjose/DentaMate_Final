@@ -1,0 +1,185 @@
+<div class="stock-refill-dialog">
+  
+  <!-- Dialog Header -->
+  <div mat-dialog-title class="dialog-header">
+    <div class="header-info">
+      <h2>Stock Refill Request</h2>
+      <div class="medicine-info">
+        <span class="medicine-name">{{ data.medicineName }}</span>
+        <span class="current-stock">Current Stock: {{ data.currentStock }}</span>
+      </div>
+    </div>
+    <button mat-icon-button (click)="onCancel()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Dialog Content -->
+  <div mat-dialog-content class="dialog-content">
+    <form [formGroup]="refillForm" (ngSubmit)="onSubmit()">
+
+      <!-- Stock Information Card -->
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>inventory</mat-icon>
+          <mat-card-title>Current Stock Status</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stock-details">
+            <div class="stock-item">
+              <span class="label">Current Stock:</span>
+              <span class="value">{{ data.currentStock }} units</span>
+            </div>
+            <div class="stock-item" *ngIf="data.minStockLevel">
+              <span class="label">Minimum Level:</span>
+              <span class="value">{{ data.minStockLevel }} units</span>
+            </div>
+            <div class="stock-item" *ngIf="data.minStockLevel">
+              <span class="label">Stock Status:</span>
+              <mat-chip [color]="data.currentStock <= data.minStockLevel ? 'warn' : 'accent'" selected>
+                {{ data.currentStock <= data.minStockLevel ? 'Below Minimum' : 'Above Minimum' }}
+              </mat-chip>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Request Details -->
+      <div class="form-section">
+        <h3>Request Details</h3>
+        
+        <!-- Requested Quantity -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Requested Quantity</mat-label>
+          <input matInput type="number" formControlName="requestedQuantity" min="1">
+          <span matSuffix>units</span>
+          <mat-error *ngIf="refillForm.get('requestedQuantity')?.hasError('required')">
+            Quantity is required
+          </mat-error>
+          <mat-error *ngIf="refillForm.get('requestedQuantity')?.hasError('min')">
+            Quantity must be at least 1
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Priority Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Priority Level</mat-label>
+          <mat-select formControlName="priority" (selectionChange)="onPriorityChange()">
+            <mat-option *ngFor="let option of priorityOptions" [value]="option.value">
+              <div class="priority-option">
+                <div class="priority-header">
+                  <mat-icon [color]="getPriorityColor(option.value)">
+                    {{ getPriorityIcon(option.value) }}
+                  </mat-icon>
+                  <span class="priority-label">{{ option.label }}</span>
+                </div>
+                <span class="priority-description">{{ option.description }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Urgent Justification (shown only for urgent priority) -->
+        <mat-form-field appearance="outline" class="full-width" 
+                        *ngIf="refillForm.get('priority')?.value === 'urgent'">
+          <mat-label>Urgent Justification</mat-label>
+          <textarea matInput formControlName="urgentJustification" 
+                    rows="3" placeholder="Please provide justification for urgent priority"></textarea>
+          <mat-error *ngIf="refillForm.get('urgentJustification')?.hasError('required')">
+            Justification is required for urgent requests
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Reason Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Reason for Request</mat-label>
+          <mat-select formControlName="reason" (selectionChange)="onReasonChange()">
+            <mat-option *ngFor="let reason of reasonOptions" [value]="reason">
+              {{ reason }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Custom Reason (shown only when "Other" is selected) -->
+        <mat-form-field appearance="outline" class="full-width" 
+                        *ngIf="refillForm.get('reason')?.value === 'Other'">
+          <mat-label>Custom Reason</mat-label>
+          <input matInput formControlName="customReason" 
+                 placeholder="Please specify the reason">
+          <mat-error *ngIf="refillForm.get('customReason')?.hasError('required')">
+            Custom reason is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Additional Notes -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Additional Notes (Optional)</mat-label>
+          <textarea matInput formControlName="notes" 
+                    rows="3" placeholder="Any additional information or special requirements"></textarea>
+        </mat-form-field>
+
+      </div>
+
+      <!-- Request Summary -->
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>summarize</mat-icon>
+          <mat-card-title>Request Summary</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-details">
+            <div class="summary-item">
+              <span class="label">Medicine:</span>
+              <span class="value">{{ data.medicineName }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Requested Quantity:</span>
+              <span class="value">{{ refillForm.get('requestedQuantity')?.value || 0 }} units</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Priority:</span>
+              <mat-chip [color]="getPriorityColor(refillForm.get('priority')?.value)" selected>
+                <mat-icon>{{ getPriorityIcon(refillForm.get('priority')?.value) }}</mat-icon>
+                {{ refillForm.get('priority')?.value | titlecase }}
+              </mat-chip>
+            </div>
+            <div class="summary-item">
+              <span class="label">Estimated Cost:</span>
+              <span class="value cost">₹{{ getEstimatedCost() | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </form>
+  </div>
+
+  <!-- Dialog Actions -->
+  <div mat-dialog-actions class="dialog-actions">
+    <div class="action-buttons">
+      
+      <!-- Submit Button -->
+      <button mat-raised-button color="primary" 
+              (click)="onSubmit()"
+              [disabled]="refillForm.invalid || isSubmitting">
+        <mat-icon *ngIf="!isSubmitting">send</mat-icon>
+        <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+        {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+      </button>
+
+      <!-- Cancel Button -->
+      <button mat-button (click)="onCancel()" [disabled]="isSubmitting">
+        Cancel
+      </button>
+
+    </div>
+
+    <!-- Form Validation Message -->
+    <div class="validation-message" *ngIf="refillForm.invalid && refillForm.touched">
+      <mat-icon color="warn">error</mat-icon>
+      <span>Please fill in all required fields</span>
+    </div>
+
+  </div>
+
+</div>

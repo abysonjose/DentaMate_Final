@@ -1,0 +1,270 @@
+<div class="billing-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <mat-icon>receipt_long</mat-icon>
+        Billing Dashboard
+      </h1>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="openGenerateBillDialog()">
+          <mat-icon>add</mat-icon>
+          Generate Bill
+        </button>
+        <button mat-icon-button (click)="refreshDashboard()" matTooltip="Refresh Dashboard">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Search Section -->
+  <div class="quick-search-section">
+    <mat-card>
+      <mat-card-content>
+        <div class="search-container">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search Invoice</mat-label>
+            <input matInput [(ngModel)]="searchTerm" placeholder="Enter invoice number">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          <button mat-raised-button color="accent" (click)="searchInvoice()">
+            Search
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-section" *ngIf="billingSummary">
+    <div class="summary-cards">
+      <mat-card class="summary-card bills-generated">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>receipt</mat-icon>
+            <span class="card-title">Today's Bills</span>
+          </div>
+          <div class="card-value">{{ billingSummary.todayBillsGenerated }}</div>
+          <div class="card-subtitle">Bills Generated</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card payments-received">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>payment</mat-icon>
+            <span class="card-title">Payments Received</span>
+          </div>
+          <div class="card-value">{{ formatCurrency(billingSummary.todayPaymentsReceived) }}</div>
+          <div class="card-subtitle">Today's Collection</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card pending-payments">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>schedule</mat-icon>
+            <span class="card-title">Pending Payments</span>
+          </div>
+          <div class="card-value">{{ billingSummary.todayPendingPayments }}</div>
+          <div class="card-subtitle">Awaiting Payment</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card total-revenue">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>trending_up</mat-icon>
+            <span class="card-title">Total Revenue</span>
+          </div>
+          <div class="card-value">{{ formatCurrency(billingSummary.totalRevenue) }}</div>
+          <div class="card-subtitle">This Month</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="alerts.length > 0">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>warning</mat-icon>
+          Payment Alerts
+          <mat-chip-list>
+            <mat-chip [color]="'warn'" selected>{{ alerts.length }}</mat-chip>
+          </mat-chip-list>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-container">
+          <div class="alert-item" *ngFor="let alert of alerts" 
+               [ngClass]="'alert-' + alert.priority.toLowerCase()">
+            <div class="alert-icon">
+              <mat-icon [style.color]="getPriorityColor(alert.priority)">
+                {{ getAlertIcon(alert.type) }}
+              </mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-details">
+                <span class="patient-name">{{ alert.patientName }}</span>
+                <span class="amount">{{ formatCurrency(alert.amount) }}</span>
+                <span class="due-date">Due: {{ alert.dueDate | date:'short' }}</span>
+              </div>
+            </div>
+            <div class="alert-actions">
+              <button mat-icon-button (click)="handleAlert(alert)" 
+                      matTooltip="Handle Alert">
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Today's Bills -->
+    <div class="content-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>today</mat-icon>
+            Today's Bills
+          </mat-card-title>
+          <div class="card-actions">
+            <button mat-button routerLink="/billing-staff/bill-generation">
+              View All
+            </button>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-container" *ngIf="todayBills.length > 0; else noBillsTemplate">
+            <table mat-table [dataSource]="todayBills" class="bills-table">
+              <!-- Bill Number Column -->
+              <ng-container matColumnDef="billNumber">
+                <th mat-header-cell *matHeaderCellDef>Bill Number</th>
+                <td mat-cell *matCellDef="let bill">
+                  <span class="bill-number">{{ bill.billNumber }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Patient Name Column -->
+              <ng-container matColumnDef="patientName">
+                <th mat-header-cell *matHeaderCellDef>Patient</th>
+                <td mat-cell *matCellDef="let bill">{{ bill.patientName }}</td>
+              </ng-container>
+
+              <!-- Amount Column -->
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef>Amount</th>
+                <td mat-cell *matCellDef="let bill">
+                  <span class="amount">{{ formatCurrency(bill.totalAmount) }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let bill">
+                  <mat-chip [style.background-color]="getStatusColor(bill.status)" 
+                           [style.color]="'white'">
+                    {{ bill.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Created Date Column -->
+              <ng-container matColumnDef="createdDate">
+                <th mat-header-cell *matHeaderCellDef>Created</th>
+                <td mat-cell *matCellDef="let bill">
+                  {{ bill.createdDate | date:'short' }}
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let bill">
+                  <button mat-icon-button [matMenuTriggerFor]="billMenu">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #billMenu="matMenu">
+                    <button mat-menu-item (click)="viewBillDetails(bill)">
+                      <mat-icon>visibility</mat-icon>
+                      View Details
+                    </button>
+                    <button mat-menu-item (click)="processBillPayment(bill)" 
+                            *ngIf="bill.status !== 'PAID'">
+                      <mat-icon>payment</mat-icon>
+                      Process Payment
+                    </button>
+                    <button mat-menu-item (click)="printBill(bill)">
+                      <mat-icon>print</mat-icon>
+                      Print
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="billsDisplayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: billsDisplayedColumns;"></tr>
+            </table>
+          </div>
+
+          <ng-template #noBillsTemplate>
+            <div class="no-data">
+              <mat-icon>receipt_long</mat-icon>
+              <p>No bills generated today</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Pending Bills -->
+    <div class="content-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>schedule</mat-icon>
+            Pending Payments
+            <mat-chip-list *ngIf="pendingBills.length > 0">
+              <mat-chip color="warn" selected>{{ pendingBills.length }}</mat-chip>
+            </mat-chip-list>
+          </mat-card-title>
+          <div class="card-actions">
+            <button mat-button routerLink="/billing-staff/payment-tracking">
+              View All
+            </button>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-container" *ngIf="pendingBills.length > 0; else noPendingTemplate">
+            <table mat-table [dataSource]="pendingBills" class="bills-table">
+              <tr mat-header-row *matHeaderRowDef="billsDisplayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: billsDisplayedColumns;"></tr>
+            </table>
+          </div>
+
+          <ng-template #noPendingTemplate>
+            <div class="no-data">
+              <mat-icon>check_circle</mat-icon>
+              <p>No pending payments</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+    <p>Loading billing data...</p>
+  </div>
+</div>

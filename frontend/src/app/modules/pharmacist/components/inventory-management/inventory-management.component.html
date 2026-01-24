@@ -1,0 +1,263 @@
+<div class="inventory-management">
+  <!-- Header Section -->
+  <div class="section-header">
+    <h2>Medicine Inventory</h2>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshInventory()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-button (click)="exportInventory()" matTooltip="Export Data">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-container">
+        
+        <!-- Search Filter -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search medicines</mat-label>
+          <input matInput [formControl]="searchControl" 
+                 placeholder="Medicine name, generic name, or manufacturer">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Category Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <mat-select [formControl]="categoryFilter">
+            <mat-option *ngFor="let category of categories" [value]="category.value">
+              {{ category.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Status Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Stock Status</mat-label>
+          <mat-select [formControl]="statusFilter">
+            <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+              {{ status.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Results Summary -->
+  <div class="results-summary">
+    <span>Showing {{ dataSource.filteredData.length }} of {{ totalMedicines }} medicines</span>
+  </div>
+
+  <!-- Inventory Table -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading inventory...</p>
+      </div>
+
+      <!-- Data Table -->
+      <div *ngIf="!isLoading" class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="inventory-table">
+
+          <!-- Medicine Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Medicine</th>
+            <td mat-cell *matCellDef="let medicine">
+              <div class="medicine-info">
+                <span class="medicine-name">{{ medicine.name }}</span>
+                <span class="generic-name">{{ medicine.genericName }}</span>
+                <span class="manufacturer">{{ medicine.manufacturer }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Category Column -->
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+            <td mat-cell *matCellDef="let medicine">
+              <mat-chip>{{ medicine.category | titlecase }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Current Stock Column -->
+          <ng-container matColumnDef="currentStock">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Stock</th>
+            <td mat-cell *matCellDef="let medicine">
+              <div class="stock-info">
+                <span class="current-stock">{{ medicine.currentStock }}</span>
+                <span class="stock-range">Min: {{ medicine.minStockLevel }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Stock Status Column -->
+          <ng-container matColumnDef="stockStatus">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let medicine">
+              <mat-chip [color]="getStockStatusColor(medicine.status)" selected>
+                <mat-icon>{{ getStockStatusIcon(medicine.status) }}</mat-icon>
+                {{ medicine.status | titlecase }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Expiry Date Column -->
+          <ng-container matColumnDef="expiryDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Expiry</th>
+            <td mat-cell *matCellDef="let medicine">
+              <div class="expiry-info">
+                <span class="expiry-date" 
+                      [class.expiring-soon]="isExpiringSoon(medicine.expiryDate)"
+                      [class.expired]="isExpired(medicine.expiryDate)">
+                  {{ medicine.expiryDate | date:'shortDate' }}
+                </span>
+                <mat-icon *ngIf="isExpiringSoon(medicine.expiryDate)" 
+                          color="accent" 
+                          matTooltip="Expiring soon">
+                  schedule
+                </mat-icon>
+                <mat-icon *ngIf="isExpired(medicine.expiryDate)" 
+                          color="warn" 
+                          matTooltip="Expired">
+                  dangerous
+                </mat-icon>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Unit Price Column -->
+          <ng-container matColumnDef="unitPrice">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Price</th>
+            <td mat-cell *matCellDef="let medicine">
+              <span class="unit-price">₹{{ medicine.unitPrice | number:'1.2-2' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Location Column -->
+          <ng-container matColumnDef="location">
+            <th mat-header-cell *matHeaderCellDef>Location</th>
+            <td mat-cell *matCellDef="let medicine">
+              <div class="location-info">
+                <mat-icon>location_on</mat-icon>
+                <span>{{ medicine.location }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let medicine">
+              <div class="action-buttons">
+                
+                <!-- Request Refill Button -->
+                <button mat-icon-button color="primary" 
+                        (click)="requestStockRefill(medicine)"
+                        matTooltip="Request Stock Refill"
+                        *ngIf="medicine.status === 'low_stock' || medicine.status === 'out_of_stock'">
+                  <mat-icon>add_shopping_cart</mat-icon>
+                </button>
+
+                <!-- View Details Button -->
+                <button mat-icon-button color="accent" 
+                        matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [class.low-stock]="row.status === 'low_stock'"
+              [class.out-of-stock]="row.status === 'out_of_stock'"
+              [class.expired]="row.status === 'expired'"></tr>
+
+        </table>
+
+        <!-- No Data Message -->
+        <div *ngIf="dataSource.filteredData.length === 0" class="no-data">
+          <mat-icon>inventory_2</mat-icon>
+          <h3>No medicines found</h3>
+          <p>Try adjusting your search criteria or filters</p>
+        </div>
+
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                     [pageSize]="25"
+                     showFirstLastButtons>
+      </mat-paginator>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Stock Summary Cards -->
+  <div class="summary-section">
+    <h3>Stock Summary</h3>
+    <div class="summary-cards">
+      
+      <mat-card class="summary-card available">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>check_circle</mat-icon>
+            <span class="card-title">Available</span>
+          </div>
+          <div class="card-value">
+            {{ (dataSource.data | filter: 'status': 'available').length }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card low-stock">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>warning</mat-icon>
+            <span class="card-title">Low Stock</span>
+          </div>
+          <div class="card-value">
+            {{ (dataSource.data | filter: 'status': 'low_stock').length }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card out-of-stock">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>remove_shopping_cart</mat-icon>
+            <span class="card-title">Out of Stock</span>
+          </div>
+          <div class="card-value">
+            {{ (dataSource.data | filter: 'status': 'out_of_stock').length }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card expired">
+        <mat-card-content>
+          <div class="card-header">
+            <mat-icon>dangerous</mat-icon>
+            <span class="card-title">Expired</span>
+          </div>
+          <div class="card-value">
+            {{ (dataSource.data | filter: 'status': 'expired').length }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+  </div>
+
+</div>

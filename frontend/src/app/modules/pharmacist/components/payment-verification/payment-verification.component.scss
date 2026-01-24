@@ -1,0 +1,289 @@
+.payment-verification {
+  max-width: 600px;
+  width: 100%;
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 0;
+    margin: 0;
+
+    h2 {
+      margin: 0;
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .close-button {
+      margin-top: -8px;
+    }
+  }
+
+  .dialog-content {
+    padding: 20px 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      gap: 20px;
+
+      p {
+        color: #666;
+        margin: 0;
+      }
+    }
+
+    .payment-info {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+
+      // Status Card
+      .status-card {
+        .status-header {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+
+          .status-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+          }
+
+          .status-details {
+            flex: 1;
+
+            h3 {
+              margin: 0 0 8px 0;
+              color: #333;
+              font-weight: 500;
+            }
+          }
+        }
+      }
+
+      // Details Card
+      .details-card {
+        .mat-mdc-card-header {
+          padding-bottom: 10px;
+
+          .mat-mdc-card-title {
+            font-size: 16px;
+            font-weight: 500;
+          }
+
+          mat-icon {
+            background-color: #e3f2fd;
+            color: #1976d2;
+          }
+        }
+
+        .payment-details {
+          .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .label {
+              font-weight: 500;
+              color: #666;
+              min-width: 120px;
+            }
+
+            .value {
+              color: #333;
+              text-align: right;
+              flex: 1;
+
+              &.amount {
+                font-weight: 600;
+                color: #2e7d32;
+                font-size: 16px;
+              }
+            }
+          }
+        }
+      }
+
+      // Status Messages
+      .status-messages {
+        .success-card {
+          border-left: 4px solid #4caf50;
+          background-color: #e8f5e8;
+        }
+
+        .warning-card {
+          border-left: 4px solid #ff9800;
+          background-color: #fff3e0;
+        }
+
+        .error-card {
+          border-left: 4px solid #f44336;
+          background-color: #ffebee;
+        }
+
+        .message-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 15px;
+
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+          }
+
+          .message-text {
+            flex: 1;
+
+            h4 {
+              margin: 0 0 8px 0;
+              font-weight: 500;
+              color: #333;
+            }
+
+            p {
+              margin: 0;
+              color: #666;
+              line-height: 1.5;
+            }
+          }
+        }
+      }
+    }
+
+    .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      gap: 15px;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+      }
+
+      h3 {
+        margin: 0;
+        color: #333;
+        font-weight: 500;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        line-height: 1.5;
+      }
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+      }
+    }
+  }
+
+  .dialog-actions {
+    padding: 0 24px 20px;
+    margin: 0;
+    display: flex;
+    justify-content: flex-end;
+
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .payment-verification {
+    .dialog-content {
+      .payment-info {
+        .status-card .status-header {
+          flex-direction: column;
+          text-align: center;
+          gap: 15px;
+        }
+
+        .details-card .payment-details .detail-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+
+          .value {
+            text-align: left;
+          }
+        }
+      }
+    }
+
+    .dialog-actions {
+      .action-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+// Material Design Overrides
+::ng-deep {
+  .mat-mdc-dialog-container {
+    .mat-mdc-dialog-surface {
+      border-radius: 12px;
+    }
+  }
+
+  .mat-mdc-chip.mat-mdc-standard-chip {
+    font-size: 12px;
+    height: 24px;
+  }
+
+  .mat-mdc-card {
+    border-radius: 8px;
+  }
+
+  .mat-mdc-card-header {
+    .mat-mdc-card-avatar {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}

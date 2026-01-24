@@ -1,0 +1,243 @@
+.bill-generation {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .page-header {
+    margin-bottom: 20px;
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+      .page-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        color: #333;
+        font-size: 24px;
+        font-weight: 500;
+
+        mat-icon {
+          color: #1976d2;
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+    }
+  }
+
+  .tab-content {
+    padding-top: 20px;
+
+    .search-filters-section {
+      margin-bottom: 20px;
+
+      .search-filters {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+
+        .search-field {
+          flex: 1;
+          min-width: 300px;
+        }
+
+        mat-form-field {
+          min-width: 150px;
+        }
+      }
+    }
+
+    .table-section {
+      mat-card-header {
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          mat-icon {
+            color: #1976d2;
+          }
+        }
+      }
+
+      .table-container {
+        .appointments-table,
+        .bills-table {
+          width: 100%;
+
+          .date-time {
+            .date {
+              font-weight: 500;
+            }
+            .time {
+              font-size: 12px;
+              color: #666;
+            }
+          }
+
+          .patient-info {
+            .name {
+              font-weight: 500;
+            }
+            .id {
+              font-size: 12px;
+              color: #666;
+            }
+          }
+
+          .bill-number {
+            font-family: monospace;
+            font-weight: 500;
+            color: #1976d2;
+          }
+
+          .amount {
+            font-weight: 500;
+            color: #2e7d32;
+          }
+
+          mat-chip {
+            font-size: 12px;
+            min-height: 24px;
+          }
+
+          .delete-action {
+            color: #f44336;
+          }
+        }
+
+        .no-data {
+          text-align: center;
+          padding: 60px;
+          color: #666;
+
+          mat-icon {
+            font-size: 64px;
+            width: 64px;
+            height: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+          }
+
+          p {
+            margin: 0;
+            font-size: 18px;
+          }
+        }
+
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 60px;
+          color: #666;
+
+          mat-spinner {
+            margin-bottom: 20px;
+          }
+
+          p {
+            margin: 0;
+            font-size: 16px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Tab Styles
+::ng-deep .mat-tab-group {
+  .mat-tab-header {
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .mat-tab-label {
+    min-width: 160px;
+    padding: 0 24px;
+    height: 48px;
+    
+    &.mat-tab-label-active {
+      opacity: 1;
+    }
+  }
+
+  .mat-tab-body-wrapper {
+    .mat-tab-body {
+      .mat-tab-body-content {
+        overflow: visible;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .bill-generation {
+    padding: 10px;
+
+    .page-header .header-content {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+    }
+
+    .tab-content {
+      .search-filters-section .search-filters {
+        flex-direction: column;
+        align-items: stretch;
+
+        .search-field {
+          min-width: auto;
+        }
+
+        mat-form-field {
+          min-width: auto;
+        }
+      }
+
+      .table-container {
+        overflow-x: auto;
+
+        .appointments-table,
+        .bills-table {
+          min-width: 800px;
+        }
+      }
+    }
+  }
+}
+
+// Print Styles
+@media print {
+  .bill-generation {
+    .page-header .header-actions,
+    .search-filters-section,
+    .mat-paginator,
+    button,
+    mat-menu {
+      display: none !important;
+    }
+
+    .table-container {
+      .appointments-table,
+      .bills-table {
+        font-size: 12px;
+      }
+    }
+  }
+}

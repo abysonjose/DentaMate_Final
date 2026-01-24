@@ -1,0 +1,420 @@
+.prescription-details-dialog {
+  max-width: 900px;
+  width: 100%;
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 24px 0;
+    margin: 0;
+
+    .header-info {
+      flex: 1;
+
+      h2 {
+        margin: 0 0 8px 0;
+        color: #1976d2;
+        font-weight: 500;
+      }
+
+      .prescription-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+
+        .prescription-id {
+          font-size: 14px;
+          color: #666;
+        }
+      }
+    }
+
+    .close-button {
+      margin-top: -8px;
+    }
+  }
+
+  .dialog-content {
+    padding: 20px 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+
+    // Info Section
+    .info-section {
+      margin-bottom: 30px;
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+
+        .info-card {
+          .mat-mdc-card-header {
+            padding-bottom: 10px;
+
+            .mat-mdc-card-title {
+              font-size: 16px;
+              font-weight: 500;
+            }
+
+            mat-icon {
+              background-color: #e3f2fd;
+              color: #1976d2;
+            }
+          }
+
+          .mat-mdc-card-content {
+            padding-top: 0;
+
+            .info-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 12px;
+
+              &:last-child {
+                margin-bottom: 0;
+              }
+
+              .label {
+                font-weight: 500;
+                color: #666;
+                min-width: 100px;
+              }
+
+              .value {
+                color: #333;
+                text-align: right;
+
+                &.amount {
+                  font-weight: 600;
+                  color: #2e7d32;
+                  font-size: 16px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Authenticity Section
+    .authenticity-section {
+      margin-bottom: 30px;
+
+      .warning-card {
+        border-left: 4px solid #ff9800;
+        background-color: #fff3e0;
+
+        .warning-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 15px;
+
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+          }
+
+          .warning-text {
+            flex: 1;
+
+            h4 {
+              margin: 0 0 8px 0;
+              color: #e65100;
+              font-weight: 500;
+            }
+
+            p {
+              margin: 0;
+              color: #bf360c;
+              font-size: 14px;
+            }
+          }
+        }
+      }
+    }
+
+    // Medicines Section
+    .medicines-section {
+      margin-bottom: 30px;
+
+      h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .medicines-card {
+        .medicines-table {
+          .medicine-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 80px 100px;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 2px solid #e0e0e0;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+          }
+
+          .medicine-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 80px 100px;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: start;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .col-medicine {
+              .medicine-info {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+                .medicine-name {
+                  font-weight: 500;
+                  color: #333;
+                }
+
+                .medicine-id {
+                  font-size: 12px;
+                  color: #666;
+                }
+              }
+            }
+
+            .col-dosage,
+            .col-frequency,
+            .col-duration {
+              color: #666;
+              font-size: 14px;
+            }
+
+            .col-quantity {
+              font-weight: 500;
+              color: #333;
+              text-align: center;
+            }
+
+            .col-price {
+              font-weight: 600;
+              color: #2e7d32;
+              text-align: right;
+            }
+
+            .medicine-instructions {
+              grid-column: 1 / -1;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-top: 10px;
+              padding: 10px;
+              background-color: #f8f9fa;
+              border-radius: 4px;
+              font-size: 14px;
+              color: #666;
+
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+                color: #1976d2;
+              }
+            }
+          }
+
+          .medicines-total {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 0 10px;
+            border-top: 2px solid #e0e0e0;
+            margin-top: 10px;
+
+            .total-label {
+              font-weight: 600;
+              color: #333;
+              font-size: 16px;
+            }
+
+            .total-amount {
+              font-weight: 700;
+              color: #2e7d32;
+              font-size: 18px;
+            }
+          }
+        }
+      }
+    }
+
+    // Notes Section
+    .notes-section {
+      h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .notes-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid #1976d2;
+
+        p {
+          margin: 0;
+          color: #333;
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    padding: 0 24px 20px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+
+      .payment-actions,
+      .prescription-actions {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+
+        button {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+      }
+
+      .payment-actions {
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 15px;
+      }
+    }
+
+    .loading-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #666;
+      font-size: 14px;
+      justify-content: center;
+    }
+  }
+
+  // Cashier Integration Styling
+  .cashier-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .prescription-details-dialog {
+    .dialog-content {
+      .info-section .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .medicines-section .medicines-card .medicines-table {
+        .medicine-header,
+        .medicine-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+
+          .col-medicine {
+            order: 1;
+          }
+
+          .col-quantity,
+          .col-price {
+            text-align: left;
+          }
+        }
+
+        .medicine-row {
+          .medicine-instructions {
+            grid-column: 1;
+          }
+        }
+      }
+    }
+
+    .dialog-actions {
+      flex-direction: column;
+      gap: 15px;
+
+      .action-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+// Material Design Overrides
+::ng-deep {
+  .mat-mdc-dialog-container {
+    .mat-mdc-dialog-surface {
+      border-radius: 12px;
+    }
+  }
+
+  .mat-mdc-chip.mat-mdc-standard-chip {
+    font-size: 12px;
+    height: 24px;
+  }
+
+  .mat-mdc-card {
+    border-radius: 8px;
+  }
+
+  .mat-mdc-card-header {
+    .mat-mdc-card-avatar {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}

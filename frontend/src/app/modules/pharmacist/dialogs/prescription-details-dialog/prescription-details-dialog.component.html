@@ -1,0 +1,268 @@
+<div class="prescription-details-dialog">
+  
+  <!-- Dialog Header -->
+  <div mat-dialog-title class="dialog-header">
+    <div class="header-info">
+      <h2>Prescription Details</h2>
+      <div class="prescription-meta">
+        <span class="prescription-id">ID: {{ prescription.id }}</span>
+        <mat-chip [color]="getStatusColor(prescription.status)" selected>
+          {{ prescription.status | titlecase }}
+        </mat-chip>
+      </div>
+    </div>
+    <button mat-icon-button (click)="onClose()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Dialog Content -->
+  <div mat-dialog-content class="dialog-content">
+
+    <!-- Patient & Doctor Information -->
+    <div class="info-section">
+      <div class="info-grid">
+        
+        <!-- Patient Information -->
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>person</mat-icon>
+            <mat-card-title>Patient Information</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-item">
+              <span class="label">Name:</span>
+              <span class="value">{{ prescription.patientName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Patient ID:</span>
+              <span class="value">{{ prescription.patientId }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Doctor Information -->
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>medical_services</mat-icon>
+            <mat-card-title>Doctor Information</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-item">
+              <span class="label">Doctor:</span>
+              <span class="value">Dr. {{ prescription.doctorName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Doctor ID:</span>
+              <span class="value">{{ prescription.doctorId }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Prescription Information -->
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>schedule</mat-icon>
+            <mat-card-title>Prescription Details</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-item">
+              <span class="label">Date:</span>
+              <span class="value">{{ prescription.prescriptionDate | date:'medium' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Total Medicines:</span>
+              <span class="value">{{ getTotalMedicines() }} items</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Payment Information -->
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>payment</mat-icon>
+            <mat-card-title>Payment Information</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-item">
+              <span class="label">Status:</span>
+              <mat-chip [color]="getPaymentStatusColor(prescription.paymentStatus)" selected>
+                {{ prescription.paymentStatus | titlecase }}
+              </mat-chip>
+            </div>
+            <div class="info-item">
+              <span class="label">Total Amount:</span>
+              <span class="value amount">₹{{ prescription.totalAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="info-item" *ngIf="billingInfo?.invoiceNumber">
+              <span class="label">Invoice Number:</span>
+              <span class="value">{{ billingInfo.invoiceNumber }}</span>
+            </div>
+            <div class="info-item" *ngIf="paymentQueuePosition">
+              <span class="label">Queue Position:</span>
+              <span class="value">{{ getQueuePositionText() }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Cashier Integration -->
+        <mat-card class="info-card" *ngIf="!paymentVerified">
+          <mat-card-header>
+            <mat-icon mat-card-avatar>person</mat-icon>
+            <mat-card-title>Cashier Integration</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-item">
+              <span class="label">Cashier Status:</span>
+              <mat-chip [color]="cashierAvailable ? 'accent' : 'warn'" selected>
+                {{ cashierAvailable ? 'Available' : 'Unavailable' }}
+              </mat-chip>
+            </div>
+            <div class="cashier-actions" *ngIf="cashierAvailable">
+              <button mat-raised-button color="primary" (click)="requestPaymentFromCashier()" [disabled]="isLoading">
+                <mat-icon>send</mat-icon>
+                Request Payment
+              </button>
+              <button mat-button color="accent" (click)="requestUrgentPayment()" [disabled]="isLoading">
+                <mat-icon>priority_high</mat-icon>
+                Urgent Request
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+
+    <!-- Authenticity Check -->
+    <div class="authenticity-section" *ngIf="!prescription.isAuthentic">
+      <mat-card class="warning-card">
+        <mat-card-content>
+          <div class="warning-content">
+            <mat-icon color="warn">warning</mat-icon>
+            <div class="warning-text">
+              <h4>Authenticity Verification Required</h4>
+              <p>This prescription requires manual authenticity verification before it can be processed.</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Medicines List -->
+    <div class="medicines-section">
+      <h3>Prescribed Medicines</h3>
+      <mat-card class="medicines-card">
+        <mat-card-content>
+          <div class="medicines-table">
+            <div class="medicine-header">
+              <span class="col-medicine">Medicine</span>
+              <span class="col-dosage">Dosage</span>
+              <span class="col-frequency">Frequency</span>
+              <span class="col-duration">Duration</span>
+              <span class="col-quantity">Quantity</span>
+              <span class="col-price">Price</span>
+            </div>
+            
+            <div class="medicine-row" *ngFor="let medicine of prescription.medicines">
+              <div class="col-medicine">
+                <div class="medicine-info">
+                  <span class="medicine-name">{{ medicine.medicineName }}</span>
+                  <span class="medicine-id">ID: {{ medicine.medicineId }}</span>
+                </div>
+              </div>
+              <div class="col-dosage">{{ medicine.dosage }}</div>
+              <div class="col-frequency">{{ medicine.frequency }}</div>
+              <div class="col-duration">{{ medicine.duration }}</div>
+              <div class="col-quantity">{{ medicine.quantity }}</div>
+              <div class="col-price">₹{{ medicine.totalPrice | number:'1.2-2' }}</div>
+              
+              <!-- Instructions -->
+              <div class="medicine-instructions" *ngIf="medicine.instructions">
+                <mat-icon>info</mat-icon>
+                <span>{{ medicine.instructions }}</span>
+              </div>
+            </div>
+
+            <!-- Total -->
+            <div class="medicines-total">
+              <span class="total-label">Total Amount:</span>
+              <span class="total-amount">₹{{ prescription.totalAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="notes-section" *ngIf="prescription.notes">
+      <h3>Additional Notes</h3>
+      <mat-card class="notes-card">
+        <mat-card-content>
+          <p>{{ prescription.notes }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </div>
+
+  <!-- Dialog Actions -->
+  <div mat-dialog-actions class="dialog-actions">
+    <div class="action-buttons">
+      
+      <!-- Payment Actions -->
+      <div class="payment-actions" *ngIf="!paymentVerified">
+        <button mat-button color="primary" (click)="refreshPaymentStatus()" [disabled]="isLoading">
+          <mat-icon>refresh</mat-icon>
+          Refresh Payment
+        </button>
+        <button mat-button color="accent" (click)="viewBillingDetails()" *ngIf="billingInfo">
+          <mat-icon>receipt</mat-icon>
+          View Bill
+        </button>
+      </div>
+
+      <!-- Prescription Actions -->
+      <div class="prescription-actions">
+        <!-- Verify Button -->
+        <button mat-raised-button color="primary" 
+                (click)="verifyPrescription()"
+                [disabled]="!canVerify() || isLoading"
+                *ngIf="prescription.status === 'pending'">
+          <mat-icon>verified</mat-icon>
+          Verify Prescription
+        </button>
+
+        <!-- Dispense Button -->
+        <button mat-raised-button color="accent" 
+                (click)="dispensePrescription()"
+                [disabled]="!canDispense()"
+                *ngIf="prescription.status === 'verified'">
+          <mat-icon>medication</mat-icon>
+          Dispense Medicines
+        </button>
+
+        <!-- Generate Receipt Button -->
+        <button mat-button (click)="generateReceipt()" 
+                *ngIf="prescription.status === 'dispensed'">
+          <mat-icon>print</mat-icon>
+          Generate Receipt
+        </button>
+
+        <!-- Close Button -->
+        <button mat-button (click)="onClose()">
+          Close
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-indicator" *ngIf="isLoading">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Processing...</span>
+    </div>
+
+  </div>
+
+</div>
