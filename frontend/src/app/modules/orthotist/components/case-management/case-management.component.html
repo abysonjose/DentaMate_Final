@@ -1,0 +1,222 @@
+<!-- Case Management Header -->
+<div class="page-header">
+  <div class="header-content">
+    <h1 class="page-title">
+      <mat-icon>work</mat-icon>
+      Case Management
+    </h1>
+    <button mat-icon-button (click)="refreshCases()" class="refresh-btn">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+  <p class="page-subtitle">Manage and track all orthodontic cases</p>
+</div>
+
+<!-- Filters Section -->
+<mat-card class="filters-card">
+  <mat-card-content>
+    <div class="filters-grid">
+      <!-- Search -->
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search cases</mat-label>
+        <input matInput 
+               [(ngModel)]="searchTerm" 
+               (ngModelChange)="onFilterChange()"
+               placeholder="Case ID, Patient, or Doctor">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <!-- Status Filter -->
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+          <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Priority Filter -->
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select [(ngModel)]="priorityFilter" (ngModelChange)="onFilterChange()">
+          <mat-option *ngFor="let priority of priorityOptions" [value]="priority.value">
+            {{ priority.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Case Type Filter -->
+      <mat-form-field appearance="outline">
+        <mat-label>Case Type</mat-label>
+        <mat-select [(ngModel)]="caseTypeFilter" (ngModelChange)="onFilterChange()">
+          <mat-option *ngFor="let type of caseTypeOptions" [value]="type.value">
+            {{ type.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Clear Filters -->
+      <button mat-stroked-button (click)="clearFilters()" class="clear-filters-btn">
+        <mat-icon>clear</mat-icon>
+        Clear Filters
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner></mat-spinner>
+  <p>Loading cases...</p>
+</div>
+
+<!-- Cases Table -->
+<mat-card class="table-card" *ngIf="!loading">
+  <mat-card-content>
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort class="cases-table">
+        
+        <!-- Case ID Column -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Case ID</th>
+          <td mat-cell *matCellDef="let case">
+            <span class="case-id">{{ case.id }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Patient Name Column -->
+        <ng-container matColumnDef="patientName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+          <td mat-cell *matCellDef="let case">
+            <div class="patient-info">
+              <span class="patient-name">{{ case.patientName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Doctor Name Column -->
+        <ng-container matColumnDef="doctorName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+          <td mat-cell *matCellDef="let case">
+            <span class="doctor-name">Dr. {{ case.doctorName }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Case Type Column -->
+        <ng-container matColumnDef="caseType">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let case">
+            <mat-chip class="case-type-chip">{{ case.caseType }}</mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+          <td mat-cell *matCellDef="let case">
+            <mat-chip [style.background-color]="getPriorityColor(case.priority)" class="priority-chip">
+              {{ case.priority }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let case">
+            <mat-chip [style.background-color]="getStatusColor(case.status)" class="status-chip">
+              {{ getStatusDisplayName(case.status) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Created Date Column -->
+        <ng-container matColumnDef="createdDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+          <td mat-cell *matCellDef="let case">
+            <span class="date">{{ case.createdDate | date:'MMM dd, yyyy' }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Estimated Delivery Date Column -->
+        <ng-container matColumnDef="estimatedDeliveryDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Est. Delivery</th>
+          <td mat-cell *matCellDef="let case">
+            <div class="delivery-info">
+              <span *ngIf="case.estimatedDeliveryDate" 
+                    class="date"
+                    [class.overdue]="isOverdue(case.estimatedDeliveryDate)">
+                {{ case.estimatedDeliveryDate | date:'MMM dd, yyyy' }}
+              </span>
+              <span *ngIf="!case.estimatedDeliveryDate" class="no-date">Not set</span>
+              <div *ngIf="isOverdue(case.estimatedDeliveryDate)" class="overdue-badge">
+                <mat-icon>warning</mat-icon>
+                {{ getDaysOverdue(case.estimatedDeliveryDate!) }} days overdue
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let case">
+            <div class="action-buttons">
+              <button mat-icon-button 
+                      (click)="viewCaseDetails(case)"
+                      matTooltip="View Details"
+                      color="primary">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      *ngIf="case.status === 'RECEIVED'"
+                      (click)="updateCaseStatus(case.id, 'IN_MEASUREMENT_REVIEW')"
+                      matTooltip="Start Review"
+                      color="accent">
+                <mat-icon>play_arrow</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      *ngIf="case.status === 'IN_MEASUREMENT_REVIEW'"
+                      (click)="updateCaseStatus(case.id, 'IN_FABRICATION')"
+                      matTooltip="Start Fabrication"
+                      color="accent">
+                <mat-icon>build</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      *ngIf="case.status === 'IN_FABRICATION'"
+                      (click)="updateCaseStatus(case.id, 'READY')"
+                      matTooltip="Mark as Ready"
+                      color="accent">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            class="table-row"
+            [class.urgent-row]="row.priority === 'URGENT'"
+            [class.overdue-row]="isOverdue(row.estimatedDeliveryDate)">
+        </tr>
+      </table>
+
+      <!-- No Data Message -->
+      <div *ngIf="dataSource.data.length === 0" class="no-data">
+        <mat-icon>work_off</mat-icon>
+        <h3>No cases found</h3>
+        <p>No cases match your current filters.</p>
+      </div>
+    </div>
+
+    <!-- Paginator -->
+    <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                   [pageSize]="25"
+                   showFirstLastButtons>
+    </mat-paginator>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,220 @@
+<!-- Fabrication Tracking Header -->
+<div class="page-header">
+  <div class="header-content">
+    <h1 class="page-title">
+      <mat-icon>build</mat-icon>
+      Fabrication Tracking
+    </h1>
+    <button mat-icon-button (click)="refreshData()" class="refresh-btn">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+  <p class="page-subtitle">Track and manage orthodontic appliance fabrication progress</p>
+</div>
+
+<!-- Filters Section -->
+<mat-card class="filters-card">
+  <mat-card-content>
+    <div class="filters-grid">
+      <!-- Priority Filter -->
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select [(ngModel)]="priorityFilter" (ngModelChange)="onFilterChange()">
+          <mat-option *ngFor="let priority of priorityOptions" [value]="priority.value">
+            {{ priority.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Clear Filters -->
+      <button mat-stroked-button (click)="clearFilters()" class="clear-filters-btn">
+        <mat-icon>clear</mat-icon>
+        Clear Filters
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner></mat-spinner>
+  <p>Loading fabrication cases...</p>
+</div>
+
+<!-- Fabrication Cases Grid -->
+<div *ngIf="!loading" class="fabrication-grid">
+  
+  <!-- No Cases Message -->
+  <div *ngIf="fabricationCases.length === 0" class="no-cases">
+    <mat-card class="empty-state-card">
+      <mat-card-content>
+        <mat-icon>build_circle</mat-icon>
+        <h3>No Cases in Fabrication</h3>
+        <p>There are currently no cases in the fabrication stage.</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Fabrication Case Cards -->
+  <mat-card *ngFor="let case of fabricationCases" 
+            class="fabrication-card"
+            [class.urgent]="case.priority === 'URGENT'"
+            [class.overdue]="isOverdue(case.estimatedDeliveryDate)">
+    
+    <!-- Card Header -->
+    <mat-card-header class="case-header">
+      <div class="case-info">
+        <mat-card-title class="case-title">
+          <span class="case-id">{{ case.id }}</span>
+          <mat-chip [style.background-color]="getPriorityColor(case.priority)" class="priority-chip">
+            {{ case.priority }}
+          </mat-chip>
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ case.caseType }} - Dr. {{ case.doctorName }}
+        </mat-card-subtitle>
+      </div>
+      
+      <div class="case-status">
+        <mat-chip [style.background-color]="getStatusColor(case.status)" class="status-chip">
+          {{ case.status.replace('_', ' ') }}
+        </mat-chip>
+      </div>
+    </mat-card-header>
+
+    <!-- Card Content -->
+    <mat-card-content class="case-content">
+      
+      <!-- Patient Info -->
+      <div class="patient-section">
+        <div class="info-row">
+          <mat-icon>person</mat-icon>
+          <span>{{ case.patientName }}</span>
+        </div>
+        <div class="info-row" *ngIf="case.estimatedDeliveryDate">
+          <mat-icon [class.overdue-icon]="isOverdue(case.estimatedDeliveryDate)">schedule</mat-icon>
+          <span [class.overdue-text]="isOverdue(case.estimatedDeliveryDate)">
+            Due: {{ case.estimatedDeliveryDate | date:'MMM dd, yyyy' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Fabrication Progress -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <span class="progress-label">Fabrication Progress</span>
+          <span class="progress-percentage">{{ getFabricationProgress(case) | number:'1.0-0' }}%</span>
+        </div>
+        <mat-progress-bar 
+          [value]="getFabricationProgress(case)" 
+          mode="determinate"
+          class="progress-bar">
+        </mat-progress-bar>
+      </div>
+
+      <!-- Fabrication Stages -->
+      <div class="stages-section" *ngIf="case.fabricationStages && case.fabricationStages.length > 0">
+        <h4 class="stages-title">Fabrication Stages</h4>
+        <div class="stages-list">
+          <div *ngFor="let stage of case.fabricationStages" class="stage-item">
+            <div class="stage-info">
+              <mat-icon [style.color]="getStageStatusColor(stage.status)">
+                {{ stage.status === 'COMPLETED' ? 'check_circle' : 
+                   stage.status === 'IN_PROGRESS' ? 'radio_button_checked' : 
+                   stage.status === 'ON_HOLD' ? 'pause_circle' : 'radio_button_unchecked' }}
+              </mat-icon>
+              <span class="stage-name">{{ stage.stage.replace('_', ' ') }}</span>
+              <mat-chip [style.background-color]="getStageStatusColor(stage.status)" class="stage-status">
+                {{ stage.status.replace('_', ' ') }}
+              </mat-chip>
+            </div>
+            
+            <div class="stage-actions" *ngIf="stage.status === 'IN_PROGRESS'">
+              <button mat-icon-button 
+                      (click)="markStageComplete(case.id, stage.id)"
+                      matTooltip="Mark Complete"
+                      color="primary">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Section -->
+      <div class="notes-section" *ngIf="case.notes">
+        <mat-expansion-panel class="notes-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>note</mat-icon>
+              Notes
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <p class="notes-content">{{ case.notes }}</p>
+        </mat-expansion-panel>
+      </div>
+
+    </mat-card-content>
+
+    <!-- Card Actions -->
+    <mat-card-actions class="case-actions">
+      <button mat-button 
+              (click)="updateFabrication(case)"
+              color="primary">
+        <mat-icon>edit</mat-icon>
+        Update Progress
+      </button>
+      
+      <button mat-button 
+              *ngIf="case.status === 'IN_MEASUREMENT_REVIEW'"
+              (click)="startFabrication(case.id)"
+              color="accent">
+        <mat-icon>play_arrow</mat-icon>
+        Start Fabrication
+      </button>
+      
+      <button mat-button 
+              *ngIf="getFabricationProgress(case) === 100"
+              (click)="updateFabrication(case)"
+              color="accent">
+        <mat-icon>check_circle</mat-icon>
+        Mark Ready
+      </button>
+    </mat-card-actions>
+
+  </mat-card>
+
+</div>
+
+<!-- Quick Stats -->
+<div *ngIf="!loading && fabricationCases.length > 0" class="stats-section">
+  <mat-card class="stats-card">
+    <mat-card-content>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <mat-icon>build</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ fabricationCases.length }}</span>
+            <span class="stat-label">Active Cases</span>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon>priority_high</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ fabricationCases.filter(c => c.priority === 'URGENT').length }}</span>
+            <span class="stat-label">Urgent Cases</span>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon>warning</mat-icon>
+          <div class="stat-info">
+            <span class="stat-number">{{ fabricationCases.filter(c => isOverdue(c.estimatedDeliveryDate)).length }}</span>
+            <span class="stat-label">Overdue Cases</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { BillingDoctorIntegrationService } from '../../../shared/services/billing-doctor-integration.service';
 import { BillingPatientIntegrationService } from '../../../shared/services/billing-patient-integration.service';
+import { OrthotistBillingIntegrationService } from '../../../shared/services/orthotist-billing-integration.service';
 
 export interface BillingSummary {
   todayBillsGenerated: number;
@@ -52,11 +53,13 @@ export class BillingStaffService {
   constructor(
     private http: HttpClient,
     private doctorIntegration: BillingDoctorIntegrationService,
-    private patientIntegration: BillingPatientIntegrationService
+    private patientIntegration: BillingPatientIntegrationService,
+    private orthotistIntegration: OrthotistBillingIntegrationService
   ) {
     this.loadBillingSummary();
     this.loadAlerts();
     this.subscribeToTreatmentUpdates();
+    this.subscribeToOrthotistUpdates();
   }
 
   // Dashboard Data
@@ -218,5 +221,87 @@ export class BillingStaffService {
       'LOW': '#4caf50'
     };
     return colors[priority as keyof typeof colors] || '#9e9e9e';
+  }
+
+  // Orthotist Integration Methods
+  
+  // Get orthodontic billing items
+  getOrthodonticBillingItems(): Observable<any[]> {
+    return this.orthotistIntegration.getBillingItems('');
+  }
+
+  // Get orthodontic cost estimates
+  getOrthodonticCostEstimates(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/orthodontic/cost-estimates`);
+  }
+
+  // Review orthodontic billing approval
+  reviewOrthodonticBillingApproval(approvalId: string, decision: 'APPROVED' | 'REJECTED', notes?: string): Observable<any> {
+    return this.orthotistIntegration.updateApprovalStatus(approvalId, decision, notes);
+  }
+
+  // Get orthodontic billing approvals pending review
+  getPendingOrthodonticApprovals(): Observable<any[]> {
+    return this.orthotistIntegration.getBillingApprovals('');
+  }
+
+  // Generate orthodontic case invoice
+  generateOrthodonticInvoice(caseId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/orthodontic/cases/${caseId}/generate-invoice`, {});
+  }
+
+  // Get orthodontic material costs
+  getOrthodonticMaterialCosts(caseId: string): Observable<any[]> {
+    return this.orthotistIntegration.getMaterialUsage(caseId);
+  }
+
+  // Get orthodontic labor costs
+  getOrthodonticLaborCosts(caseId: string): Observable<any[]> {
+    return this.orthotistIntegration.getLaborTracking(caseId);
+  }
+
+  // Update orthodontic billing item
+  updateOrthodonticBillingItem(itemId: string, updates: any): Observable<any> {
+    return this.orthotistIntegration.updateBillingItem(itemId, updates);
+  }
+
+  // Get orthodontic financial summary
+  getOrthodonticFinancialSummary(caseId: string): Observable<any> {
+    return this.orthotistIntegration.getCaseFinancialSummary(caseId);
+  }
+
+  // Process orthodontic insurance claim
+  processOrthodonticInsuranceClaim(caseId: string, claimData: any): Observable<any> {
+    return this.orthotistIntegration.createInsuranceClaim({
+      caseId,
+      ...claimData
+    });
+  }
+
+  // Get orthodontic revenue analytics
+  getOrthodonticRevenueAnalytics(dateRange?: { start: Date; end: Date }): Observable<any> {
+    return this.orthotistIntegration.getMaterialCostAnalysis(dateRange);
+  }
+
+  // Subscribe to orthodontic billing updates
+  private subscribeToOrthotistUpdates(): void {
+    this.orthotistIntegration.billingUpdates$.subscribe(updates => {
+      // Handle orthodontic billing updates
+      this.loadBillingSummary();
+    });
+  }
+
+  // Notify orthotist of billing status
+  notifyOrthotistBillingStatus(caseId: string, status: string, amount: number): Observable<any> {
+    return this.orthotistIntegration.updatePaymentStatus(caseId, {
+      status,
+      amount,
+      lastUpdated: new Date()
+    });
+  }
+
+  // Request orthodontic billing review
+  requestOrthodonticBillingReview(caseId: string, reviewType: string): Observable<any> {
+    return this.orthotistIntegration.requestBillingReview(caseId, reviewType);
   }
 }

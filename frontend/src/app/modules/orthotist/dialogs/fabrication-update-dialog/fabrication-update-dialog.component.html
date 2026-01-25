@@ -1,0 +1,205 @@
+<!-- Dialog Header -->
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>build</mat-icon>
+    Update Fabrication - {{ case.id }}
+  </h2>
+  <button mat-icon-button mat-dialog-close class="close-btn">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- Dialog Content -->
+<div mat-dialog-content class="dialog-content">
+  
+  <!-- Case Overview -->
+  <div class="case-overview">
+    <div class="overview-info">
+      <div class="info-item">
+        <label>Case Type:</label>
+        <span>{{ case.caseType }}</span>
+      </div>
+      <div class="info-item">
+        <label>Patient:</label>
+        <span>{{ case.patientName }}</span>
+      </div>
+      <div class="info-item">
+        <label>Doctor:</label>
+        <span>Dr. {{ case.doctorName }}</span>
+      </div>
+    </div>
+    
+    <!-- Progress Overview -->
+    <div class="progress-overview">
+      <div class="progress-header">
+        <span class="progress-label">Overall Progress</span>
+        <span class="progress-percentage">{{ getCompletionPercentage() | number:'1.0-0' }}%</span>
+      </div>
+      <mat-progress-bar 
+        [value]="getCompletionPercentage()" 
+        mode="determinate"
+        class="progress-bar">
+      </mat-progress-bar>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="loading-section">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading fabrication stages...</p>
+  </div>
+
+  <!-- Fabrication Stages -->
+  <div *ngIf="!loading" class="stages-section">
+    <h3 class="section-title">Fabrication Stages</h3>
+    
+    <div *ngIf="fabricationStages.length === 0" class="no-stages">
+      <mat-icon>info</mat-icon>
+      <p>No fabrication stages defined for this case</p>
+    </div>
+    
+    <div *ngFor="let stage of fabricationStages" class="stage-card">
+      <div class="stage-header">
+        <div class="stage-info">
+          <h4>{{ stage.stage.replace('_', ' ') }}</h4>
+          <mat-chip [style.background-color]="getStageStatusColor(stage.status)" class="stage-status">
+            {{ stage.status.replace('_', ' ') }}
+          </mat-chip>
+        </div>
+        
+        <div class="stage-dates">
+          <div *ngIf="stage.startedAt" class="date-info">
+            <mat-icon>play_arrow</mat-icon>
+            <span>Started: {{ stage.startedAt | date:'MMM dd, HH:mm' }}</span>
+          </div>
+          <div *ngIf="stage.completedAt" class="date-info">
+            <mat-icon>check_circle</mat-icon>
+            <span>Completed: {{ stage.completedAt | date:'MMM dd, HH:mm' }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="stage.notes" class="stage-notes">
+        <mat-icon>note</mat-icon>
+        <span>{{ stage.notes }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Forms -->
+  <div *ngIf="!loading" class="update-forms">
+    
+    <!-- Stage Update Form -->
+    <mat-card class="update-card">
+      <mat-card-header>
+        <mat-card-title>Update Stage Status</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="stageUpdateForm" class="update-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Stage</mat-label>
+            <mat-select formControlName="stageId">
+              <mat-option *ngFor="let stage of fabricationStages" [value]="stage.id">
+                {{ stage.stage.replace('_', ' ') }} - {{ stage.status.replace('_', ' ') }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>New Status</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notes (optional)</mat-label>
+            <textarea matInput formControlName="notes" rows="3" placeholder="Add any relevant notes..."></textarea>
+          </mat-form-field>
+          
+          <div class="form-actions">
+            <button mat-raised-button 
+                    color="primary" 
+                    (click)="updateStage()"
+                    [disabled]="!stageUpdateForm.valid">
+              <mat-icon>update</mat-icon>
+              Update Stage
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+    
+    <!-- Add Note Form -->
+    <mat-card class="update-card">
+      <mat-card-header>
+        <mat-card-title>Add Stage Note</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="noteForm" class="note-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Stage</mat-label>
+            <mat-select formControlName="stageId">
+              <mat-option *ngFor="let stage of fabricationStages" [value]="stage.id">
+                {{ stage.stage.replace('_', ' ') }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput formControlName="note" rows="3" placeholder="Enter your note..."></textarea>
+          </mat-form-field>
+          
+          <div class="form-actions">
+            <button mat-raised-button 
+                    color="accent" 
+                    (click)="addNote()"
+                    [disabled]="!noteForm.valid">
+              <mat-icon>note_add</mat-icon>
+              Add Note
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+    
+  </div>
+
+  <!-- Quick Actions -->
+  <div *ngIf="!loading && fabricationStages.length > 0" class="quick-actions">
+    <h3 class="section-title">Quick Actions</h3>
+    
+    <div class="action-buttons">
+      <button mat-raised-button 
+              color="primary" 
+              (click)="markAllComplete()"
+              [disabled]="getCompletionPercentage() === 100">
+        <mat-icon>done_all</mat-icon>
+        Mark All Stages Complete
+      </button>
+      
+      <button mat-raised-button 
+              color="accent" 
+              (click)="markCaseReady()"
+              [disabled]="!canMarkReady()">
+        <mat-icon>check_circle</mat-icon>
+        Mark Case Ready for Delivery
+      </button>
+    </div>
+    
+    <div *ngIf="!canMarkReady()" class="ready-info">
+      <mat-icon>info</mat-icon>
+      <span>Complete all fabrication stages to mark case as ready</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Dialog Actions -->
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onClose()">Close</button>
+</div>

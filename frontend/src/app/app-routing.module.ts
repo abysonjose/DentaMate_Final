@@ -54,6 +54,14 @@ const routes: Routes = [
     data: { roles: ['head-nurse'] }
   },
   
+  // Orthotist module
+  {
+    path: 'orthotist',
+    loadChildren: () => import('./modules/orthotist/orthotist.module').then(m => m.OrthotistModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['orthotist'] }
+  },
+  
   // Receptionist module
   {
     path: 'receptionist',

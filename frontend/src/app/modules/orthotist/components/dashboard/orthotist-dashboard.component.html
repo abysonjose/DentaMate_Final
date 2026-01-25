@@ -1,0 +1,237 @@
+<!-- Orthotist Dashboard Header -->
+<div class="dashboard-header">
+  <div class="header-content">
+    <h1 class="dashboard-title">
+      <mat-icon>precision_manufacturing</mat-icon>
+      Orthotist Workspace
+    </h1>
+    <button mat-icon-button (click)="refreshDashboard()" class="refresh-btn">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+  <p class="dashboard-subtitle">Orthodontic Case Management & Fabrication Tracking</p>
+</div>
+
+<!-- Loading Spinner -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner></mat-spinner>
+  <p>Loading dashboard data...</p>
+</div>
+
+<!-- Dashboard Content -->
+<div *ngIf="!loading" class="dashboard-content">
+  
+  <!-- Quick Stats Cards -->
+  <div class="stats-grid">
+    <mat-card class="stat-card active-cases">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>work</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ totalActiveCases }}</h3>
+            <p>Active Cases</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card fabrication-cases">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>build</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ casesInFabrication }}</h3>
+            <p>In Fabrication</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card ready-cases">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ casesReadyForDelivery }}</h3>
+            <p>Ready for Delivery</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card overdue-cases" [class.alert]="overdueCount > 0">
+      <mat-card-content>
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="stat-info">
+            <h3>{{ overdueCount }}</h3>
+            <p>Overdue Cases</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Dashboard Grid -->
+  <div class="dashboard-grid">
+    
+    <!-- Today's Workload -->
+    <mat-card class="dashboard-card workload-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>today</mat-icon>
+          Today's Workload
+        </mat-card-title>
+        <button mat-button (click)="navigateToSection('cases')" class="view-all-btn">
+          View All Cases
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="todaysCases.length === 0" class="empty-state">
+          <mat-icon>work_off</mat-icon>
+          <p>No new cases assigned today</p>
+        </div>
+        <div *ngFor="let case of todaysCases" class="case-item" (click)="viewCase(case.id)">
+          <div class="case-info">
+            <div class="case-header">
+              <span class="case-id">{{ case.id }}</span>
+              <mat-chip [style.background-color]="getPriorityColor(case.priority)" class="priority-chip">
+                {{ case.priority }}
+              </mat-chip>
+            </div>
+            <p class="case-details">{{ case.caseType }} - Dr. {{ case.doctorName }}</p>
+            <div class="case-status">
+              <mat-chip [style.background-color]="getStatusColor(case.status)" class="status-chip">
+                {{ case.status.replace('_', ' ') }}
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Urgent Cases -->
+    <mat-card class="dashboard-card urgent-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>priority_high</mat-icon>
+          Urgent Cases
+          <mat-badge *ngIf="urgentCases.length > 0" [content]="urgentCases.length" color="warn"></mat-badge>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="urgentCases.length === 0" class="empty-state">
+          <mat-icon>check_circle</mat-icon>
+          <p>No urgent cases at the moment</p>
+        </div>
+        <div *ngFor="let case of urgentCases" class="urgent-case-item" (click)="viewCase(case.id)">
+          <div class="urgent-case-info">
+            <div class="case-header">
+              <span class="case-id">{{ case.id }}</span>
+              <span class="case-type">{{ case.caseType }}</span>
+            </div>
+            <p class="doctor-name">Dr. {{ case.doctorName }}</p>
+            <div class="case-status">
+              <mat-chip [style.background-color]="getStatusColor(case.status)" class="status-chip">
+                {{ case.status.replace('_', ' ') }}
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Overdue Cases -->
+    <mat-card class="dashboard-card overdue-card" *ngIf="overdueCases.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>schedule</mat-icon>
+          Overdue Cases
+          <mat-badge [content]="overdueCases.length" color="warn"></mat-badge>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngFor="let case of overdueCases" class="overdue-case-item" (click)="viewCase(case.id)">
+          <div class="overdue-case-info">
+            <div class="case-header">
+              <span class="case-id">{{ case.id }}</span>
+              <span class="overdue-days">
+                {{ (new Date().getTime() - new Date(case.estimatedDeliveryDate!).getTime()) / (1000 * 60 * 60 * 24) | number:'1.0-0' }} days overdue
+              </span>
+            </div>
+            <p class="case-details">{{ case.caseType }} - Dr. {{ case.doctorName }}</p>
+            <div class="case-status">
+              <mat-chip [style.background-color]="getStatusColor(case.status)" class="status-chip">
+                {{ case.status.replace('_', ' ') }}
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Communications -->
+    <mat-card class="dashboard-card communication-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>message</mat-icon>
+          Recent Messages
+        </mat-card-title>
+        <button mat-button (click)="navigateToSection('communication')" class="view-all-btn">
+          View All
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="recentMessages.length === 0" class="empty-state">
+          <mat-icon>mail_outline</mat-icon>
+          <p>No recent messages</p>
+        </div>
+        <div *ngFor="let message of recentMessages" class="message-item">
+          <div class="message-info">
+            <div class="message-header">
+              <span class="sender">{{ message.fromRole }}</span>
+              <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
+            </div>
+            <p class="message-preview">{{ message.message | slice:0:100 }}...</p>
+            <mat-chip *ngIf="message.priority === 'HIGH'" color="warn" class="priority-chip">
+              High Priority
+            </mat-chip>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h3>Quick Actions</h3>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="navigateToSection('cases')">
+        <mat-icon>work</mat-icon>
+        Manage Cases
+      </button>
+      <button mat-raised-button color="accent" (click)="navigateToSection('fabrication')">
+        <mat-icon>build</mat-icon>
+        Track Fabrication
+      </button>
+      <button mat-raised-button (click)="navigateToSection('delivery')">
+        <mat-icon>local_shipping</mat-icon>
+        Delivery Management
+      </button>
+      <button mat-raised-button (click)="navigateToSection('quality')">
+        <mat-icon>verified</mat-icon>
+        Quality Control
+      </button>
+    </div>
+  </div>
+
+</div>

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ClinicalIntegrationService, PatientHandoff, ClinicalMessage, TaskAssignment, ClinicalAlert } from '../../../shared/services/clinical-integration.service';
+import { OrthotistDoctorIntegrationService } from '../../../shared/services/orthotist-doctor-integration.service';
 
 export interface DoctorProfile {
   id: string;
@@ -50,7 +51,11 @@ export class DoctorService {
   private doctorProfile$ = new BehaviorSubject<DoctorProfile | null>(null);
   private notifications$ = new BehaviorSubject<Notification[]>([]);
 
-  constructor(private http: HttpClient, private clinicalIntegration: ClinicalIntegrationService) {
+  constructor(
+    private http: HttpClient, 
+    private clinicalIntegration: ClinicalIntegrationService,
+    private orthotistIntegration: OrthotistDoctorIntegrationService
+  ) {
     this.loadDoctorProfile();
     this.loadNotifications();
     this.subscribeToIntegrationEvents();
@@ -374,5 +379,107 @@ export class DoctorService {
 
   getPendingHandoffCount(): number {
     return this.clinicalIntegration.getPendingHandoffCount();
+  }
+
+  // Orthotist Integration Methods
+  
+  // Assign orthodontic case to orthotist
+  assignOrthodonticCase(caseDetails: any): Observable<any> {
+    return this.orthotistIntegration.assignCaseToOrthotist({
+      patientId: caseDetails.patientId,
+      patientName: caseDetails.patientName,
+      doctorId: this.getCurrentDoctorId(),
+      doctorName: this.getCurrentDoctorName(),
+      caseType: caseDetails.caseType,
+      priority: caseDetails.priority || 'MEDIUM',
+      measurements: caseDetails.measurements,
+      specifications: caseDetails.specifications,
+      estimatedDuration: caseDetails.estimatedDuration,
+      specialInstructions: caseDetails.specialInstructions,
+      assignedDate: new Date(),
+      requestedDeliveryDate: caseDetails.requestedDeliveryDate
+    });
+  }
+
+  // Get orthodontic case assignments
+  getOrthodonticCaseAssignments(): Observable<any[]> {
+    return this.orthotistIntegration.getCaseAssignments(this.getCurrentDoctorId());
+  }
+
+  // Update case specifications
+  updateOrthodonticSpecifications(caseId: string, specifications: any): Observable<any> {
+    return this.orthotistIntegration.updateCaseSpecifications(caseId, specifications);
+  }
+
+  // Get case progress updates from orthotist
+  getCaseProgressUpdates(caseId: string): Observable<any[]> {
+    return this.orthotistIntegration.getCommunicationThread(caseId);
+  }
+
+  // Respond to clarification requests
+  respondToClarificationRequest(caseId: string, response: string): Observable<any> {
+    return this.orthotistIntegration.sendMessage(caseId, {
+      type: 'CLARIFICATION_RESPONSE',
+      message: response,
+      senderRole: 'doctor',
+      timestamp: new Date()
+    });
+  }
+
+  // Approve case for delivery
+  approveCaseForDelivery(caseId: string, approvalNotes?: string): Observable<any> {
+    return this.orthotistIntegration.sendMessage(caseId, {
+      type: 'DELIVERY_APPROVAL',
+      message: 'Case approved for delivery to patient',
+      notes: approvalNotes,
+      senderRole: 'doctor',
+      timestamp: new Date()
+    });
+  }
+
+  // Request case modifications
+  requestCaseModifications(caseId: string, modifications: string): Observable<any> {
+    return this.orthotistIntegration.sendMessage(caseId, {
+      type: 'MODIFICATION_REQUEST',
+      message: modifications,
+      senderRole: 'doctor',
+      priority: 'HIGH',
+      timestamp: new Date()
+    });
+  }
+
+  // Get orthotist performance metrics
+  getOrthotistPerformanceMetrics(): Observable<any> {
+    return this.orthotistIntegration.getDoctorOrthotistStats(this.getCurrentDoctorId());
+  }
+
+  // Subscribe to real-time orthotist updates
+  subscribeToOrthotistUpdates(caseId: string): Observable<any> {
+    return this.orthotistIntegration.subscribeToUpdates(caseId);
+  }
+
+  // Upload measurement files
+  uploadMeasurementFiles(caseId: string, files: File[]): Observable<any> {
+    return this.orthotistIntegration.uploadMeasurementFiles(caseId, files);
+  }
+
+  // Download case files
+  downloadCaseFile(fileId: string): Observable<Blob> {
+    return this.orthotistIntegration.downloadFile(fileId);
+  }
+
+  // Get case history with orthotist
+  getOrthodonticCaseHistory(caseId: string): Observable<any[]> {
+    return this.orthotistIntegration.getCaseHistory(caseId);
+  }
+
+  // Utility methods for orthotist integration
+  private getCurrentDoctorId(): string {
+    return localStorage.getItem('userId') || '';
+  }
+
+  private getCurrentDoctorName(): string {
+    const profile = this.doctorProfile$.value;
+    return profile?.name || 'Unknown Doctor';
   }
 }

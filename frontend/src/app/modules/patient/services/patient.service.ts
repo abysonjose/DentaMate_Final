@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { OrthotistPatientIntegrationService } from '../../../shared/services/orthotist-patient-integration.service';
 
 export interface PatientProfile {
   id: string;
@@ -117,7 +118,10 @@ export class PatientService {
   private readonly tokenQueueServiceUrl = `${environment.apiUrl}/queue`;
   private currentTokenStatus = new BehaviorSubject<TokenStatus | null>(null);
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private orthotistIntegration: OrthotistPatientIntegrationService
+  ) {}
 
   // Profile Management
   getProfile(): Observable<PatientProfile> {
@@ -282,3 +286,103 @@ export class PatientService {
     return this.http.get(`${this.apiUrl}/patient/clinic-info`);
   }
 }
+
+  // Orthodontic Integration Methods
+  
+  // Get patient's orthodontic cases
+  getOrthodonticCases(): Observable<any[]> {
+    const patientId = this.getCurrentPatientId();
+    return this.orthotistIntegration.getPatientOrthodonticCases(patientId);
+  }
+
+  // Get specific orthodontic case details
+  getOrthodonticCaseDetails(caseId: string): Observable<any> {
+    return this.orthotistIntegration.getCaseDetails(caseId);
+  }
+
+  // Get orthodontic case progress
+  getOrthodonticCaseProgress(caseId: string): Observable<any> {
+    return this.orthotistIntegration.getCaseProgress(caseId);
+  }
+
+  // Get delivery notifications
+  getDeliveryNotifications(): Observable<any[]> {
+    const patientId = this.getCurrentPatientId();
+    return this.orthotistIntegration.getDeliveryNotifications(patientId);
+  }
+
+  // Request appointment for orthodontic case
+  requestOrthodonticAppointment(caseId: string, appointmentDetails: any): Observable<any> {
+    return this.orthotistIntegration.requestAppointment({
+      caseId,
+      patientId: this.getCurrentPatientId(),
+      requestType: appointmentDetails.type || 'DELIVERY',
+      preferredDates: appointmentDetails.preferredDates,
+      preferredTimes: appointmentDetails.preferredTimes,
+      notes: appointmentDetails.notes,
+      urgency: appointmentDetails.urgency || 'MEDIUM'
+    });
+  }
+
+  // Get available appointment slots
+  getOrthodonticAppointmentSlots(caseId: string, date: Date): Observable<string[]> {
+    return this.orthotistIntegration.getAvailableSlots(caseId, date);
+  }
+
+  // Confirm orthodontic appointment
+  confirmOrthodonticAppointment(caseId: string, appointmentDetails: any): Observable<any> {
+    return this.orthotistIntegration.confirmDeliveryAppointment(caseId, appointmentDetails);
+  }
+
+  // Submit feedback for orthodontic case
+  submitOrthodonticFeedback(caseId: string, feedback: any): Observable<any> {
+    return this.orthotistIntegration.submitPatientFeedback({
+      caseId,
+      patientId: this.getCurrentPatientId(),
+      rating: feedback.rating,
+      comfort: feedback.comfort,
+      appearance: feedback.appearance,
+      functionality: feedback.functionality,
+      comments: feedback.comments,
+      issues: feedback.issues,
+      recommendToOthers: feedback.recommendToOthers,
+      submissionDate: new Date()
+    });
+  }
+
+  // Get orthodontic education content
+  getOrthodonticEducationContent(caseType: string): Observable<any[]> {
+    return this.orthotistIntegration.getEducationContent(caseType);
+  }
+
+  // Mark education content as read
+  markEducationContentAsRead(contentId: string): Observable<any> {
+    const patientId = this.getCurrentPatientId();
+    return this.orthotistIntegration.markContentAsRead(contentId, patientId);
+  }
+
+  // Get orthodontic case timeline
+  getOrthodonticCaseTimeline(caseId: string): Observable<any[]> {
+    return this.orthotistIntegration.getCaseTimeline(caseId);
+  }
+
+  // Generate patient portal link for orthodontic case
+  generateOrthodonticPortalLink(caseId: string): Observable<any> {
+    return this.orthotistIntegration.generatePatientPortalLink(caseId);
+  }
+
+  // Get orthodontic case messages
+  getOrthodonticCaseMessages(caseId: string): Observable<any[]> {
+    return this.orthotistIntegration.getPatientMessages(caseId);
+  }
+
+  // Subscribe to real-time orthodontic updates
+  subscribeToOrthodonticUpdates(): Observable<any> {
+    const patientId = this.getCurrentPatientId();
+    return this.orthotistIntegration.subscribeToPatientUpdates(patientId);
+  }
+
+  // Utility method to get current patient ID
+  private getCurrentPatientId(): string {
+    return localStorage.getItem('userId') || '';
+  }

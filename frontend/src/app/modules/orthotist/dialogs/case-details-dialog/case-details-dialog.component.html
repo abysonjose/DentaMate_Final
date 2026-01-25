@@ -1,0 +1,278 @@
+<!-- Dialog Header -->
+<div class="dialog-header">
+  <h2 mat-dialog-title>
+    <mat-icon>work</mat-icon>
+    Case Details - {{ case.id }}
+  </h2>
+  <button mat-icon-button mat-dialog-close class="close-btn">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<!-- Dialog Content -->
+<div mat-dialog-content class="dialog-content">
+  
+  <!-- Case Overview -->
+  <div class="case-overview">
+    <div class="overview-grid">
+      <div class="info-item">
+        <label>Patient:</label>
+        <span>{{ case.patientName }}</span>
+      </div>
+      <div class="info-item">
+        <label>Doctor:</label>
+        <span>Dr. {{ case.doctorName }}</span>
+      </div>
+      <div class="info-item">
+        <label>Case Type:</label>
+        <mat-chip class="case-type-chip">{{ case.caseType }}</mat-chip>
+      </div>
+      <div class="info-item">
+        <label>Priority:</label>
+        <mat-chip [style.background-color]="getPriorityColor(case.priority)" class="priority-chip">
+          {{ case.priority }}
+        </mat-chip>
+      </div>
+      <div class="info-item">
+        <label>Current Status:</label>
+        <mat-chip [style.background-color]="getStatusColor(case.status)" class="status-chip">
+          {{ case.status.replace('_', ' ') }}
+        </mat-chip>
+      </div>
+      <div class="info-item">
+        <label>Created Date:</label>
+        <span>{{ case.createdDate | date:'MMM dd, yyyy HH:mm' }}</span>
+      </div>
+      <div class="info-item">
+        <label>Est. Delivery:</label>
+        <span *ngIf="case.estimatedDeliveryDate" 
+              [class.overdue]="isOverdue()">
+          {{ case.estimatedDeliveryDate | date:'MMM dd, yyyy' }}
+          <mat-icon *ngIf="isOverdue()" class="overdue-icon">warning</mat-icon>
+        </span>
+        <span *ngIf="!case.estimatedDeliveryDate" class="no-date">Not set</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs for detailed information -->
+  <mat-tab-group [(selectedIndex)]="activeTab" class="details-tabs">
+    
+    <!-- Measurements Tab -->
+    <mat-tab label="Measurements">
+      <div class="tab-content">
+        <div *ngIf="loading" class="loading-section">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading measurements...</p>
+        </div>
+        
+        <div *ngIf="!loading && measurements" class="measurements-section">
+          <div class="section-header">
+            <h3>Measurement Details</h3>
+            <div class="measurement-status">
+              <mat-chip [color]="measurements.isComplete ? 'primary' : 'warn'">
+                {{ measurements.isComplete ? 'Complete' : 'Incomplete' }}
+              </mat-chip>
+            </div>
+          </div>
+          
+          <div class="measurements-grid">
+            <div class="measurement-item">
+              <label>Dental Impressions:</label>
+              <div class="file-list">
+                <div *ngFor="let impression of measurements.dentalImpressions" class="file-item">
+                  <mat-icon>attachment</mat-icon>
+                  <span>{{ impression }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="measurement-item">
+              <label>Images:</label>
+              <div class="file-list">
+                <div *ngFor="let image of measurements.images" class="file-item">
+                  <mat-icon>image</mat-icon>
+                  <span>{{ image }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="measurement-item">
+              <label>Scans:</label>
+              <div class="file-list">
+                <div *ngFor="let scan of measurements.scans" class="file-item">
+                  <mat-icon>scanner</mat-icon>
+                  <span>{{ scan }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="measurement-item full-width">
+              <label>Doctor's Notes:</label>
+              <div class="notes-content">
+                {{ measurements.doctorNotes || 'No notes provided' }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="measurement-actions">
+            <button mat-raised-button 
+                    color="primary" 
+                    (click)="confirmMeasurements()"
+                    [disabled]="measurements.reviewedBy">
+              <mat-icon>check</mat-icon>
+              {{ measurements.reviewedBy ? 'Confirmed' : 'Confirm Receipt' }}
+            </button>
+            <button mat-stroked-button (click)="requestClarification()">
+              <mat-icon>help</mat-icon>
+              Request Clarification
+            </button>
+          </div>
+          
+          <div *ngIf="measurements.reviewedBy" class="review-info">
+            <mat-icon>verified</mat-icon>
+            <span>Reviewed by {{ measurements.reviewedBy }} on {{ measurements.reviewedAt | date:'MMM dd, yyyy HH:mm' }}</span>
+          </div>
+        </div>
+        
+        <div *ngIf="!loading && !measurements" class="no-data">
+          <mat-icon>description</mat-icon>
+          <p>No measurements available for this case</p>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Fabrication Tab -->
+    <mat-tab label="Fabrication">
+      <div class="tab-content">
+        <div *ngIf="loading" class="loading-section">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading fabrication stages...</p>
+        </div>
+        
+        <div *ngIf="!loading" class="fabrication-section">
+          <div class="section-header">
+            <h3>Fabrication Progress</h3>
+          </div>
+          
+          <div *ngIf="fabricationStages.length === 0" class="no-data">
+            <mat-icon>build</mat-icon>
+            <p>No fabrication stages defined yet</p>
+          </div>
+          
+          <div *ngFor="let stage of fabricationStages" class="stage-item">
+            <div class="stage-header">
+              <div class="stage-info">
+                <h4>{{ stage.stage.replace('_', ' ') }}</h4>
+                <mat-chip [style.background-color]="getStageStatusColor(stage.status)" class="stage-status">
+                  {{ stage.status.replace('_', ' ') }}
+                </mat-chip>
+              </div>
+              <div class="stage-dates">
+                <span *ngIf="stage.startedAt" class="date">
+                  Started: {{ stage.startedAt | date:'MMM dd, HH:mm' }}
+                </span>
+                <span *ngIf="stage.completedAt" class="date">
+                  Completed: {{ stage.completedAt | date:'MMM dd, HH:mm' }}
+                </span>
+              </div>
+            </div>
+            
+            <div *ngIf="stage.notes" class="stage-notes">
+              <mat-icon>note</mat-icon>
+              <span>{{ stage.notes }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Status & Delivery Tab -->
+    <mat-tab label="Status & Delivery">
+      <div class="tab-content">
+        <div class="status-delivery-section">
+          
+          <!-- Status Update -->
+          <mat-card class="update-card">
+            <mat-card-header>
+              <mat-card-title>Update Status</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="statusUpdateForm" class="status-form">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option *ngFor="let status of statusOptions" 
+                                [value]="status.value"
+                                [disabled]="!canUpdateStatus(status.value)">
+                      {{ status.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Notes (optional)</mat-label>
+                  <textarea matInput formControlName="notes" rows="3"></textarea>
+                </mat-form-field>
+                
+                <div class="form-actions">
+                  <button mat-raised-button 
+                          color="primary" 
+                          (click)="updateStatus()"
+                          [disabled]="!statusUpdateForm.valid">
+                    Update Status
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+          
+          <!-- Delivery Management -->
+          <mat-card class="update-card">
+            <mat-card-header>
+              <mat-card-title>Delivery Management</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="deliveryForm" class="delivery-form">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Estimated Delivery Date</mat-label>
+                  <input matInput 
+                         [matDatepicker]="picker" 
+                         formControlName="estimatedDeliveryDate">
+                  <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+                
+                <div class="form-actions">
+                  <button mat-raised-button 
+                          color="primary" 
+                          (click)="updateDeliveryDate()"
+                          [disabled]="!deliveryForm.valid">
+                    Update Delivery Date
+                  </button>
+                  
+                  <button mat-raised-button 
+                          color="accent" 
+                          (click)="markAsReady()"
+                          [disabled]="case.status === 'READY' || case.status === 'DELIVERED'">
+                    <mat-icon>check_circle</mat-icon>
+                    Mark as Ready
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+          
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+
+</div>
+
+<!-- Dialog Actions -->
+<div mat-dialog-actions class="dialog-actions">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onClose()">Close</button>
+</div>
