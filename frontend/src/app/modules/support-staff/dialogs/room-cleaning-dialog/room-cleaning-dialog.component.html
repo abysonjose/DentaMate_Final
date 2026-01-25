@@ -1,0 +1,121 @@
+<!-- Room Cleaning Dialog -->
+<div class="room-cleaning-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon color="primary">
+      {{getRoomTypeIcon(room.type)}}
+    </mat-icon>
+    Clean Room {{room.number}}
+  </h2>
+
+  <mat-dialog-content>
+    <!-- Room Information -->
+    <div class="room-info">
+      <div class="info-card">
+        <div class="room-details">
+          <div class="detail-item">
+            <span class="label">Room Type:</span>
+            <span class="value">{{room.type.replace('_', ' ')}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Started:</span>
+            <span class="value">{{startTime | date:'HH:mm'}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Duration:</span>
+            <span class="value">{{getCleaningDuration()}} minutes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="progress-overview">
+      <div class="progress-header">
+        <h3>Cleaning Progress</h3>
+        <div class="progress-stats">
+          <span class="completed-count">{{getCompletedCount()}}/{{cleaningItems.length}}</span>
+          <span class="percentage">{{getCompletionPercentage()}}%</span>
+        </div>
+      </div>
+      <mat-progress-bar 
+        mode="determinate" 
+        [value]="getCompletionPercentage()"
+        color="primary"
+        class="progress-bar">
+      </mat-progress-bar>
+    </div>
+
+    <!-- Cleaning Checklist -->
+    <div class="cleaning-checklist">
+      <h3>Cleaning Checklist</h3>
+      <form [formGroup]="cleaningForm">
+        <div class="checklist-items">
+          <div 
+            class="checklist-item" 
+            *ngFor="let item of cleaningItems"
+            [class.completed]="cleaningForm.get(item.id)?.value">
+            
+            <mat-checkbox 
+              [formControlName]="item.id"
+              (change)="onItemChange(item.id)"
+              color="primary"
+              class="item-checkbox">
+            </mat-checkbox>
+            
+            <div class="item-content">
+              <div class="item-icon">
+                <mat-icon [color]="cleaningForm.get(item.id)?.value ? 'primary' : ''">
+                  {{getItemIcon(item.item)}}
+                </mat-icon>
+              </div>
+              <div class="item-text">
+                <span class="item-name">{{item.item}}</span>
+                <span class="item-timestamp" *ngIf="item.timestamp">
+                  Completed at {{item.timestamp | date:'HH:mm'}}
+                </span>
+              </div>
+            </div>
+            
+            <div class="item-status" *ngIf="cleaningForm.get(item.id)?.value">
+              <mat-icon color="primary">check_circle</mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="additional-notes">
+          <mat-form-field appearance="outline" class="notes-field">
+            <mat-label>Additional Notes (Optional)</mat-label>
+            <textarea 
+              matInput 
+              formControlName="additionalNotes"
+              rows="3"
+              placeholder="Any additional observations or issues found during cleaning...">
+            </textarea>
+            <mat-hint>Note any issues or special observations</mat-hint>
+          </mat-form-field>
+        </div>
+      </form>
+    </div>
+
+    <!-- Completion Warning -->
+    <div class="completion-warning" *ngIf="!isAllItemsCompleted()">
+      <mat-icon>warning</mat-icon>
+      <span>Please complete all checklist items before finishing</span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">
+      Cancel
+    </button>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="onComplete()"
+      [disabled]="!isAllItemsCompleted()">
+      <mat-icon>check</mat-icon>
+      Complete Cleaning
+    </button>
+  </mat-dialog-actions>
+</div>

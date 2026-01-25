@@ -1,0 +1,204 @@
+.task-details-dialog {
+  min-width: 500px;
+  
+  @media (max-width: 768px) {
+    min-width: 300px;
+  }
+  
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #333;
+    
+    .mat-icon {
+      font-size: 24px;
+    }
+  }
+  
+  .task-header {
+    margin-bottom: 24px;
+    
+    .task-title {
+      h3 {
+        margin: 0 0 12px 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #333;
+        line-height: 1.3;
+      }
+      
+      .task-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        
+        .mat-chip {
+          font-size: 0.75rem;
+          height: 28px;
+          min-height: 28px;
+          font-weight: 500;
+          
+          &.status-chip {
+            .mat-icon {
+              font-size: 16px;
+              margin-right: 4px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .task-info {
+    margin-bottom: 24px;
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        .label {
+          font-weight: 500;
+          color: #666;
+          min-width: 120px;
+        }
+        
+        .value {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          color: #333;
+          text-align: right;
+          
+          .mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: #666;
+          }
+          
+          &.elapsed {
+            color: #ff9800;
+            font-weight: 500;
+            
+            .mat-icon {
+              color: #ff9800;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .task-description {
+    margin-bottom: 24px;
+    
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    p {
+      margin: 0;
+      color: #555;
+      line-height: 1.6;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid #2196f3;
+    }
+  }
+  
+  .task-notes {
+    h4 {
+      margin: 0 0 16px 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .notes-field {
+      width: 100%;
+      
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+    }
+  }
+}
+
+// Dialog actions styling
+.mat-dialog-actions {
+  padding: 16px 0 0 0;
+  margin: 0;
+  
+  button {
+    font-weight: 500;
+    
+    &:not(:last-child) {
+      margin-right: 8px;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .task-details-dialog {
+    .task-info .info-grid .info-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      
+      .label {
+        min-width: auto;
+        font-size: 0.9rem;
+      }
+      
+      .value {
+        text-align: left;
+        font-size: 0.95rem;
+      }
+    }
+    
+    .task-header .task-title .task-badges {
+      justify-content: flex-start;
+    }
+  }
+}
+
+// Accessibility improvements
+button {
+  &:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .task-description p {
+    border: 2px solid #2196f3;
+  }
+  
+  .info-item {
+    border-bottom: 2px solid #000 !important;
+  }
+}

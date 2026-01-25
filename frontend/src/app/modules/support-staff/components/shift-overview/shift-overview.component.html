@@ -1,0 +1,223 @@
+<!-- Shift Overview Component -->
+<div class="shift-overview">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>
+      <mat-icon>schedule</mat-icon>
+      Shift Overview
+    </h1>
+  </div>
+
+  <div class="shift-content" *ngIf="shiftInfo">
+    <!-- Current Time Display -->
+    <mat-card class="time-card">
+      <mat-card-content>
+        <div class="time-display">
+          <div class="current-time">{{currentTime | date:'HH:mm:ss'}}</div>
+          <div class="current-date">{{currentTime | date:'EEEE, MMMM d, yyyy'}}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Staff Information -->
+    <mat-card class="staff-info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Staff Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="staff-details">
+          <div class="detail-item">
+            <span class="label">Name:</span>
+            <span class="value">{{shiftInfo.staffName}}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Role:</span>
+            <mat-chip color="primary" selected>
+              {{getRoleDisplayName(shiftInfo.role)}}
+            </mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Status:</span>
+            <mat-chip 
+              [color]="isOnBreak() ? 'warn' : 'accent'" 
+              selected>
+              {{isOnBreak() ? 'On Break' : 'Available'}}
+            </mat-chip>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Shift Schedule -->
+    <mat-card class="schedule-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event</mat-icon>
+          Today's Schedule
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="schedule-details">
+          <div class="schedule-item">
+            <div class="schedule-icon">
+              <mat-icon>login</mat-icon>
+            </div>
+            <div class="schedule-info">
+              <div class="schedule-label">Shift Start</div>
+              <div class="schedule-time">{{shiftInfo.shiftStart | date:'HH:mm'}}</div>
+            </div>
+          </div>
+          
+          <div class="schedule-item">
+            <div class="schedule-icon">
+              <mat-icon>logout</mat-icon>
+            </div>
+            <div class="schedule-info">
+              <div class="schedule-label">Shift End</div>
+              <div class="schedule-time">{{shiftInfo.shiftEnd | date:'HH:mm'}}</div>
+            </div>
+          </div>
+          
+          <div class="schedule-item">
+            <div class="schedule-icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="schedule-info">
+              <div class="schedule-label">Duration</div>
+              <div class="schedule-time">{{getShiftDuration()}}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Attendance Tracking -->
+    <mat-card class="attendance-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>access_time</mat-icon>
+          Attendance
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="attendance-details">
+          <div class="attendance-item" *ngIf="shiftInfo.clockedIn">
+            <div class="attendance-icon">
+              <mat-icon color="primary">login</mat-icon>
+            </div>
+            <div class="attendance-info">
+              <div class="attendance-label">Clocked In</div>
+              <div class="attendance-time">{{shiftInfo.clockedIn | date:'HH:mm'}}</div>
+            </div>
+          </div>
+          
+          <div class="attendance-item" *ngIf="shiftInfo.clockedOut">
+            <div class="attendance-icon">
+              <mat-icon color="accent">logout</mat-icon>
+            </div>
+            <div class="attendance-info">
+              <div class="attendance-label">Clocked Out</div>
+              <div class="attendance-time">{{shiftInfo.clockedOut | date:'HH:mm'}}</div>
+            </div>
+          </div>
+          
+          <div class="attendance-item" *ngIf="shiftInfo.clockedIn && !shiftInfo.clockedOut">
+            <div class="attendance-icon">
+              <mat-icon color="primary">timer</mat-icon>
+            </div>
+            <div class="attendance-info">
+              <div class="attendance-label">Time Worked</div>
+              <div class="attendance-time">{{getWorkedTime()}}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Shift Progress -->
+    <mat-card class="progress-card" *ngIf="shiftInfo.clockedIn && !shiftInfo.clockedOut">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>trending_up</mat-icon>
+          Shift Progress
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="progress-info">
+          <div class="progress-stats">
+            <div class="stat">
+              <span class="stat-label">Remaining:</span>
+              <span class="stat-value">{{getRemainingShiftTime()}}</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Progress:</span>
+              <span class="stat-value">{{getShiftProgress() | number:'1.0-0'}}%</span>
+            </div>
+          </div>
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="getShiftProgress()"
+            color="primary"
+            class="progress-bar">
+          </mat-progress-bar>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Clock In/Out Actions -->
+    <mat-card class="actions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>touch_app</mat-icon>
+          Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-buttons">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            size="large"
+            *ngIf="!shiftInfo.clockedIn"
+            (click)="clockIn()"
+            class="clock-button">
+            <mat-icon>login</mat-icon>
+            Clock In
+          </button>
+          
+          <button 
+            mat-raised-button 
+            color="warn" 
+            size="large"
+            *ngIf="shiftInfo.clockedIn && !shiftInfo.clockedOut"
+            (click)="clockOut()"
+            class="clock-button">
+            <mat-icon>logout</mat-icon>
+            Clock Out
+          </button>
+          
+          <div class="shift-status" *ngIf="shiftInfo.clockedOut">
+            <mat-icon color="primary">check_circle</mat-icon>
+            <span>Shift completed for today</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- No Shift Info -->
+  <div class="no-shift-info" *ngIf="!shiftInfo">
+    <mat-card>
+      <mat-card-content>
+        <div class="no-info-content">
+          <mat-icon>schedule</mat-icon>
+          <h3>No Shift Information</h3>
+          <p>Unable to load shift information. Please contact your supervisor.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

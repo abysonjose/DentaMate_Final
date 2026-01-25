@@ -1,0 +1,116 @@
+<!-- Task Details Dialog -->
+<div class="task-details-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon [color]="getTaskPriorityColor(task.priority)">
+      {{getTaskTypeIcon(task.type)}}
+    </mat-icon>
+    Task Details
+  </h2>
+
+  <mat-dialog-content>
+    <!-- Task Header -->
+    <div class="task-header">
+      <div class="task-title">
+        <h3>{{task.title}}</h3>
+        <div class="task-badges">
+          <mat-chip 
+            [color]="getTaskPriorityColor(task.priority)" 
+            selected
+            class="priority-chip">
+            {{task.priority}}
+          </mat-chip>
+          <mat-chip 
+            color="primary" 
+            selected
+            class="status-chip">
+            <mat-icon>{{getTaskStatusIcon(task.status)}}</mat-icon>
+            {{task.status.replace('_', ' ')}}
+          </mat-chip>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Information -->
+    <div class="task-info">
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Type:</span>
+          <span class="value">{{task.type.replace('_', ' ')}}</span>
+        </div>
+        
+        <div class="info-item">
+          <span class="label">Location:</span>
+          <span class="value">
+            <mat-icon>location_on</mat-icon>
+            {{task.location}}
+          </span>
+        </div>
+        
+        <div class="info-item" *ngIf="task.estimatedDuration">
+          <span class="label">Estimated Duration:</span>
+          <span class="value">
+            <mat-icon>schedule</mat-icon>
+            {{task.estimatedDuration}} minutes
+          </span>
+        </div>
+        
+        <div class="info-item">
+          <span class="label">Assigned At:</span>
+          <span class="value">{{task.assignedAt | date:'MMM d, yyyy HH:mm'}}</span>
+        </div>
+        
+        <div class="info-item" *ngIf="task.completedAt">
+          <span class="label">Completed At:</span>
+          <span class="value">{{task.completedAt | date:'MMM d, yyyy HH:mm'}}</span>
+        </div>
+        
+        <div class="info-item" *ngIf="getElapsedTime()">
+          <span class="label">Time Elapsed:</span>
+          <span class="value elapsed">
+            <mat-icon>timer</mat-icon>
+            {{getElapsedTime()}}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Description -->
+    <div class="task-description" *ngIf="task.description">
+      <h4>Description</h4>
+      <p>{{task.description}}</p>
+    </div>
+
+    <!-- Task Notes -->
+    <div class="task-notes">
+      <h4>Notes</h4>
+      <form [formGroup]="notesForm">
+        <mat-form-field appearance="outline" class="notes-field">
+          <mat-label>Add notes about this task...</mat-label>
+          <textarea 
+            matInput 
+            formControlName="notes"
+            rows="4"
+            placeholder="Enter any additional notes or observations about this task">
+          </textarea>
+          <mat-hint>{{notesForm.get('notes')?.value?.length || 0}}/500 characters</mat-hint>
+          <mat-error *ngIf="notesForm.get('notes')?.hasError('maxlength')">
+            Notes cannot exceed 500 characters
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">
+      Cancel
+    </button>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="onSave()"
+      [disabled]="!notesForm.valid">
+      Save Notes
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,308 @@
+<!-- Support Staff Dashboard -->
+<div class="support-staff-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="shift-info-card">
+      <mat-card class="shift-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>schedule</mat-icon>
+            Current Shift
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="shift-details" *ngIf="shiftInfo">
+            <div class="staff-info">
+              <h3>{{shiftInfo.staffName}}</h3>
+              <mat-chip [color]="'primary'" selected>{{shiftInfo.role}}</mat-chip>
+            </div>
+            <div class="time-info">
+              <div class="current-time">{{currentTime | date:'HH:mm:ss'}}</div>
+              <div class="shift-duration">{{getRemainingShiftTime()}} remaining</div>
+            </div>
+            <div class="shift-progress">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="getShiftProgress()"
+                color="primary">
+              </mat-progress-bar>
+            </div>
+            <div class="clock-actions">
+              <button 
+                mat-raised-button 
+                color="primary" 
+                *ngIf="!shiftInfo.clockedIn"
+                (click)="clockIn()">
+                <mat-icon>login</mat-icon>
+                Clock In
+              </button>
+              <button 
+                mat-raised-button 
+                color="warn" 
+                *ngIf="shiftInfo.clockedIn && !shiftInfo.clockedOut"
+                (click)="clockOut()">
+                <mat-icon>logout</mat-icon>
+                Clock Out
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Quick Stats Section -->
+  <div class="quick-stats">
+    <div class="stats-grid">
+      <!-- Task Statistics -->
+      <mat-card class="stat-card tasks-stat">
+        <mat-card-content>
+          <div class="stat-header">
+            <mat-icon>assignment</mat-icon>
+            <span>Tasks</span>
+          </div>
+          <div class="stat-numbers">
+            <div class="main-number">{{taskStats.total}}</div>
+            <div class="sub-stats">
+              <span class="pending">{{taskStats.pending}} Pending</span>
+              <span class="in-progress">{{taskStats.inProgress}} Active</span>
+              <span class="completed">{{taskStats.completed}} Done</span>
+            </div>
+          </div>
+          <div class="urgent-indicator" *ngIf="urgentTasks > 0">
+            <mat-chip color="warn" selected>
+              <mat-icon>priority_high</mat-icon>
+              {{urgentTasks}} Urgent
+            </mat-chip>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Alerts Card -->
+      <mat-card class="stat-card alerts-stat">
+        <mat-card-content>
+          <div class="stat-header">
+            <mat-icon [matBadge]="unacknowledgedAlerts" matBadgeColor="warn">notifications</mat-icon>
+            <span>Alerts</span>
+          </div>
+          <div class="stat-numbers">
+            <div class="main-number">{{alerts.length}}</div>
+            <div class="sub-stats">
+              <span class="unread">{{unacknowledgedAlerts}} New</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Room Status Card -->
+      <mat-card class="stat-card rooms-stat">
+        <mat-card-content>
+          <div class="stat-header">
+            <mat-icon>meeting_room</mat-icon>
+            <span>Rooms</span>
+          </div>
+          <div class="stat-numbers">
+            <div class="main-number">{{roomsNeedingCleaning}}</div>
+            <div class="sub-stats">
+              <span class="cleaning">Need Cleaning</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Assistance Requests Card -->
+      <mat-card class="stat-card assistance-stat">
+        <mat-card-content>
+          <div class="stat-header">
+            <mat-icon>accessible</mat-icon>
+            <span>Assistance</span>
+          </div>
+          <div class="stat-numbers">
+            <div class="main-number">{{assistanceRequests}}</div>
+            <div class="sub-stats">
+              <span class="requests">Active Requests</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Active Alerts Section -->
+  <div class="active-alerts" *ngIf="alerts.length > 0">
+    <mat-card class="alerts-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>warning</mat-icon>
+          Active Alerts
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div 
+            class="alert-item" 
+            *ngFor="let alert of alerts.slice(0, 3)"
+            [class.acknowledged]="alert.acknowledged">
+            <div class="alert-icon">
+              <mat-icon [color]="alert.priority === 'CRITICAL' ? 'warn' : 'primary'">
+                {{getAlertIcon(alert.type)}}
+              </mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-message">{{alert.message}}</div>
+              <div class="alert-time">{{alert.timestamp | date:'HH:mm'}}</div>
+            </div>
+            <div class="alert-actions">
+              <button 
+                mat-icon-button 
+                color="primary"
+                *ngIf="!alert.acknowledged"
+                (click)="acknowledgeAlert(alert.id)"
+                matTooltip="Acknowledge">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="view-all-alerts" *ngIf="alerts.length > 3">
+          <button mat-button color="primary" routerLink="/support-staff/alerts">
+            View All Alerts ({{alerts.length}})
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Recent Tasks Section -->
+  <div class="recent-tasks">
+    <mat-card class="tasks-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>assignment</mat-icon>
+          Today's Tasks
+        </mat-card-title>
+        <div class="header-actions">
+          <button mat-button color="primary" routerLink="/support-staff/tasks">
+            View All Tasks
+          </button>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="tasks-list" *ngIf="tasks.length > 0; else noTasks">
+          <div 
+            class="task-item" 
+            *ngFor="let task of tasks.slice(0, 5)"
+            [class]="'priority-' + task.priority.toLowerCase()">
+            <div class="task-icon">
+              <mat-icon [color]="getTaskPriorityColor(task.priority)">
+                {{getTaskStatusIcon(task.status)}}
+              </mat-icon>
+            </div>
+            <div class="task-content">
+              <div class="task-title">{{task.title}}</div>
+              <div class="task-details">
+                <span class="task-location">
+                  <mat-icon>location_on</mat-icon>
+                  {{task.location}}
+                </span>
+                <span class="task-time" *ngIf="task.estimatedDuration">
+                  <mat-icon>schedule</mat-icon>
+                  {{task.estimatedDuration}}min
+                </span>
+              </div>
+            </div>
+            <div class="task-status">
+              <mat-chip 
+                [color]="getTaskPriorityColor(task.priority)" 
+                selected
+                class="priority-chip">
+                {{task.priority}}
+              </mat-chip>
+              <mat-chip 
+                [color]="task.status === 'COMPLETED' ? 'primary' : 'accent'" 
+                selected
+                class="status-chip">
+                {{task.status.replace('_', ' ')}}
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+        <ng-template #noTasks>
+          <div class="no-tasks">
+            <mat-icon>check_circle</mat-icon>
+            <p>No tasks assigned for today</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="quick-actions">
+    <mat-card class="actions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>flash_on</mat-icon>
+          Quick Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-grid">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            class="action-button"
+            routerLink="/support-staff/tasks">
+            <mat-icon>assignment</mat-icon>
+            <span>View Tasks</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            color="accent" 
+            class="action-button"
+            routerLink="/support-staff/rooms">
+            <mat-icon>cleaning_services</mat-icon>
+            <span>Room Status</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            color="primary" 
+            class="action-button"
+            routerLink="/support-staff/assistance">
+            <mat-icon>accessible</mat-icon>
+            <span>Assistance</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            color="warn" 
+            class="action-button"
+            routerLink="/support-staff/security">
+            <mat-icon>security</mat-icon>
+            <span>Security</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            color="primary" 
+            class="action-button"
+            routerLink="/support-staff/activity">
+            <mat-icon>history</mat-icon>
+            <span>Activity Log</span>
+          </button>
+          
+          <button 
+            mat-raised-button 
+            color="accent" 
+            class="action-button"
+            routerLink="/support-staff/communication">
+            <mat-icon>message</mat-icon>
+            <span>Messages</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

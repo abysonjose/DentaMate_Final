@@ -1,0 +1,240 @@
+<!-- Room Readiness Component -->
+<div class="room-readiness">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>meeting_room</mat-icon>
+        Room Readiness
+      </h1>
+      <div class="header-actions">
+        <button 
+          mat-raised-button 
+          color="accent" 
+          (click)="openComplianceChecklist()">
+          <mat-icon>checklist</mat-icon>
+          Compliance Check
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card cleaning-required">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>cleaning_services</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-number">{{roomStats.cleaningRequired}}</div>
+            <div class="stat-label">Need Cleaning</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card ready">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-number">{{roomStats.ready}}</div>
+            <div class="stat-label">Ready</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card occupied">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-number">{{roomStats.occupied}}</div>
+            <div class="stat-label">Occupied</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card out-of-order" *ngIf="roomStats.outOfOrder > 0">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>error</mat-icon>
+          </div>
+          <div class="stat-info">
+            <div class="stat-number">{{roomStats.outOfOrder}}</div>
+            <div class="stat-label">Out of Order</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-container">
+        <div class="search-field">
+          <mat-form-field appearance="outline">
+            <mat-label>Search rooms...</mat-label>
+            <input 
+              matInput 
+              [(ngModel)]="searchTerm" 
+              (input)="onSearchChange()"
+              placeholder="Search by room number">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-fields">
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select [(value)]="selectedStatus" (selectionChange)="onFilterChange()">
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                {{option.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Room Type</mat-label>
+            <mat-select [(value)]="selectedType" (selectionChange)="onFilterChange()">
+              <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+                {{option.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button 
+            mat-stroked-button 
+            color="primary" 
+            (click)="clearFilters()"
+            class="clear-filters-btn">
+            <mat-icon>clear</mat-icon>
+            Clear Filters
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Rooms Grid -->
+  <div class="rooms-section">
+    <mat-card class="rooms-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>list</mat-icon>
+          Rooms ({{filteredRooms.length}})
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="rooms-grid" *ngIf="filteredRooms.length > 0; else noRooms">
+          <div 
+            class="room-card" 
+            *ngFor="let room of sortRooms(filteredRooms)"
+            [class]="'status-' + room.status.toLowerCase().replace('_', '-')"
+            [class.overdue]="isCleaningOverdue(room)">
+            
+            <!-- Room Header -->
+            <div class="room-header">
+              <div class="room-number">
+                <mat-icon [color]="getRoomStatusColor(room.status)">
+                  {{getRoomTypeIcon(room.type)}}
+                </mat-icon>
+                <span class="number">{{room.number}}</span>
+              </div>
+              <div class="room-status">
+                <mat-chip 
+                  [color]="getRoomStatusColor(room.status)" 
+                  selected
+                  class="status-chip">
+                  <mat-icon>{{getRoomStatusIcon(room.status)}}</mat-icon>
+                  {{room.status.replace('_', ' ')}}
+                </mat-chip>
+              </div>
+            </div>
+
+            <!-- Room Details -->
+            <div class="room-details">
+              <div class="room-type">
+                <span class="label">Type:</span>
+                <span class="value">{{room.type.replace('_', ' ')}}</span>
+              </div>
+              <div class="last-cleaned" *ngIf="room.lastCleaned">
+                <span class="label">Last Cleaned:</span>
+                <span class="value" [class.overdue]="isCleaningOverdue(room)">
+                  {{getTimeSinceLastCleaned(room)}}
+                </span>
+              </div>
+            </div>
+
+            <!-- Overdue Warning -->
+            <div class="overdue-warning" *ngIf="isCleaningOverdue(room)">
+              <mat-icon>warning</mat-icon>
+              <span>Cleaning Overdue</span>
+            </div>
+
+            <!-- Room Actions -->
+            <div class="room-actions">
+              <button 
+                mat-raised-button 
+                color="primary" 
+                *ngIf="canStartCleaning(room)"
+                (click)="startCleaning(room)"
+                class="action-btn">
+                <mat-icon>cleaning_services</mat-icon>
+                Start Cleaning
+              </button>
+              
+              <button 
+                mat-raised-button 
+                color="accent" 
+                *ngIf="canMarkReady(room)"
+                (click)="markRoomReady(room)"
+                class="action-btn">
+                <mat-icon>check</mat-icon>
+                Mark Ready
+              </button>
+              
+              <div class="status-info" *ngIf="room.status === 'OCCUPIED'">
+                <mat-icon>info</mat-icon>
+                <span>Room is currently occupied</span>
+              </div>
+              
+              <div class="status-info ready" *ngIf="room.status === 'READY'">
+                <mat-icon>check_circle</mat-icon>
+                <span>Room is ready for use</span>
+              </div>
+              
+              <div class="status-info error" *ngIf="room.status === 'OUT_OF_ORDER'">
+                <mat-icon>error</mat-icon>
+                <span>Room is out of order</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noRooms>
+          <div class="no-rooms">
+            <mat-icon>meeting_room</mat-icon>
+            <h3>No rooms found</h3>
+            <p *ngIf="searchTerm || selectedStatus !== 'ALL' || selectedType !== 'ALL'">
+              Try adjusting your filters to see more rooms.
+            </p>
+            <p *ngIf="!searchTerm && selectedStatus === 'ALL' && selectedType === 'ALL'">
+              No rooms are available in the system.
+            </p>
+            <button 
+              mat-raised-button 
+              color="primary" 
+              (click)="clearFilters()"
+              *ngIf="searchTerm || selectedStatus !== 'ALL' || selectedType !== 'ALL'">
+              Clear Filters
+            </button>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

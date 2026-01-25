@@ -101,6 +101,14 @@ const routes: Routes = [
     data: { roles: ['pharmacist'] }
   },
 
+  // Support Staff module
+  {
+    path: 'support-staff',
+    loadChildren: () => import('./modules/support-staff/support-staff.module').then(m => m.SupportStaffModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['support-staff', 'housekeeping', 'security', 'attendant'] }
+  },
+
   // Billing Staff module
   {
     path: 'billing-staff',

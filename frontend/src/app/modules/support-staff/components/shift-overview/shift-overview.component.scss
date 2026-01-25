@@ -1,0 +1,378 @@
+.shift-overview {
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
+}
+
+// Page Header
+.page-header {
+  margin-bottom: 24px;
+  
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    
+    .mat-icon {
+      font-size: 28px;
+      color: #2196f3;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// Shift Content
+.shift-content {
+  display: grid;
+  gap: 20px;
+  
+  .mat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .mat-card-header {
+      .mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        
+        .mat-icon {
+          font-size: 20px;
+          color: #2196f3;
+        }
+      }
+    }
+  }
+}
+
+// Time Card
+.time-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  
+  .time-display {
+    text-align: center;
+    padding: 20px 0;
+    
+    .current-time {
+      font-size: 3rem;
+      font-weight: 700;
+      font-family: 'Roboto Mono', monospace;
+      margin-bottom: 8px;
+      
+      @media (max-width: 768px) {
+        font-size: 2.5rem;
+      }
+    }
+    
+    .current-date {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      font-weight: 500;
+      
+      @media (max-width: 768px) {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+// Staff Info Card
+.staff-info-card {
+  .staff-details {
+    display: grid;
+    gap: 16px;
+    
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .label {
+        font-weight: 500;
+        color: #666;
+      }
+      
+      .value {
+        font-weight: 600;
+        color: #333;
+      }
+      
+      .mat-chip {
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Schedule Card
+.schedule-card {
+  .schedule-details {
+    display: grid;
+    gap: 16px;
+    
+    .schedule-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      
+      .schedule-icon {
+        .mat-icon {
+          font-size: 24px;
+          color: #2196f3;
+        }
+      }
+      
+      .schedule-info {
+        flex: 1;
+        
+        .schedule-label {
+          font-size: 0.9rem;
+          color: #666;
+          font-weight: 500;
+          margin-bottom: 2px;
+        }
+        
+        .schedule-time {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #333;
+          font-family: 'Roboto Mono', monospace;
+        }
+      }
+    }
+  }
+}
+
+// Attendance Card
+.attendance-card {
+  .attendance-details {
+    display: grid;
+    gap: 16px;
+    
+    .attendance-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      
+      .attendance-icon {
+        .mat-icon {
+          font-size: 24px;
+        }
+      }
+      
+      .attendance-info {
+        flex: 1;
+        
+        .attendance-label {
+          font-size: 0.9rem;
+          color: #666;
+          font-weight: 500;
+          margin-bottom: 2px;
+        }
+        
+        .attendance-time {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #333;
+          font-family: 'Roboto Mono', monospace;
+        }
+      }
+    }
+  }
+}
+
+// Progress Card
+.progress-card {
+  .progress-info {
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      
+      .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        
+        .stat-label {
+          font-size: 0.9rem;
+          color: #666;
+          font-weight: 500;
+        }
+        
+        .stat-value {
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #2196f3;
+          font-family: 'Roboto Mono', monospace;
+        }
+      }
+    }
+    
+    .progress-bar {
+      height: 12px;
+      border-radius: 6px;
+    }
+  }
+}
+
+// Actions Card
+.actions-card {
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    
+    .clock-button {
+      width: 200px;
+      height: 56px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      
+      .mat-icon {
+        margin-right: 8px;
+        font-size: 20px;
+      }
+      
+      @media (max-width: 768px) {
+        width: 100%;
+        height: 48px;
+        font-size: 1rem;
+      }
+    }
+    
+    .shift-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #e8f5e8;
+      color: #2e7d32;
+      border-radius: 8px;
+      font-weight: 500;
+      
+      .mat-icon {
+        font-size: 20px;
+      }
+    }
+  }
+}
+
+// No Shift Info
+.no-shift-info {
+  .no-info-content {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    
+    .mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: #ff9800;
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .shift-content {
+    gap: 16px;
+    
+    .schedule-card .schedule-details .schedule-item,
+    .attendance-card .attendance-details .attendance-item {
+      padding: 10px;
+      
+      .schedule-info,
+      .attendance-info {
+        .schedule-time,
+        .attendance-time {
+          font-size: 1rem;
+        }
+      }
+    }
+    
+    .progress-card .progress-info .progress-stats {
+      .stat {
+        .stat-value {
+          font-size: 1.1rem;
+        }
+      }
+    }
+  }
+}
+
+// Accessibility improvements
+.mat-card {
+  &:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+  }
+}
+
+button {
+  &:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .schedule-item,
+  .attendance-item {
+    border: 1px solid #000;
+  }
+  
+  .shift-status {
+    border: 2px solid #2e7d32;
+  }
+}

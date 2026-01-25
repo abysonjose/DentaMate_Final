@@ -1,0 +1,301 @@
+.room-cleaning-dialog {
+  min-width: 600px;
+  
+  @media (max-width: 768px) {
+    min-width: 350px;
+  }
+  
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #333;
+    
+    .mat-icon {
+      font-size: 24px;
+    }
+  }
+  
+  .room-info {
+    margin-bottom: 24px;
+    
+    .info-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+      border-left: 4px solid #2196f3;
+      
+      .room-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        
+        .detail-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          
+          .label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+          }
+          
+          .value {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+  
+  .progress-overview {
+    margin-bottom: 24px;
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      
+      h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+      }
+      
+      .progress-stats {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        
+        .completed-count {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #2196f3;
+        }
+        
+        .percentage {
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #4caf50;
+        }
+      }
+    }
+    
+    .progress-bar {
+      height: 8px;
+      border-radius: 4px;
+    }
+  }
+  
+  .cleaning-checklist {
+    h3 {
+      margin: 0 0 16px 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .checklist-items {
+      .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        background: #fafafa;
+        border-radius: 8px;
+        border-left: 4px solid #e0e0e0;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background: #f0f0f0;
+        }
+        
+        &.completed {
+          background: #e8f5e8;
+          border-left-color: #4caf50;
+          
+          .item-text .item-name {
+            text-decoration: line-through;
+            color: #666;
+          }
+        }
+        
+        .item-checkbox {
+          flex-shrink: 0;
+        }
+        
+        .item-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex: 1;
+          
+          .item-icon {
+            .mat-icon {
+              font-size: 20px;
+              width: 20px;
+              height: 20px;
+              color: #666;
+            }
+          }
+          
+          .item-text {
+            flex: 1;
+            
+            .item-name {
+              display: block;
+              font-size: 0.95rem;
+              font-weight: 500;
+              color: #333;
+              line-height: 1.4;
+            }
+            
+            .item-timestamp {
+              display: block;
+              font-size: 0.8rem;
+              color: #4caf50;
+              font-weight: 500;
+              margin-top: 2px;
+            }
+          }
+        }
+        
+        .item-status {
+          flex-shrink: 0;
+          
+          .mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+    
+    .additional-notes {
+      margin-top: 20px;
+      
+      .notes-field {
+        width: 100%;
+        
+        textarea {
+          resize: vertical;
+          min-height: 60px;
+        }
+      }
+    }
+  }
+  
+  .completion-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff3e0;
+    color: #f57c00;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    
+    .mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// Dialog actions styling
+.mat-dialog-actions {
+  padding: 16px 0 0 0;
+  margin: 0;
+  
+  button {
+    font-weight: 500;
+    
+    &:not(:last-child) {
+      margin-right: 8px;
+    }
+    
+    .mat-icon {
+      margin-right: 4px;
+      font-size: 18px;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .room-cleaning-dialog {
+    .room-info .info-card .room-details {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    
+    .progress-overview .progress-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      
+      .progress-stats {
+        gap: 12px;
+      }
+    }
+    
+    .checklist-items .checklist-item {
+      padding: 10px;
+      
+      .item-content {
+        gap: 8px;
+        
+        .item-text .item-name {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+
+// Accessibility improvements
+.checklist-item {
+  &:focus-within {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+  }
+}
+
+button {
+  &:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .checklist-item {
+    border: 1px solid #000;
+    
+    &.completed {
+      border-left: 4px solid #4caf50;
+    }
+  }
+  
+  .room-info .info-card {
+    border: 2px solid #2196f3;
+  }
+  
+  .completion-warning {
+    border: 2px solid #f57c00;
+  }
+}

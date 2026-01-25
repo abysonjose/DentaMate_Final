@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject, takeUntil } from 'rxjs';
 import { PatientService } from '../../services/patient.service';
+import { PatientSupportIntegrationService, PatientSupportRequest } from '../../services/patient-support-integration.service';
 
 @Component({
   selector: 'app-support-help',
@@ -334,10 +336,24 @@ import { PatientService } from '../../services/patient.service';
   `,
   styleUrls: ['./support-help.component.scss']
 })
-export class SupportHelpComponent implements OnInit {
+export class SupportHelpComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
   supportForm: FormGroup;
   submitting = false;
   clinicInfo: any = null;
+  
+  // Support Staff Integration
+  activeRequests: PatientSupportRequest[] = [];
+  requestHistory: PatientSupportRequest[] = [];
+  supportAvailability: any[] = [];
+  
+  supportTypes = [
+    { value: 'WHEELCHAIR', label: 'Wheelchair Assistance', icon: 'accessible' },
+    { value: 'ESCORT', label: 'Escort to Location', icon: 'directions_walk' },
+    { value: 'GUIDANCE', label: 'Information & Guidance', icon: 'help' },
+    { value: 'EMERGENCY', label: 'Emergency Assistance', icon: 'emergency' }
+  ];
 
   faqs = [
     {
@@ -377,6 +393,7 @@ export class SupportHelpComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private patientService: PatientService,
+    private patientSupportService: PatientSupportIntegrationService,
     private snackBar: MatSnackBar
   ) {
     this.supportForm = this.fb.group({
@@ -390,6 +407,15 @@ export class SupportHelpComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadClinicInfo();
+    this.loadActiveRequests();
+    this.loadRequestHistory();
+    this.checkSupportAvailability();
+    this.subscribeToUpdates();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadClinicInfo(): void {
@@ -460,5 +486,98 @@ export class SupportHelpComponent implements OnInit {
       priority: 'MEDIUM',
       contactMethod: 'EMAIL'
     });
+  }
+
+  // Support Staff Integration Methods
+  private loadActiveRequests(): void {
+    this.patientSupportService.getMyActiveRequests()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(requests => {
+        this.activeRequests = requests;
+      });
+  }
+
+  private loadRequestHistory(): void {
+    this.patientSupportService.getMyRequestHistory()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(history => {
+        this.requestHistory = history.slice(0, 5);
+      });
+  }
+
+  private checkSupportAvailability(): void {
+    this.patientSupportService.checkSupportStaffAvailability()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(availability => {
+        this.supportAvailability = availability;
+      });
+  }
+
+  private subscribeToUpdates(): void {
+    this.patientSupportService.subscribeToRequestUpdates();
+  }
+
+  requestSupport(type: string): void {
+    this.patientSupportService.requestSupport({
+      requestType: type,
+      description: `${type} assistance requested`,
+      fromLocation: 'Current Location',
+      urgency: 'MEDIUM'
+    }).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: () => {
+        this.snackBar.open('Support request submitted successfully', 'Close', { duration: 3000 });
+        this.loadActiveRequests();
+      },
+      error: () => {
+        this.snackBar.open('Failed to submit support request', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  requestEmergencyAssistance(): void {
+    this.patientSupportService.requestEmergencyAssistance({
+      type: 'MEDICAL',
+      location: 'Current Location',
+      description: 'Emergency assistance needed'
+    }).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: () => {
+        this.snackBar.open('Emergency assistance requested', 'Close', { duration: 3000 });
+        this.loadActiveRequests();
+      },
+      error: () => {
+        this.snackBar.open('Failed to request emergency assistance', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  cancelRequest(requestId: string): void {
+    this.patientSupportService.cancelSupportRequest(requestId, 'Cancelled by patient')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Request cancelled successfully', 'Close', { duration: 3000 });
+          this.loadActiveRequests();
+        },
+        error: () => {
+          this.snackBar.open('Failed to cancel request', 'Close', { duration: 3000 });
+        }
+      });
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'REQUESTED': return 'primary';
+      case 'ASSIGNED': return 'accent';
+      case 'IN_PROGRESS': return 'warn';
+      case 'COMPLETED': return 'primary';
+      default: return '';
+    }
+  }
+
+  getRequestTypeIcon(type: string): string {
+    const supportType = this.supportTypes.find(t => t.value === type);
+    return supportType ? supportType.icon : 'help';
   }
 }
