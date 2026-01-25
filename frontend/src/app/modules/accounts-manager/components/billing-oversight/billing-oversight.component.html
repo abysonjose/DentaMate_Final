@@ -1,0 +1,77 @@
+<div class="billing-oversight">
+  <div class="oversight-header">
+    <h2>
+      <mat-icon>receipt_long</mat-icon>
+      Billing Oversight
+    </h2>
+  </div>
+
+  <div *ngIf="oversightData && !isLoading">
+    <!-- Flagged Bills -->
+    <div class="oversight-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon color="warn">flag</mat-icon>
+            Flagged Bills ({{ oversightData.flaggedBills.length }})
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="flagged-bills-list">
+            <div class="bill-item" *ngFor="let bill of oversightData.flaggedBills">
+              <div class="bill-info">
+                <h4>{{ bill.billNumber }}</h4>
+                <p>{{ bill.patientName }} - {{ formatCurrency(bill.amount) }}</p>
+                <small>{{ bill.flagReason }}</small>
+              </div>
+              <div class="bill-status">
+                <mat-chip [color]="getPriorityColor(bill.priority)" selected>
+                  {{ bill.priority }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Pending Approvals -->
+    <div class="oversight-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon color="primary">schedule</mat-icon>
+            Pending Approvals ({{ oversightData.pendingApprovals.length }})
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="approvals-list">
+            <div class="approval-item" *ngFor="let approval of oversightData.pendingApprovals">
+              <div class="approval-info">
+                <h4>{{ approval.type }} - {{ formatCurrency(approval.amount) }}</h4>
+                <p>{{ approval.patientName }}</p>
+                <small>{{ approval.reason }}</small>
+              </div>
+              <div class="approval-actions">
+                <button mat-raised-button color="primary" size="small">Approve</button>
+                <button mat-raised-button color="warn" size="small">Reject</button>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-card>
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner></mat-spinner>
+          <p>Loading billing oversight data...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

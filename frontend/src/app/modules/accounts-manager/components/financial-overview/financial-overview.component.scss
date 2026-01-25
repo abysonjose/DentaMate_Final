@@ -1,0 +1,401 @@
+.financial-overview {
+  padding: 24px;
+
+  .overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #1976d2;
+      margin: 0;
+
+      mat-icon {
+        font-size: 1.8rem;
+        width: 1.8rem;
+        height: 1.8rem;
+      }
+    }
+
+    .period-selector {
+      mat-form-field {
+        width: 200px;
+      }
+    }
+  }
+
+  .kpi-section {
+    margin-bottom: 32px;
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+
+      .kpi-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+        }
+
+        &.revenue-card {
+          border-left: 4px solid #4caf50;
+        }
+
+        &.collections-card {
+          border-left: 4px solid #2196f3;
+        }
+
+        &.receivables-card {
+          border-left: 4px solid #ff9800;
+        }
+
+        &.refunds-card {
+          border-left: 4px solid #f44336;
+        }
+
+        mat-card-header {
+          padding-bottom: 8px;
+
+          .kpi-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            margin-bottom: 8px;
+
+            mat-icon {
+              color: #1976d2;
+              font-size: 20px;
+              width: 20px;
+              height: 20px;
+            }
+          }
+
+          mat-card-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #666;
+          }
+        }
+
+        mat-card-content {
+          .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+          }
+
+          .kpi-change, .kpi-metric {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+
+            mat-icon {
+              font-size: 1rem;
+              width: 1rem;
+              height: 1rem;
+            }
+          }
+
+          .text-green-600 {
+            color: #16a34a;
+          }
+
+          .text-yellow-600 {
+            color: #ca8a04;
+          }
+
+          .text-red-600 {
+            color: #dc2626;
+          }
+        }
+      }
+    }
+  }
+
+  .comparative-section {
+    margin-bottom: 32px;
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+
+      .comparison-item {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+
+        .comparison-label {
+          font-size: 0.9rem;
+          color: #666;
+          margin-bottom: 12px;
+        }
+
+        .comparison-values {
+          .current-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+          }
+
+          .previous-value {
+            font-size: 0.9rem;
+            color: #666;
+          }
+
+          .comparison-change {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+
+            mat-icon {
+              font-size: 1rem;
+              width: 1rem;
+              height: 1rem;
+            }
+
+            &.text-green-600 {
+              color: #16a34a;
+            }
+
+            &.text-red-600 {
+              color: #dc2626;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .health-indicators {
+    margin-bottom: 32px;
+
+    .indicators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+
+      .indicator-item {
+        .indicator-label {
+          font-size: 0.9rem;
+          color: #666;
+          margin-bottom: 12px;
+        }
+
+        .indicator-progress {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          mat-progress-bar {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+          }
+
+          .progress-value {
+            font-weight: 600;
+            color: #333;
+            min-width: 50px;
+          }
+        }
+
+        .indicator-value {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1.2rem;
+          font-weight: 600;
+
+          mat-icon {
+            font-size: 1.2rem;
+            width: 1.2rem;
+            height: 1.2rem;
+          }
+
+          &.text-green-600 {
+            color: #16a34a;
+          }
+
+          &.text-yellow-600 {
+            color: #ca8a04;
+          }
+
+          &.text-red-600 {
+            color: #dc2626;
+          }
+        }
+      }
+    }
+  }
+
+  .alerts-section {
+    margin-bottom: 32px;
+
+    .alerts-list {
+      .alert-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+
+        &.alert-high {
+          background-color: #ffebee;
+          border-left: 4px solid #f44336;
+        }
+
+        &.alert-medium {
+          background-color: #fff3e0;
+          border-left: 4px solid #ff9800;
+        }
+
+        &.alert-low {
+          background-color: #e3f2fd;
+          border-left: 4px solid #2196f3;
+        }
+
+        .alert-icon {
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .alert-content {
+          flex: 1;
+
+          .alert-message {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #333;
+          }
+
+          .alert-details {
+            margin-bottom: 8px;
+
+            small {
+              color: #666;
+              font-size: 0.8rem;
+            }
+          }
+
+          .alert-time {
+            font-size: 0.8rem;
+            color: #666;
+          }
+        }
+
+        .alert-actions {
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+
+  .quick-actions {
+    margin-bottom: 32px;
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        font-weight: 500;
+
+        mat-icon {
+          font-size: 1.2rem;
+          width: 1.2rem;
+          height: 1.2rem;
+        }
+      }
+    }
+  }
+
+  .loading-state {
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+
+      mat-spinner {
+        margin-bottom: 16px;
+      }
+
+      p {
+        color: #666;
+        font-size: 1rem;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .financial-overview {
+    padding: 16px;
+
+    .overview-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+
+      .period-selector {
+        mat-form-field {
+          width: 100%;
+        }
+      }
+    }
+
+    .kpi-section {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .comparative-section {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .health-indicators {
+      .indicators-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .quick-actions {
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}

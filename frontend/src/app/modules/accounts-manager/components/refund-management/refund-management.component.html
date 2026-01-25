@@ -1,0 +1,265 @@
+<div class="refund-management">
+  <!-- Header -->
+  <div class="management-header">
+    <h2>
+      <mat-icon>money_off</mat-icon>
+      Refund Management
+    </h2>
+    
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportRefundReport()">
+        <mat-icon>download</mat-icon>
+        Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-section">
+    <div class="stats-grid">
+      <mat-card class="stat-card pending-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ refundStats.totalPending }}</div>
+            <div class="stat-label">Pending Approval</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card approved-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ refundStats.totalApproved }}</div>
+            <div class="stat-label">Approved</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card rejected-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>cancel</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ refundStats.totalRejected }}</div>
+            <div class="stat-label">Rejected</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card amount-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ formatCurrency(refundStats.totalAmount) }}</div>
+            <div class="stat-label">Total Amount</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-section">
+    <mat-card>
+      <mat-card-content>
+        <div class="filters-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Status Filter</mat-label>
+            <mat-select [(value)]="statusFilter" (selectionChange)="onStatusFilterChange()">
+              <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Search</mat-label>
+            <input matInput (keyup)="applyFilter($event)" placeholder="Search by patient name, bill ID, or reason">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Refund Requests Table -->
+  <div class="table-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Refund Requests</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="dataSource" matSort class="refund-table">
+            
+            <!-- Bill ID Column -->
+            <ng-container matColumnDef="billId">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Bill ID</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="bill-id">{{ refund.billId }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Patient Name Column -->
+            <ng-container matColumnDef="patientName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient Name</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="patient-name">{{ refund.patientName }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Original Amount Column -->
+            <ng-container matColumnDef="originalAmount">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Original Amount</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="amount">{{ formatCurrency(refund.originalAmount) }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Refund Amount Column -->
+            <ng-container matColumnDef="refundAmount">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Refund Amount</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="refund-amount">{{ formatCurrency(refund.refundAmount) }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Reason Column -->
+            <ng-container matColumnDef="reason">
+              <th mat-header-cell *matHeaderCellDef>Reason</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="reason" [matTooltip]="refund.reason">
+                  {{ refund.reason.length > 50 ? (refund.reason | slice:0:50) + '...' : refund.reason }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Requested By Column -->
+            <ng-container matColumnDef="requestedBy">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Requested By</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="requested-by">{{ refund.requestedBy }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Request Date Column -->
+            <ng-container matColumnDef="requestDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Request Date</th>
+              <td mat-cell *matCellDef="let refund">
+                <span class="request-date">{{ refund.requestDate | date:'short' }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let refund">
+                <mat-chip [color]="getStatusColor(refund.status)" selected>
+                  <mat-icon>{{ getStatusIcon(refund.status) }}</mat-icon>
+                  {{ refund.status }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let refund">
+                <div class="action-buttons">
+                  <button 
+                    mat-icon-button 
+                    color="primary" 
+                    *ngIf="canApprove(refund)"
+                    (click)="openRefundDialog(refund, 'approve')"
+                    matTooltip="Approve Refund">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  
+                  <button 
+                    mat-icon-button 
+                    color="warn" 
+                    *ngIf="canReject(refund)"
+                    (click)="openRefundDialog(refund, 'reject')"
+                    matTooltip="Reject Refund">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                  
+                  <button 
+                    mat-icon-button 
+                    *ngIf="refund.supportingDocuments.length > 0"
+                    (click)="viewSupportingDocuments(refund)"
+                    matTooltip="View Supporting Documents">
+                    <mat-icon>attachment</mat-icon>
+                  </button>
+
+                  <button 
+                    mat-icon-button 
+                    [matMenuTriggerFor]="actionMenu"
+                    matTooltip="More Actions">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+
+                  <mat-menu #actionMenu="matMenu">
+                    <button mat-menu-item (click)="viewSupportingDocuments(refund)">
+                      <mat-icon>visibility</mat-icon>
+                      View Details
+                    </button>
+                    <button mat-menu-item *ngIf="refund.approvalNotes">
+                      <mat-icon>note</mat-icon>
+                      View Notes
+                    </button>
+                  </mat-menu>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+                [class.pending-row]="row.status === 'PENDING'"
+                [class.approved-row]="row.status === 'APPROVED'"
+                [class.rejected-row]="row.status === 'REJECTED'"></tr>
+          </table>
+
+          <mat-paginator 
+            [pageSizeOptions]="[10, 25, 50, 100]" 
+            showFirstLastButtons>
+          </mat-paginator>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-card>
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner></mat-spinner>
+          <p>Loading refund requests...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && dataSource.data.length === 0">
+    <mat-card>
+      <mat-card-content>
+        <div class="empty-content">
+          <mat-icon>money_off</mat-icon>
+          <h3>No Refund Requests</h3>
+          <p>There are no refund requests matching your current filters.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

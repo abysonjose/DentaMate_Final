@@ -1,0 +1,75 @@
+.billing-oversight {
+  padding: 24px;
+
+  .oversight-header {
+    margin-bottom: 32px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #1976d2;
+      margin: 0;
+    }
+  }
+
+  .oversight-section {
+    margin-bottom: 32px;
+
+    .flagged-bills-list,
+    .approvals-list {
+      .bill-item,
+      .approval-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid #e0e0e0;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .bill-info,
+        .approval-info {
+          flex: 1;
+
+          h4 {
+            margin: 0 0 8px 0;
+            font-weight: 600;
+          }
+
+          p {
+            margin: 0 0 4px 0;
+            color: #666;
+          }
+
+          small {
+            color: #999;
+          }
+        }
+
+        .approval-actions {
+          display: flex;
+          gap: 8px;
+        }
+      }
+    }
+  }
+
+  .loading-state {
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+
+      mat-spinner {
+        margin-bottom: 16px;
+      }
+    }
+  }
+}

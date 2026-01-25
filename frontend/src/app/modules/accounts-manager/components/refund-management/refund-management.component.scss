@@ -1,0 +1,325 @@
+.refund-management {
+  padding: 24px;
+
+  .management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #1976d2;
+      margin: 0;
+
+      mat-icon {
+        font-size: 1.8rem;
+        width: 1.8rem;
+        height: 1.8rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+
+  .stats-section {
+    margin-bottom: 32px;
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+
+      .stat-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+        }
+
+        &.pending-card {
+          border-left: 4px solid #ff9800;
+        }
+
+        &.approved-card {
+          border-left: 4px solid #4caf50;
+        }
+
+        &.rejected-card {
+          border-left: 4px solid #f44336;
+        }
+
+        &.amount-card {
+          border-left: 4px solid #2196f3;
+        }
+
+        mat-card-content {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 20px !important;
+
+          .stat-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background-color: #e3f2fd;
+            border-radius: 12px;
+
+            mat-icon {
+              color: #1976d2;
+              font-size: 24px;
+              width: 24px;
+              height: 24px;
+            }
+          }
+
+          .stat-content {
+            .stat-value {
+              font-size: 1.8rem;
+              font-weight: 700;
+              color: #333;
+              margin-bottom: 4px;
+            }
+
+            .stat-label {
+              font-size: 0.9rem;
+              color: #666;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .filters-section {
+    margin-bottom: 24px;
+
+    .filters-row {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+
+      mat-form-field {
+        min-width: 200px;
+      }
+    }
+  }
+
+  .table-section {
+    .table-container {
+      overflow-x: auto;
+
+      .refund-table {
+        width: 100%;
+        min-width: 1000px;
+
+        .mat-column-billId {
+          width: 120px;
+        }
+
+        .mat-column-patientName {
+          width: 180px;
+        }
+
+        .mat-column-originalAmount,
+        .mat-column-refundAmount {
+          width: 140px;
+          text-align: right;
+        }
+
+        .mat-column-reason {
+          width: 200px;
+        }
+
+        .mat-column-requestedBy {
+          width: 150px;
+        }
+
+        .mat-column-requestDate {
+          width: 140px;
+        }
+
+        .mat-column-status {
+          width: 120px;
+        }
+
+        .mat-column-actions {
+          width: 150px;
+        }
+
+        .bill-id {
+          font-family: monospace;
+          font-weight: 600;
+          color: #1976d2;
+        }
+
+        .patient-name {
+          font-weight: 500;
+        }
+
+        .amount,
+        .refund-amount {
+          font-weight: 600;
+          color: #333;
+        }
+
+        .reason {
+          color: #666;
+          font-size: 0.9rem;
+        }
+
+        .requested-by {
+          font-size: 0.9rem;
+          color: #666;
+        }
+
+        .request-date {
+          font-size: 0.9rem;
+          color: #666;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+        }
+
+        // Row styling based on status
+        .pending-row {
+          background-color: #fff3e0;
+          border-left: 3px solid #ff9800;
+        }
+
+        .approved-row {
+          background-color: #e8f5e8;
+          border-left: 3px solid #4caf50;
+        }
+
+        .rejected-row {
+          background-color: #ffebee;
+          border-left: 3px solid #f44336;
+        }
+
+        tr:hover {
+          background-color: #f5f5f5;
+        }
+      }
+    }
+  }
+
+  .loading-state,
+  .empty-state {
+    .loading-content,
+    .empty-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      text-align: center;
+
+      mat-spinner {
+        margin-bottom: 16px;
+      }
+
+      mat-icon {
+        font-size: 4rem;
+        width: 4rem;
+        height: 4rem;
+        color: #ccc;
+        margin-bottom: 16px;
+      }
+
+      h3 {
+        color: #666;
+        margin-bottom: 8px;
+      }
+
+      p {
+        color: #999;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .refund-management {
+    padding: 16px;
+
+    .management-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .stats-section {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .filters-section {
+      .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+
+        mat-form-field {
+          min-width: auto;
+          width: 100%;
+        }
+      }
+    }
+
+    .table-section {
+      .table-container {
+        .refund-table {
+          .mat-column-reason {
+            display: none;
+          }
+
+          .mat-column-requestedBy {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .refund-management {
+    .table-section {
+      .table-container {
+        .refund-table {
+          .mat-column-originalAmount {
+            display: none;
+          }
+
+          .mat-column-requestDate {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}

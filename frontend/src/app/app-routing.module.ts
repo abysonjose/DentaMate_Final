@@ -46,6 +46,14 @@ const routes: Routes = [
     data: { roles: ['nurse'] }
   },
   
+  // Accounts Manager module
+  {
+    path: 'accounts-manager',
+    loadChildren: () => import('./modules/accounts-manager/accounts-manager.module').then(m => m.AccountsManagerModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['accounts-manager'] }
+  },
+  
   // Head Nurse module
   {
     path: 'head-nurse',

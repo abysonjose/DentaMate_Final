@@ -1,0 +1,128 @@
+<div class="refund-approval-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon [color]="isApproval ? 'primary' : 'warn'">
+      {{ isApproval ? 'check_circle' : 'cancel' }}
+    </mat-icon>
+    {{ isApproval ? 'Approve' : 'Reject' }} Refund Request
+  </h2>
+
+  <mat-dialog-content>
+    <!-- Refund Details -->
+    <div class="refund-details">
+      <h3>Refund Details</h3>
+      
+      <div class="details-grid">
+        <div class="detail-item">
+          <label>Bill ID:</label>
+          <span class="bill-id">{{ data.refund.billId }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Patient Name:</label>
+          <span>{{ data.refund.patientName }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Original Amount:</label>
+          <span class="amount">{{ formatCurrency(data.refund.originalAmount) }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Refund Amount:</label>
+          <span class="refund-amount">{{ formatCurrency(data.refund.refundAmount) }}</span>
+        </div>
+        
+        <div class="detail-item full-width">
+          <label>Reason for Refund:</label>
+          <span class="reason">{{ data.refund.reason }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Requested By:</label>
+          <span>{{ data.refund.requestedBy }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Request Date:</label>
+          <span>{{ data.refund.requestDate | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <!-- Supporting Documents -->
+      <div class="supporting-docs" *ngIf="data.refund.supportingDocuments.length > 0">
+        <h4>Supporting Documents</h4>
+        <div class="docs-list">
+          <mat-chip-list>
+            <mat-chip *ngFor="let doc of data.refund.supportingDocuments">
+              <mat-icon>attachment</mat-icon>
+              {{ doc }}
+            </mat-chip>
+          </mat-chip-list>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval/Rejection Form -->
+    <form [formGroup]="approvalForm" class="approval-form">
+      <div class="form-section">
+        <h3>{{ isApproval ? 'Approval' : 'Rejection' }} Details</h3>
+        
+        <!-- Rejection Reason (only for rejections) -->
+        <mat-form-field appearance="outline" *ngIf="!isApproval" class="full-width">
+          <mat-label>Reason for Rejection *</mat-label>
+          <mat-select formControlName="reason">
+            <mat-option value="insufficient_documentation">Insufficient Documentation</mat-option>
+            <mat-option value="invalid_claim">Invalid Claim</mat-option>
+            <mat-option value="policy_violation">Policy Violation</mat-option>
+            <mat-option value="duplicate_request">Duplicate Request</mat-option>
+            <mat-option value="amount_discrepancy">Amount Discrepancy</mat-option>
+            <mat-option value="other">Other</mat-option>
+          </mat-select>
+          <mat-error *ngIf="approvalForm.get('reason')?.hasError('required')">
+            Reason for rejection is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Notes -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ isApproval ? 'Approval Notes (Optional)' : 'Additional Notes *' }}</mat-label>
+          <textarea 
+            matInput 
+            formControlName="notes" 
+            rows="4" 
+            placeholder="Enter your {{ isApproval ? 'approval notes' : 'rejection notes' }}...">
+          </textarea>
+          <mat-error *ngIf="approvalForm.get('notes')?.hasError('required')">
+            Notes are required for rejection
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </form>
+
+    <!-- Warning Message -->
+    <div class="warning-message" [ngClass]="isApproval ? 'approval-warning' : 'rejection-warning'">
+      <mat-icon>{{ isApproval ? 'info' : 'warning' }}</mat-icon>
+      <div class="warning-text">
+        <strong>{{ isApproval ? 'Approval Confirmation' : 'Rejection Warning' }}</strong>
+        <p>
+          {{ isApproval 
+            ? 'Once approved, this refund will be processed and the amount will be refunded to the patient.' 
+            : 'Once rejected, this refund request will be closed and cannot be reopened. The patient will be notified of the rejection.' 
+          }}
+        </p>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button 
+      mat-raised-button 
+      [color]="isApproval ? 'primary' : 'warn'"
+      (click)="onSubmit()"
+      [disabled]="!approvalForm.valid">
+      <mat-icon>{{ isApproval ? 'check' : 'close' }}</mat-icon>
+      {{ isApproval ? 'Approve Refund' : 'Reject Refund' }}
+    </button>
+  </mat-dialog-actions>
+</div>

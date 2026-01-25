@@ -1,0 +1,242 @@
+.refund-approval-dialog {
+  min-width: 600px;
+  max-width: 800px;
+
+  h2[mat-dialog-title] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0;
+
+    mat-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  mat-dialog-content {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+
+    .refund-details {
+      margin-bottom: 32px;
+
+      h3 {
+        color: #333;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 8px;
+      }
+
+      .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+
+        .detail-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          &.full-width {
+            grid-column: 1 / -1;
+          }
+
+          label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+          }
+
+          span {
+            font-size: 1rem;
+            color: #333;
+
+            &.bill-id {
+              font-family: monospace;
+              font-weight: 600;
+              color: #1976d2;
+            }
+
+            &.amount,
+            &.refund-amount {
+              font-weight: 600;
+              color: #2e7d32;
+            }
+
+            &.reason {
+              font-style: italic;
+              line-height: 1.4;
+            }
+          }
+        }
+      }
+
+      .supporting-docs {
+        h4 {
+          color: #333;
+          font-size: 1rem;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+
+        .docs-list {
+          mat-chip-list {
+            mat-chip {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background-color: #e3f2fd;
+              color: #1976d2;
+
+              mat-icon {
+                font-size: 1rem;
+                width: 1rem;
+                height: 1rem;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .approval-form {
+      margin-bottom: 24px;
+
+      .form-section {
+        h3 {
+          color: #333;
+          font-size: 1.2rem;
+          font-weight: 600;
+          margin-bottom: 16px;
+          border-bottom: 2px solid #e0e0e0;
+          padding-bottom: 8px;
+        }
+
+        .full-width {
+          width: 100%;
+        }
+
+        mat-form-field {
+          margin-bottom: 16px;
+        }
+      }
+    }
+
+    .warning-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+
+      &.approval-warning {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+
+        mat-icon {
+          color: #2196f3;
+        }
+      }
+
+      &.rejection-warning {
+        background-color: #fff3e0;
+        border-left: 4px solid #ff9800;
+
+        mat-icon {
+          color: #ff9800;
+        }
+      }
+
+      mat-icon {
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .warning-text {
+        flex: 1;
+
+        strong {
+          display: block;
+          font-weight: 600;
+          margin-bottom: 4px;
+          color: #333;
+        }
+
+        p {
+          margin: 0;
+          color: #666;
+          font-size: 0.9rem;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+
+  mat-dialog-actions {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0;
+
+    button {
+      margin-left: 8px;
+
+      &[mat-raised-button] {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+
+        mat-icon {
+          font-size: 1.1rem;
+          width: 1.1rem;
+          height: 1.1rem;
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .refund-approval-dialog {
+    min-width: auto;
+    width: 95vw;
+    max-width: 95vw;
+
+    mat-dialog-content {
+      padding: 16px;
+
+      .refund-details {
+        .details-grid {
+          grid-template-columns: 1fr;
+          gap: 12px;
+
+          .detail-item {
+            &.full-width {
+              grid-column: 1;
+            }
+          }
+        }
+      }
+    }
+
+    mat-dialog-actions {
+      padding: 12px 16px;
+      flex-direction: column;
+      align-items: stretch;
+
+      button {
+        margin: 4px 0;
+        width: 100%;
+      }
+    }
+  }
+}

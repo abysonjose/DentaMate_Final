@@ -1,0 +1,153 @@
+<div class="accounts-manager-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <mat-icon>account_balance</mat-icon>
+        Accounts Manager Dashboard
+      </h1>
+      <p class="dashboard-subtitle">Financial oversight and decision-making workspace</p>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="quick-stats" *ngIf="kpis">
+      <div class="stat-card">
+        <div class="stat-value">{{ formatCurrency(kpis.totalRevenue) }}</div>
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-change" [ngClass]="getGrowthColor(kpis.revenueGrowth)">
+          <mat-icon>{{ getGrowthIcon(kpis.revenueGrowth) }}</mat-icon>
+          {{ formatPercentage(kpis.revenueGrowth) }}
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-value">{{ formatCurrency(kpis.netCollections) }}</div>
+        <div class="stat-label">Net Collections</div>
+        <div class="stat-change">
+          {{ kpis.collectionEfficiency.toFixed(1) }}% efficiency
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-value">{{ formatCurrency(kpis.outstandingReceivables) }}</div>
+        <div class="stat-label">Outstanding Receivables</div>
+        <div class="stat-change">
+          {{ kpis.averageReceivableDays }} days avg
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-value">{{ pendingApprovals.length }}</div>
+        <div class="stat-label">Pending Approvals</div>
+        <div class="stat-change" *ngIf="pendingApprovals.length > 0">
+          <mat-icon color="warn">priority_high</mat-icon>
+          Requires attention
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="alerts.length > 0">
+    <mat-card class="alerts-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="warn">notifications_active</mat-icon>
+          Financial Alerts
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div class="alert-item" *ngFor="let alert of alerts" [ngClass]="'alert-' + alert.severity.toLowerCase()">
+            <div class="alert-icon">
+              <mat-icon [color]="getAlertColor(alert.severity)">{{ getAlertIcon(alert.type) }}</mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-time">{{ alert.createdDate | date:'short' }}</div>
+            </div>
+            <div class="alert-actions">
+              <button mat-icon-button (click)="acknowledgeAlert(alert.id)" matTooltip="Acknowledge">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Navigation Grid -->
+  <div class="navigation-grid">
+    <mat-card 
+      class="nav-card" 
+      *ngFor="let item of navigationItems"
+      (click)="navigateTo(item.path)"
+      [class.has-badge]="item.path === 'refunds' && pendingApprovals.length > 0">
+      
+      <mat-card-header>
+        <div class="nav-icon">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span class="badge" *ngIf="item.path === 'refunds' && pendingApprovals.length > 0">
+            {{ pendingApprovals.length }}
+          </span>
+        </div>
+        <mat-card-title>{{ item.label }}</mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <p class="nav-description">{{ item.description }}</p>
+      </mat-card-content>
+      
+      <mat-card-actions>
+        <button mat-button color="primary">
+          Open
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Recent Activity Summary -->
+  <div class="activity-summary" *ngIf="kpis">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Today's Activity Summary
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="activity-grid">
+          <div class="activity-item">
+            <div class="activity-value">{{ formatCurrency(kpis.todayRevenue) }}</div>
+            <div class="activity-label">Today's Revenue</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-value">{{ formatCurrency(kpis.refundsIssued) }}</div>
+            <div class="activity-label">Refunds Issued</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-value">{{ formatCurrency(kpis.monthToDateRevenue) }}</div>
+            <div class="activity-label">Month-to-Date</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-value">{{ kpis.collectionEfficiency.toFixed(1) }}%</div>
+            <div class="activity-label">Collection Rate</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Router Outlet for Child Components -->
+  <div class="content-area">
+    <router-outlet></router-outlet>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+    <p>Loading financial data...</p>
+  </div>
+</div>

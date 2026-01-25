@@ -1,0 +1,173 @@
+<div class="revenue-monitoring">
+  <!-- Header -->
+  <div class="monitoring-header">
+    <h2>
+      <mat-icon>trending_up</mat-icon>
+      Revenue Monitoring
+    </h2>
+    
+    <div class="period-selector">
+      <mat-form-field appearance="outline">
+        <mat-label>Time Period</mat-label>
+        <mat-select [(value)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+          <mat-option *ngFor="let period of timePeriods" [value]="period.value">
+            {{ period.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div *ngIf="revenueAnalytics && !isLoading">
+    <!-- Department-wise Revenue -->
+    <div class="analytics-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>business</mat-icon>
+            Department-wise Revenue
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="department-grid">
+            <div class="department-item" *ngFor="let dept of revenueAnalytics.departmentWise">
+              <div class="department-header">
+                <h4>{{ dept.departmentName }}</h4>
+                <div class="growth-indicator" [ngClass]="getGrowthColor(dept.growth)">
+                  <mat-icon>{{ getGrowthIcon(dept.growth) }}</mat-icon>
+                  {{ dept.growth > 0 ? '+' : '' }}{{ dept.growth.toFixed(1) }}%
+                </div>
+              </div>
+              <div class="department-stats">
+                <div class="revenue-amount">{{ formatCurrency(dept.revenue) }}</div>
+                <div class="revenue-percentage">{{ formatPercentage(dept.percentage) }} of total</div>
+              </div>
+              <mat-progress-bar mode="determinate" [value]="dept.percentage"></mat-progress-bar>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Doctor-wise Revenue -->
+    <div class="analytics-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>person</mat-icon>
+            Doctor-wise Revenue Contribution
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-container">
+            <table mat-table [dataSource]="revenueAnalytics.doctorWise" class="doctor-table">
+              
+              <ng-container matColumnDef="doctorName">
+                <th mat-header-cell *matHeaderCellDef>Doctor Name</th>
+                <td mat-cell *matCellDef="let doctor">{{ doctor.doctorName }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="revenue">
+                <th mat-header-cell *matHeaderCellDef>Revenue</th>
+                <td mat-cell *matCellDef="let doctor">{{ formatCurrency(doctor.revenue) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="patientCount">
+                <th mat-header-cell *matHeaderCellDef>Patients</th>
+                <td mat-cell *matCellDef="let doctor">{{ doctor.patientCount }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="averagePerPatient">
+                <th mat-header-cell *matHeaderCellDef>Avg per Patient</th>
+                <td mat-cell *matCellDef="let doctor">{{ formatCurrency(doctor.averagePerPatient) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="growth">
+                <th mat-header-cell *matHeaderCellDef>Growth</th>
+                <td mat-cell *matCellDef="let doctor">
+                  <span [ngClass]="getGrowthColor(doctor.growth)">
+                    <mat-icon>{{ getGrowthIcon(doctor.growth) }}</mat-icon>
+                    {{ doctor.growth > 0 ? '+' : '' }}{{ doctor.growth.toFixed(1) }}%
+                  </span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['doctorName', 'revenue', 'patientCount', 'averagePerPatient', 'growth']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['doctorName', 'revenue', 'patientCount', 'averagePerPatient', 'growth'];"></tr>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Treatment-wise Revenue -->
+    <div class="analytics-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>medical_services</mat-icon>
+            Treatment-wise Revenue Breakdown
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="treatment-grid">
+            <div class="treatment-item" *ngFor="let treatment of revenueAnalytics.treatmentWise">
+              <div class="treatment-info">
+                <h4>{{ treatment.treatmentName }}</h4>
+                <div class="treatment-stats">
+                  <span class="count">{{ treatment.count }} procedures</span>
+                  <span class="avg-price">Avg: {{ formatCurrency(treatment.averagePrice) }}</span>
+                </div>
+              </div>
+              <div class="treatment-revenue">
+                {{ formatCurrency(treatment.revenue) }}
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Payment Mode Analytics -->
+    <div class="analytics-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>payment</mat-icon>
+            Payment Mode Analytics
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="payment-mode-grid">
+            <div class="payment-mode-item" *ngFor="let mode of revenueAnalytics.paymentModeAnalytics">
+              <div class="mode-header">
+                <div class="mode-icon">
+                  <mat-icon>{{ getPaymentModeIcon(mode.mode) }}</mat-icon>
+                </div>
+                <h4>{{ mode.mode }}</h4>
+              </div>
+              <div class="mode-stats">
+                <div class="amount">{{ formatCurrency(mode.amount) }}</div>
+                <div class="percentage">{{ formatPercentage(mode.percentage) }}</div>
+                <div class="transactions">{{ mode.transactionCount }} transactions</div>
+              </div>
+              <mat-progress-bar mode="determinate" [value]="mode.percentage"></mat-progress-bar>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-card>
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner></mat-spinner>
+          <p>Loading revenue analytics...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

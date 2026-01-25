@@ -1,0 +1,259 @@
+<div class="financial-overview">
+  <!-- Header -->
+  <div class="overview-header">
+    <h2>
+      <mat-icon>dashboard</mat-icon>
+      Financial Overview
+    </h2>
+    
+    <div class="period-selector">
+      <mat-form-field appearance="outline">
+        <mat-label>Time Period</mat-label>
+        <mat-select [(value)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+          <mat-option *ngFor="let period of timePeriods" [value]="period.value">
+            {{ period.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Key Performance Indicators -->
+  <div class="kpi-section" *ngIf="kpis">
+    <div class="kpi-grid">
+      <!-- Total Revenue -->
+      <mat-card class="kpi-card revenue-card">
+        <mat-card-header>
+          <div class="kpi-icon">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <mat-card-title>Total Revenue</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="kpi-value">{{ formatCurrency(kpis.totalRevenue) }}</div>
+          <div class="kpi-change" [ngClass]="getGrowthColor(kpis.revenueGrowth)">
+            <mat-icon>{{ getGrowthIcon(kpis.revenueGrowth) }}</mat-icon>
+            {{ formatPercentage(kpis.revenueGrowth) }} vs last period
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Net Collections -->
+      <mat-card class="kpi-card collections-card">
+        <mat-card-header>
+          <div class="kpi-icon">
+            <mat-icon>payments</mat-icon>
+          </div>
+          <mat-card-title>Net Collections</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="kpi-value">{{ formatCurrency(kpis.netCollections) }}</div>
+          <div class="kpi-metric" [ngClass]="getCollectionEfficiencyColor(kpis.collectionEfficiency)">
+            {{ kpis.collectionEfficiency.toFixed(1) }}% collection efficiency
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Outstanding Receivables -->
+      <mat-card class="kpi-card receivables-card">
+        <mat-card-header>
+          <div class="kpi-icon">
+            <mat-icon>account_balance</mat-icon>
+          </div>
+          <mat-card-title>Outstanding Receivables</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="kpi-value">{{ formatCurrency(kpis.outstandingReceivables) }}</div>
+          <div class="kpi-metric" [ngClass]="getReceivableDaysColor(kpis.averageReceivableDays)">
+            {{ kpis.averageReceivableDays }} days average
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Refunds Issued -->
+      <mat-card class="kpi-card refunds-card">
+        <mat-card-header>
+          <div class="kpi-icon">
+            <mat-icon>money_off</mat-icon>
+          </div>
+          <mat-card-title>Refunds Issued</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="kpi-value">{{ formatCurrency(kpis.refundsIssued) }}</div>
+          <div class="kpi-metric">
+            {{ ((kpis.refundsIssued / kpis.totalRevenue) * 100).toFixed(1) }}% of total revenue
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Comparative Analysis -->
+  <div class="comparative-section" *ngIf="kpis">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>compare_arrows</mat-icon>
+          Comparative Analysis
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="comparison-grid">
+          <div class="comparison-item">
+            <div class="comparison-label">Today vs Last Week</div>
+            <div class="comparison-values">
+              <div class="current-value">{{ formatCurrency(kpis.todayRevenue) }}</div>
+              <div class="comparison-change" [ngClass]="getGrowthColor(kpis.revenueGrowth)">
+                <mat-icon>{{ getGrowthIcon(kpis.revenueGrowth) }}</mat-icon>
+                {{ formatPercentage(kpis.revenueGrowth) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="comparison-item">
+            <div class="comparison-label">Month-to-Date vs Previous Month</div>
+            <div class="comparison-values">
+              <div class="current-value">{{ formatCurrency(kpis.monthToDateRevenue) }}</div>
+              <div class="previous-value">vs {{ formatCurrency(kpis.previousMonthRevenue) }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Financial Health Indicators -->
+  <div class="health-indicators" *ngIf="kpis">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>health_and_safety</mat-icon>
+          Financial Health Indicators
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="indicators-grid">
+          <!-- Collection Efficiency -->
+          <div class="indicator-item">
+            <div class="indicator-label">Collection Efficiency</div>
+            <div class="indicator-progress">
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="kpis.collectionEfficiency"
+                [color]="kpis.collectionEfficiency >= 90 ? 'primary' : kpis.collectionEfficiency >= 75 ? 'accent' : 'warn'">
+              </mat-progress-bar>
+              <span class="progress-value">{{ kpis.collectionEfficiency.toFixed(1) }}%</span>
+            </div>
+          </div>
+
+          <!-- Revenue Growth -->
+          <div class="indicator-item">
+            <div class="indicator-label">Revenue Growth</div>
+            <div class="indicator-value" [ngClass]="getGrowthColor(kpis.revenueGrowth)">
+              <mat-icon>{{ getGrowthIcon(kpis.revenueGrowth) }}</mat-icon>
+              {{ formatPercentage(kpis.revenueGrowth) }}
+            </div>
+          </div>
+
+          <!-- Receivables Turnover -->
+          <div class="indicator-item">
+            <div class="indicator-label">Average Collection Days</div>
+            <div class="indicator-value" [ngClass]="getReceivableDaysColor(kpis.averageReceivableDays)">
+              <mat-icon>schedule</mat-icon>
+              {{ kpis.averageReceivableDays }} days
+            </div>
+          </div>
+
+          <!-- Refund Rate -->
+          <div class="indicator-item">
+            <div class="indicator-label">Refund Rate</div>
+            <div class="indicator-value">
+              <mat-icon>money_off</mat-icon>
+              {{ ((kpis.refundsIssued / kpis.totalRevenue) * 100).toFixed(2) }}%
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Active Alerts -->
+  <div class="alerts-section" *ngIf="alerts.length > 0">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon color="warn">notifications_active</mat-icon>
+          Active Financial Alerts
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div class="alert-item" *ngFor="let alert of alerts" [ngClass]="'alert-' + alert.severity.toLowerCase()">
+            <div class="alert-icon">
+              <mat-icon [color]="getAlertColor(alert.severity)">{{ getAlertIcon(alert.type) }}</mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-details" *ngIf="alert.details">
+                <small>{{ alert.details | json }}</small>
+              </div>
+              <div class="alert-time">{{ alert.createdDate | date:'short' }}</div>
+            </div>
+            <div class="alert-actions">
+              <button mat-icon-button (click)="acknowledgeAlert(alert.id)" matTooltip="Acknowledge Alert">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>flash_on</mat-icon>
+          Quick Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-grid">
+          <button mat-raised-button color="primary" routerLink="../revenue">
+            <mat-icon>trending_up</mat-icon>
+            View Revenue Details
+          </button>
+          
+          <button mat-raised-button color="accent" routerLink="../billing">
+            <mat-icon>receipt_long</mat-icon>
+            Review Billing
+          </button>
+          
+          <button mat-raised-button color="warn" routerLink="../refunds">
+            <mat-icon>money_off</mat-icon>
+            Manage Refunds
+          </button>
+          
+          <button mat-raised-button routerLink="../reports">
+            <mat-icon>assessment</mat-icon>
+            Generate Reports
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-card>
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner></mat-spinner>
+          <p>Loading financial overview...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
