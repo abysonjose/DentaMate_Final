@@ -1,0 +1,262 @@
+<div class="claim-details-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title *ngIf="claim">
+      Claim Details - {{ claim.claimNumber }}
+    </h2>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content *ngIf="!loading && claim">
+    <!-- Claim Summary -->
+    <div class="claim-summary">
+      <div class="summary-grid">
+        <div class="summary-item">
+          <label>Patient</label>
+          <span>{{ claim.patientName }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Insurance Provider</label>
+          <span>{{ claim.insuranceProvider }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Policy Number</label>
+          <span>{{ claim.policyNumber }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Treatment Date</label>
+          <span>{{ claim.treatmentDate | date:'mediumDate' }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Submission Date</label>
+          <span>{{ claim.submissionDate | date:'mediumDate' }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Current Status</label>
+          <mat-chip 
+            [style.background-color]="getStatusColor(claim.status)"
+            [style.color]="'white'"
+            class="status-chip"
+          >
+            <mat-icon>{{ getStatusIcon(claim.status) }}</mat-icon>
+            {{ claim.status }}
+          </mat-chip>
+        </div>
+      </div>
+
+      <div class="amount-summary">
+        <div class="amount-item">
+          <label>Billed Amount</label>
+          <span class="amount">${{ claim.billedAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="amount-item" *ngIf="claim.approvedAmount">
+          <label>Approved Amount</label>
+          <span class="amount approved">${{ claim.approvedAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="amount-item" *ngIf="claim.patientPayable">
+          <label>Patient Payable</label>
+          <span class="amount payable">${{ claim.patientPayable | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      <!-- Status Update Tab -->
+      <mat-tab label="Status Update">
+        <div class="tab-content">
+          <form [formGroup]="statusUpdateForm" class="status-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option *ngFor="let status of statusOptions" [value]="status">
+                    {{ status }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Approved Amount</mat-label>
+                <input matInput type="number" formControlName="approvedAmount" step="0.01">
+                <span matPrefix>$&nbsp;</span>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Rejection Reason (if applicable)</mat-label>
+                <textarea matInput formControlName="rejectionReason" rows="3"></textarea>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Notes</mat-label>
+                <textarea matInput formControlName="notes" rows="3"></textarea>
+              </mat-form-field>
+            </div>
+
+            <div class="form-actions">
+              <button mat-raised-button color="primary" (click)="onStatusUpdate()" 
+                      [disabled]="statusUpdateForm.invalid">
+                Update Status
+              </button>
+            </div>
+          </form>
+        </div>
+      </mat-tab>
+
+      <!-- Communications Tab -->
+      <mat-tab label="Communications">
+        <div class="tab-content">
+          <!-- Add Communication Form -->
+          <mat-card class="communication-form-card">
+            <mat-card-header>
+              <mat-card-title>Log Communication</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="communicationForm" class="communication-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="quarter-width">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="type">
+                      <mat-option *ngFor="let type of communicationTypes" [value]="type">
+                        {{ type }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="quarter-width">
+                    <mat-label>Direction</mat-label>
+                    <mat-select formControlName="direction">
+                      <mat-option value="INBOUND">Inbound</mat-option>
+                      <mat-option value="OUTBOUND">Outbound</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Contact Person</mat-label>
+                    <input matInput formControlName="contactPerson">
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Subject</mat-label>
+                    <input matInput formControlName="subject">
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Content</mat-label>
+                    <textarea matInput formControlName="content" rows="4"></textarea>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-checkbox formControlName="followUpRequired">
+                    Follow-up required
+                  </mat-checkbox>
+                  
+                  <mat-form-field appearance="outline" class="follow-up-date" 
+                                  *ngIf="communicationForm.get('followUpRequired')?.value">
+                    <mat-label>Follow-up Date</mat-label>
+                    <input matInput [matDatepicker]="followUpPicker" formControlName="followUpDate">
+                    <mat-datepicker-toggle matSuffix [for]="followUpPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #followUpPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" (click)="onAddCommunication()" 
+                          [disabled]="communicationForm.invalid">
+                    Log Communication
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Communications History -->
+          <div class="communications-history">
+            <h3>Communication History</h3>
+            <div class="communication-list" *ngIf="communications.length > 0; else noCommunications">
+              <div *ngFor="let comm of communications" class="communication-item">
+                <div class="comm-header">
+                  <div class="comm-info">
+                    <mat-icon>{{ getCommunicationIcon(comm.type) }}</mat-icon>
+                    <span class="comm-type">{{ comm.type }}</span>
+                    <span class="comm-direction" [class]="comm.direction.toLowerCase()">
+                      {{ comm.direction }}
+                    </span>
+                  </div>
+                  <span class="comm-date">{{ comm.communicationDate | date:'short' }}</span>
+                </div>
+                <div class="comm-subject">{{ comm.subject }}</div>
+                <div class="comm-content">{{ comm.content }}</div>
+                <div class="comm-meta" *ngIf="comm.contactPerson || comm.followUpRequired">
+                  <span *ngIf="comm.contactPerson" class="contact-person">
+                    Contact: {{ comm.contactPerson }}
+                  </span>
+                  <span *ngIf="comm.followUpRequired" class="follow-up">
+                    Follow-up: {{ comm.followUpDate | date:'mediumDate' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <ng-template #noCommunications>
+              <div class="no-communications">
+                <mat-icon>chat_bubble_outline</mat-icon>
+                <p>No communications logged yet</p>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Documents Tab -->
+      <mat-tab label="Documents">
+        <div class="tab-content">
+          <div class="documents-list" *ngIf="documents.length > 0; else noDocuments">
+            <div *ngFor="let doc of documents" class="document-item">
+              <div class="doc-info">
+                <mat-icon class="doc-icon">{{ doc.documentType === 'INVOICE' ? 'receipt' : 'description' }}</mat-icon>
+                <div class="doc-details">
+                  <span class="doc-name">{{ doc.fileName }}</span>
+                  <span class="doc-meta">
+                    {{ doc.documentType }} • {{ doc.fileSize | number }} bytes • 
+                    Uploaded {{ doc.uploadDate | date:'short' }}
+                  </span>
+                </div>
+              </div>
+              <div class="doc-actions">
+                <button mat-icon-button (click)="downloadDocument(doc)" matTooltip="Download">
+                  <mat-icon>download</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <ng-template #noDocuments>
+            <div class="no-documents">
+              <mat-icon>folder_open</mat-icon>
+              <p>No documents uploaded yet</p>
+            </div>
+          </ng-template>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-dialog-content>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading claim details...</p>
+  </div>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Close</button>
+  </mat-dialog-actions>
+</div>

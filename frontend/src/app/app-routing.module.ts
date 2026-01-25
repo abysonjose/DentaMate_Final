@@ -141,6 +141,14 @@ const routes: Routes = [
     data: { roles: ['accountant'] }
   },
 
+  // Insurance module
+  {
+    path: 'insurance',
+    loadChildren: () => import('./modules/insurance/insurance.module').then(m => m.InsuranceModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['insurance-staff'] }
+  },
+
   // Admin modules
   {
     path: 'branch-admin',

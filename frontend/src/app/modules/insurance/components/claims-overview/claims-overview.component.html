@@ -1,0 +1,144 @@
+<div class="claims-overview">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Claims Overview</h2>
+      <p>Today's claims summary and alerts</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openCreateClaimDialog()">
+        <mat-icon>add</mat-icon>
+        New Claim
+      </button>
+      <button mat-icon-button (click)="refreshData()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="overview-content" *ngIf="!loading">
+    <!-- Quick Stats Cards -->
+    <div class="stats-grid">
+      <mat-card *ngFor="let card of statsCards" class="stat-card">
+        <mat-card-content>
+          <div class="stat-header">
+            <mat-icon [style.color]="card.color">{{ card.icon }}</mat-icon>
+            <span class="trend" [class.positive]="card.trend.includes('+')">{{ card.trend }}</span>
+          </div>
+          <div class="stat-value">{{ card.value }}</div>
+          <div class="stat-title">{{ card.title }}</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="alerts-section" *ngIf="alerts.length > 0">
+      <h3>Alerts & Notifications</h3>
+      <div class="alerts-grid">
+        <mat-card *ngFor="let alert of alerts" class="alert-card" [class]="alert.type">
+          <mat-card-content>
+            <div class="alert-header">
+              <mat-icon>{{ alert.icon }}</mat-icon>
+              <span class="alert-title">{{ alert.title }}</span>
+            </div>
+            <p class="alert-message">{{ alert.message }}</p>
+            <div class="alert-actions">
+              <button mat-button color="primary" (click)="navigateToAlert(alert.actionRoute)">
+                {{ alert.action }}
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <!-- Recent Claims -->
+      <mat-card class="recent-claims-card">
+        <mat-card-header>
+          <mat-card-title>Recent Claims</mat-card-title>
+          <mat-card-subtitle>Latest claim submissions and updates</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="claims-list" *ngIf="recentClaims.length > 0; else noClaims">
+            <div *ngFor="let claim of recentClaims" class="claim-item">
+              <div class="claim-info">
+                <div class="claim-header">
+                  <span class="claim-number">{{ claim.claimNumber }}</span>
+                  <mat-chip 
+                    [style.background-color]="getClaimStatusColor(claim.status)"
+                    [style.color]="'white'"
+                    class="status-chip"
+                  >
+                    <mat-icon>{{ getClaimStatusIcon(claim.status) }}</mat-icon>
+                    {{ claim.status }}
+                  </mat-chip>
+                </div>
+                <div class="claim-details">
+                  <span class="patient-name">{{ claim.patientName }}</span>
+                  <span class="insurer">{{ claim.insuranceProvider }}</span>
+                  <span class="amount">${{ claim.billedAmount | number:'1.2-2' }}</span>
+                </div>
+                <div class="claim-meta">
+                  <span class="date">{{ claim.lastUpdated | date:'short' }}</span>
+                </div>
+              </div>
+              <button mat-icon-button matTooltip="View Details">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </div>
+          <ng-template #noClaims>
+            <div class="no-data">
+              <mat-icon>inbox</mat-icon>
+              <p>No recent claims found</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Claim Status Distribution -->
+      <mat-card class="status-distribution-card">
+        <mat-card-header>
+          <mat-card-title>Claim Status Distribution</mat-card-title>
+          <mat-card-subtitle>Current claims by status</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="status-chart" *ngIf="claimStatusDistribution.length > 0; else noDistribution">
+            <div *ngFor="let status of claimStatusDistribution" class="status-item">
+              <div class="status-info">
+                <mat-icon [style.color]="getClaimStatusColor(status.status)">
+                  {{ getClaimStatusIcon(status.status) }}
+                </mat-icon>
+                <span class="status-label">{{ status.status }}</span>
+              </div>
+              <div class="status-stats">
+                <span class="count">{{ status.count }}</span>
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill" 
+                    [style.width.%]="status.percentage"
+                    [style.background-color]="getClaimStatusColor(status.status)"
+                  ></div>
+                </div>
+                <span class="percentage">{{ status.percentage }}%</span>
+              </div>
+            </div>
+          </div>
+          <ng-template #noDistribution>
+            <div class="no-data">
+              <mat-icon>pie_chart</mat-icon>
+              <p>No status distribution data available</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+</div>

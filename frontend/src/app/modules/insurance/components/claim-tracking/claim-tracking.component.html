@@ -1,0 +1,194 @@
+<div class="claim-tracking">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>Claim Tracking</h2>
+      <p>Track claim lifecycle and status updates</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button (click)="exportClaims()" [disabled]="loading">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+      <button mat-icon-button (click)="refreshData()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Search Claims</mat-label>
+          <input matInput (keyup)="applySearch($event)" placeholder="Search by claim number, patient name...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Status</mat-label>
+          <mat-select [(value)]="statusFilter">
+            <mat-option value="">All Statuses</mat-option>
+            <mat-option *ngFor="let status of statusOptions" [value]="status">
+              {{ status }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Insurance Provider</mat-label>
+          <mat-select [(value)]="insurerFilter">
+            <mat-option value="">All Providers</mat-option>
+            <mat-option *ngFor="let insurer of insurerOptions" [value]="insurer">
+              {{ insurer }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" [(ngModel)]="dateRangeFilter.start">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" [(ngModel)]="dateRangeFilter.end">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="applyFilters()">
+          Apply Filters
+        </button>
+        <button mat-button (click)="clearFilters()">
+          Clear All
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Claims Table -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="claims-table">
+          <!-- Claim Number Column -->
+          <ng-container matColumnDef="claimNumber">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Claim Number</th>
+            <td mat-cell *matCellDef="let claim">
+              <div class="claim-number">
+                {{ claim.claimNumber }}
+                <mat-icon 
+                  *ngIf="isClaimOverdue(claim)" 
+                  class="overdue-icon" 
+                  matTooltip="Claim is overdue (>30 days)"
+                  color="warn"
+                >
+                  warning
+                </mat-icon>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let claim">{{ claim.patientName }}</td>
+          </ng-container>
+
+          <!-- Insurance Provider Column -->
+          <ng-container matColumnDef="insuranceProvider">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Insurance Provider</th>
+            <td mat-cell *matCellDef="let claim">{{ claim.insuranceProvider }}</td>
+          </ng-container>
+
+          <!-- Submission Date Column -->
+          <ng-container matColumnDef="submissionDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Submitted</th>
+            <td mat-cell *matCellDef="let claim">
+              <div class="date-info">
+                <span class="date">{{ claim.submissionDate | date:'short' }}</span>
+                <span class="age">({{ getClaimAge(claim.submissionDate) }} days ago)</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let claim">
+              <mat-chip 
+                [style.background-color]="getStatusColor(claim.status)"
+                [style.color]="'white'"
+                class="status-chip"
+              >
+                <mat-icon>{{ getStatusIcon(claim.status) }}</mat-icon>
+                {{ claim.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Billed Amount Column -->
+          <ng-container matColumnDef="billedAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Billed Amount</th>
+            <td mat-cell *matCellDef="let claim">
+              ${{ claim.billedAmount | number:'1.2-2' }}
+            </td>
+          </ng-container>
+
+          <!-- Approved Amount Column -->
+          <ng-container matColumnDef="approvedAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Approved Amount</th>
+            <td mat-cell *matCellDef="let claim">
+              <span *ngIf="claim.approvedAmount; else notApproved" class="approved-amount">
+                ${{ claim.approvedAmount | number:'1.2-2' }}
+              </span>
+              <ng-template #notApproved>
+                <span class="pending-approval">Pending</span>
+              </ng-template>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let claim">
+              <button mat-icon-button (click)="viewClaimDetails(claim)" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [class.overdue-row]="isClaimOverdue(row)"></tr>
+        </table>
+
+        <!-- Loading State -->
+        <div class="loading-container" *ngIf="loading">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading claims...</p>
+        </div>
+
+        <!-- No Data State -->
+        <div class="no-data" *ngIf="!loading && dataSource.data.length === 0">
+          <mat-icon>inbox</mat-icon>
+          <p>No claims found</p>
+          <span>Try adjusting your filters or create a new claim</span>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]" 
+        showFirstLastButtons
+        *ngIf="!loading && dataSource.data.length > 0">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>
