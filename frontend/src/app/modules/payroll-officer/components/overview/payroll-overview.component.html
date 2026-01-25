@@ -1,0 +1,245 @@
+<div class="payroll-overview">
+  <!-- Header Section -->
+  <div class="overview-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon>dashboard</mat-icon>
+        Payroll Overview
+      </h1>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="createNewCycle()">
+          <mat-icon>add</mat-icon>
+          New Payroll Cycle
+        </button>
+        <button mat-icon-button (click)="refreshData()" matTooltip="Refresh Data">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading payroll overview...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && dashboardStats" class="overview-content">
+    
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+      <mat-card class="metric-card total-employees">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">people</mat-icon>
+            <span class="metric-label">Total Employees</span>
+          </div>
+          <div class="metric-value">{{ dashboardStats.totalEmployees | number }}</div>
+          <div class="metric-subtitle">
+            {{ dashboardStats.processedEmployees }} processed, 
+            {{ dashboardStats.pendingEmployees }} pending
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card total-payroll">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">account_balance_wallet</mat-icon>
+            <span class="metric-label">Total Payroll</span>
+          </div>
+          <div class="metric-value">₹{{ dashboardStats.totalPayroll | number:'1.0-0' }}</div>
+          <div class="metric-subtitle">
+            Average: ₹{{ dashboardStats.averageSalary | number:'1.0-0' }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card payroll-status">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon" [color]="getStatusColor(dashboardStats.payrollStatus)">
+              {{ getStatusIcon(dashboardStats.payrollStatus) }}
+            </mat-icon>
+            <span class="metric-label">Current Status</span>
+          </div>
+          <div class="metric-value status-value">
+            <mat-chip [color]="getStatusColor(dashboardStats.payrollStatus)" selected>
+              {{ dashboardStats.payrollStatus | titlecase }}
+            </mat-chip>
+          </div>
+          <div class="metric-subtitle">
+            {{ dashboardStats.currentMonth }}/{{ dashboardStats.currentYear }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card deductions-allowances">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon class="metric-icon">calculate</mat-icon>
+            <span class="metric-label">Deductions & Allowances</span>
+          </div>
+          <div class="metric-breakdown">
+            <div class="breakdown-item">
+              <span class="breakdown-label">Deductions:</span>
+              <span class="breakdown-value deduction">₹{{ dashboardStats.deductionsTotal | number:'1.0-0' }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="breakdown-label">Allowances:</span>
+              <span class="breakdown-value allowance">₹{{ dashboardStats.allowancesTotal | number:'1.0-0' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <mat-card class="quick-actions-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>flash_on</mat-icon>
+          Quick Actions
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-grid">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            class="action-button"
+            (click)="processCurrentCycle()"
+            [disabled]="dashboardStats.payrollStatus === 'finalized'">
+            <mat-icon>play_arrow</mat-icon>
+            Process Current Cycle
+          </button>
+          
+          <button 
+            mat-raised-button 
+            class="action-button"
+            routerLink="/payroll-officer/employee-payroll">
+            <mat-icon>people</mat-icon>
+            View Employee Payroll
+          </button>
+          
+          <button 
+            mat-raised-button 
+            class="action-button"
+            routerLink="/payroll-officer/payslips">
+            <mat-icon>receipt</mat-icon>
+            Generate Payslips
+          </button>
+          
+          <button 
+            mat-raised-button 
+            class="action-button"
+            routerLink="/payroll-officer/reports">
+            <mat-icon>assessment</mat-icon>
+            View Reports
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="charts-row">
+        <!-- Payroll Trend Chart -->
+        <mat-card class="chart-card trend-chart">
+          <mat-card-header>
+            <mat-card-title>Payroll Trend (Last 6 Months)</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas 
+                baseChart
+                [data]="payrollTrendChartData"
+                [type]="payrollTrendChartType">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Employee Status Chart -->
+        <mat-card class="chart-card status-chart">
+          <mat-card-header>
+            <mat-card-title>Employee Status Distribution</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas 
+                baseChart
+                [data]="statusChartData"
+                [type]="statusChartType">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Department Distribution Chart -->
+      <mat-card class="chart-card department-chart">
+        <mat-card-header>
+          <mat-card-title>Department-wise Payroll Distribution</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas 
+              baseChart
+              [data]="departmentChartData"
+              [type]="departmentChartType">
+            </canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Cycles -->
+    <mat-card class="recent-cycles-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Recent Payroll Cycles
+        </mat-card-title>
+        <mat-card-subtitle>Last 5 payroll cycles</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="cycles-list" *ngIf="recentCycles.length > 0; else noCycles">
+          <div 
+            *ngFor="let cycle of recentCycles" 
+            class="cycle-item"
+            [class]="'status-' + cycle.status">
+            <div class="cycle-info">
+              <div class="cycle-period">
+                <strong>{{ cycle.month }}/{{ cycle.year }}</strong>
+              </div>
+              <div class="cycle-details">
+                <span class="detail-item">
+                  <mat-icon>people</mat-icon>
+                  {{ cycle.totalEmployees }} employees
+                </span>
+                <span class="detail-item">
+                  <mat-icon>account_balance_wallet</mat-icon>
+                  ₹{{ cycle.totalPayroll | number:'1.0-0' }}
+                </span>
+              </div>
+            </div>
+            <div class="cycle-status">
+              <mat-chip [color]="getStatusColor(cycle.status)" selected>
+                {{ cycle.status | titlecase }}
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #noCycles>
+          <div class="no-cycles">
+            <mat-icon>info</mat-icon>
+            <p>No payroll cycles found. Create your first cycle to get started.</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

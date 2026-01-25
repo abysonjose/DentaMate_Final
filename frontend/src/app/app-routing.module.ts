@@ -141,6 +141,22 @@ const routes: Routes = [
     data: { roles: ['accountant'] }
   },
 
+  // Payroll Officer module
+  {
+    path: 'payroll-officer',
+    loadChildren: () => import('./modules/payroll-officer/payroll-officer.module').then(m => m.PayrollOfficerModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['payroll-officer'] }
+  },
+
+  // HR module
+  {
+    path: 'hr',
+    loadChildren: () => import('./modules/hr/hr.module').then(m => m.HrModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['hr-staff', 'hr-manager'] }
+  },
+
   // Insurance module
   {
     path: 'insurance',

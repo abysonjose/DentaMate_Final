@@ -1,0 +1,146 @@
+<div class="create-cycle-dialog">
+  <div mat-dialog-title class="dialog-header">
+    <mat-icon class="dialog-icon">add_circle</mat-icon>
+    <h2>Create New Payroll Cycle</h2>
+  </div>
+
+  <div mat-dialog-content class="dialog-content">
+    <form [formGroup]="form" class="cycle-form">
+      
+      <!-- Month and Year Selection -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="month-field">
+          <mat-label>Month</mat-label>
+          <mat-select formControlName="month" (selectionChange)="onMonthYearChange()">
+            <mat-option *ngFor="let month of months" [value]="month.value">
+              {{ month.name }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="isFieldInvalid('month')">
+            {{ getErrorMessage('month') }}
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="year-field">
+          <mat-label>Year</mat-label>
+          <mat-select formControlName="year" (selectionChange)="onMonthYearChange()">
+            <mat-option *ngFor="let year of years" [value]="year">
+              {{ year }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="isFieldInvalid('year')">
+            {{ getErrorMessage('year') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Date Range -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate" readonly>
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+          <mat-error *ngIf="isFieldInvalid('startDate')">
+            {{ getErrorMessage('startDate') }}
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="date-field">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate" readonly>
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+          <mat-error *ngIf="isFieldInvalid('endDate')">
+            {{ getErrorMessage('endDate') }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Description -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description (Optional)</mat-label>
+        <textarea 
+          matInput 
+          formControlName="description" 
+          rows="3"
+          placeholder="Enter a description for this payroll cycle">
+        </textarea>
+      </mat-form-field>
+
+      <!-- Cycle Information -->
+      <div class="cycle-info" *ngIf="form.get('month')?.value && form.get('year')?.value">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>info</mat-icon>
+              Cycle Information
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Period:</span>
+                <span class="info-value">
+                  {{ getMonthName(form.get('month')?.value) }} {{ form.get('year')?.value }}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Duration:</span>
+                <span class="info-value">
+                  {{ form.get('startDate')?.value | date:'MMM d' }} - 
+                  {{ form.get('endDate')?.value | date:'MMM d, y' }}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value">
+                  <mat-chip color="accent" selected>Draft</mat-chip>
+                </span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Validation Summary -->
+      <div class="validation-summary" *ngIf="form.invalid && (form.dirty || form.touched)">
+        <mat-card class="warning-card">
+          <mat-card-content>
+            <div class="warning-header">
+              <mat-icon color="warn">warning</mat-icon>
+              <span>Please fix the following issues:</span>
+            </div>
+            <ul class="validation-list">
+              <li *ngIf="form.get('month')?.invalid">Month is required</li>
+              <li *ngIf="form.get('year')?.invalid">Year is required</li>
+              <li *ngIf="form.get('startDate')?.invalid">Start date is required</li>
+              <li *ngIf="form.get('endDate')?.invalid">End date is required</li>
+            </ul>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </form>
+  </div>
+
+  <div mat-dialog-actions class="dialog-actions">
+    <button 
+      mat-button 
+      (click)="onCancel()" 
+      [disabled]="isSubmitting"
+      class="cancel-button">
+      Cancel
+    </button>
+    
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="onSubmit()"
+      [disabled]="form.invalid || isSubmitting"
+      class="create-button">
+      <mat-spinner *ngIf="isSubmitting" diameter="20" class="button-spinner"></mat-spinner>
+      <mat-icon *ngIf="!isSubmitting">add</mat-icon>
+      {{ isSubmitting ? 'Creating...' : 'Create Cycle' }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,321 @@
+.payroll-overview {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.overview-header {
+  margin-bottom: 24px;
+  
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .page-title {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      font-size: 28px;
+      font-weight: 400;
+      color: #333;
+      
+      mat-icon {
+        margin-right: 12px;
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  
+  p {
+    margin-top: 16px;
+    color: #666;
+  }
+}
+
+.overview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// Metrics Grid
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+  
+  .metric-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    mat-card-content {
+      padding: 24px;
+    }
+    
+    .metric-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      
+      .metric-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        margin-right: 12px;
+        color: #666;
+      }
+      
+      .metric-label {
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+      }
+    }
+    
+    .metric-value {
+      font-size: 32px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      
+      &.status-value {
+        font-size: 16px;
+        font-weight: normal;
+      }
+    }
+    
+    .metric-subtitle {
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .metric-breakdown {
+      .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        
+        .breakdown-label {
+          font-size: 14px;
+          color: #666;
+        }
+        
+        .breakdown-value {
+          font-weight: 500;
+          
+          &.deduction {
+            color: #f44336;
+          }
+          
+          &.allowance {
+            color: #4caf50;
+          }
+        }
+      }
+    }
+  }
+  
+  .total-employees .metric-icon { color: #2196f3; }
+  .total-payroll .metric-icon { color: #4caf50; }
+  .payroll-status .metric-icon { color: #ff9800; }
+  .deductions-allowances .metric-icon { color: #9c27b0; }
+}
+
+// Quick Actions
+.quick-actions-card {
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      
+      mat-icon {
+        margin-right: 8px;
+        color: #ff9800;
+      }
+    }
+  }
+  
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    
+    .action-button {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+// Charts Section
+.charts-section {
+  .charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .chart-card {
+    .chart-container {
+      height: 300px;
+      position: relative;
+    }
+  }
+  
+  .department-chart {
+    .chart-container {
+      height: 400px;
+    }
+  }
+}
+
+// Recent Cycles
+.recent-cycles-card {
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      
+      mat-icon {
+        margin-right: 8px;
+        color: #1976d2;
+      }
+    }
+  }
+  
+  .cycles-list {
+    .cycle-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid #e0e0e0;
+      background-color: #fafafa;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background-color: #f5f5f5;
+        transform: translateX(4px);
+      }
+      
+      &.status-finalized {
+        border-left-color: #4caf50;
+        background-color: #f1f8e9;
+      }
+      
+      &.status-completed {
+        border-left-color: #2196f3;
+        background-color: #e3f2fd;
+      }
+      
+      &.status-processing {
+        border-left-color: #ff9800;
+        background-color: #fff3e0;
+      }
+      
+      .cycle-info {
+        .cycle-period {
+          font-size: 16px;
+          margin-bottom: 8px;
+        }
+        
+        .cycle-details {
+          display: flex;
+          gap: 16px;
+          
+          .detail-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+            
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+              margin-right: 4px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .no-cycles {
+    text-align: center;
+    padding: 32px;
+    color: #666;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+    
+    p {
+      margin: 0;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .overview-header .header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-row {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .cycle-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px;
+  }
+}

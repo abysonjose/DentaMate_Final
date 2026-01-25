@@ -1,0 +1,114 @@
+<div class="payroll-officer-dashboard">
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Sidebar Navigation -->
+    <mat-sidenav #sidenav [opened]="sidenavOpened" mode="side" class="sidenav">
+      <mat-toolbar class="sidenav-header">
+        <mat-icon class="role-icon">account_balance_wallet</mat-icon>
+        <span class="role-title">Payroll Officer</span>
+      </mat-toolbar>
+      
+      <mat-nav-list class="navigation-list">
+        <mat-list-item 
+          *ngFor="let item of navigationItems" 
+          [routerLink]="item.route"
+          routerLinkActive="active-nav-item"
+          class="nav-item">
+          <mat-icon matListIcon>{{ item.icon }}</mat-icon>
+          <span matLine>{{ item.label }}</span>
+          <mat-chip 
+            *ngIf="item.badge" 
+            class="nav-badge"
+            color="warn">
+            {{ item.badge }}
+          </mat-chip>
+        </mat-list-item>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content class="main-content">
+      <!-- Top Toolbar -->
+      <mat-toolbar class="top-toolbar">
+        <button mat-icon-button (click)="toggleSidenav()" class="menu-button">
+          <mat-icon>menu</mat-icon>
+        </button>
+        
+        <span class="toolbar-spacer"></span>
+        
+        <!-- Alerts Indicator -->
+        <button mat-icon-button [matMenuTriggerFor]="alertsMenu" class="alerts-button">
+          <mat-icon [matBadge]="unreadAlertsCount" [matBadgeHidden]="unreadAlertsCount === 0" matBadgeColor="warn">
+            notifications
+          </mat-icon>
+        </button>
+        
+        <!-- User Menu -->
+        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-button">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+      </mat-toolbar>
+
+      <!-- Router Outlet for Child Components -->
+      <div class="content-area">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+
+  <!-- Alerts Menu -->
+  <mat-menu #alertsMenu="matMenu" class="alerts-menu">
+    <div class="alerts-header">
+      <h3>Payroll Alerts</h3>
+      <mat-chip *ngIf="criticalAlertsCount > 0" color="warn" class="critical-count">
+        {{ criticalAlertsCount }} Critical
+      </mat-chip>
+    </div>
+    
+    <div class="alerts-list" *ngIf="alerts.length > 0; else noAlerts">
+      <mat-list-item 
+        *ngFor="let alert of alerts | slice:0:5" 
+        class="alert-item"
+        [class.unread]="!alert.isRead"
+        (click)="markAlertAsRead(alert)">
+        <mat-icon 
+          matListIcon 
+          [color]="getAlertColor(alert.severity)">
+          {{ getAlertIcon(alert.type) }}
+        </mat-icon>
+        <div matLine class="alert-title">{{ alert.title }}</div>
+        <div matLine class="alert-message">{{ alert.message }}</div>
+        <div matLine class="alert-time">{{ alert.timestamp | date:'short' }}</div>
+        <button 
+          mat-icon-button 
+          (click)="dismissAlert(alert); $event.stopPropagation()"
+          class="dismiss-button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-list-item>
+    </div>
+    
+    <ng-template #noAlerts>
+      <div class="no-alerts">
+        <mat-icon>check_circle</mat-icon>
+        <p>No alerts at this time</p>
+      </div>
+    </ng-template>
+  </mat-menu>
+
+  <!-- User Menu -->
+  <mat-menu #userMenu="matMenu">
+    <div class="user-info" *ngIf="currentUser$ | async as user">
+      <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+      <div class="user-role">Payroll Officer</div>
+    </div>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="refreshMetrics()">
+      <mat-icon>refresh</mat-icon>
+      <span>Refresh Data</span>
+    </button>
+    <button mat-menu-item (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
+</div>
