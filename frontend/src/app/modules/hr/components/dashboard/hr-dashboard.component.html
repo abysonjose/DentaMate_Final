@@ -1,0 +1,157 @@
+<div class="hr-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>HR Dashboard</h1>
+      <p>Workforce Overview & Management</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="refreshData()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading" class="dashboard-content">
+    <!-- Quick Stats Cards -->
+    <div class="stats-grid">
+      <mat-card *ngFor="let stat of quickStats" class="stat-card" [ngClass]="stat.color">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>{{ stat.icon }}</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ stat.value }}</h3>
+              <p>{{ stat.label }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Alerts Section -->
+    <mat-card class="alerts-card" *ngIf="alerts.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>warning</mat-icon>
+          Active Alerts
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div *ngFor="let alert of alerts" 
+               class="alert-item" 
+               [ngClass]="'severity-' + alert.severity"
+               [class.acknowledged]="alert.acknowledged">
+            <div class="alert-icon">
+              <mat-icon [color]="getAlertColor(alert.severity)">
+                {{ getAlertIcon(alert.type) }}
+              </mat-icon>
+            </div>
+            <div class="alert-content">
+              <h4>{{ alert.title }}</h4>
+              <p>{{ alert.message }}</p>
+              <small>{{ alert.createdAt | date:'short' }}</small>
+            </div>
+            <div class="alert-actions" *ngIf="!alert.acknowledged">
+              <button mat-icon-button (click)="acknowledgeAlert(alert)" matTooltip="Acknowledge">
+                <mat-icon>check</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+    <!-- Charts and Analytics -->
+    <div class="charts-section">
+      <div class="charts-grid">
+        <!-- Role Distribution Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Staff by Role</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="role-distribution">
+              <div *ngFor="let role of roleChartData" class="role-item">
+                <span class="role-name">{{ role.name }}</span>
+                <span class="role-count">{{ role.value }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Department Distribution Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Staff by Department</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="department-distribution">
+              <div *ngFor="let dept of departmentChartData" class="dept-item">
+                <span class="dept-name">{{ dept.name }}</span>
+                <span class="dept-count">{{ dept.value }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Attendance Overview -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Attendance Overview</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="attendance-overview" *ngIf="dashboardStats">
+              <div class="attendance-rate">
+                <h3>{{ dashboardStats.attendanceRate }}%</h3>
+                <p>Overall Attendance Rate</p>
+              </div>
+              <div class="leave-utilization">
+                <h3>{{ dashboardStats.leaveUtilization }}%</h3>
+                <p>Leave Utilization</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <mat-card class="quick-actions-card">
+      <mat-card-header>
+        <mat-card-title>Quick Actions</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="actions-grid">
+          <button mat-raised-button color="primary" (click)="navigateToSection('employees')">
+            <mat-icon>person_add</mat-icon>
+            Add Employee
+          </button>
+          <button mat-raised-button color="accent" (click)="navigateToSection('attendance')">
+            <mat-icon>schedule</mat-icon>
+            View Attendance
+          </button>
+          <button mat-raised-button (click)="navigateToSection('leave')">
+            <mat-icon>pending_actions</mat-icon>
+            Manage Leave
+          </button>
+          <button mat-raised-button (click)="navigateToSection('reports')">
+            <mat-icon>assessment</mat-icon>
+            Generate Reports
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

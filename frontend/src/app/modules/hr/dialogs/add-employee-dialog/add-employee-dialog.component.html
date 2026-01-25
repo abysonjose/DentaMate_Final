@@ -1,0 +1,137 @@
+<div class="add-employee-dialog">
+  <h2 mat-dialog-title>Add New Employee</h2>
+  
+  <mat-dialog-content>
+    <form [formGroup]="employeeForm" class="employee-form">
+      
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3>Basic Information</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Full Name</mat-label>
+            <input matInput formControlName="name" placeholder="Enter full name">
+            <mat-error *ngIf="employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched">
+              {{ getErrorMessage('name') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email" placeholder="Enter email address">
+            <mat-error *ngIf="employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched">
+              {{ getErrorMessage('email') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Phone</mat-label>
+            <input matInput formControlName="phone" placeholder="Enter phone number">
+            <mat-error *ngIf="employeeForm.get('phone')?.invalid && employeeForm.get('phone')?.touched">
+              {{ getErrorMessage('phone') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Work Information -->
+      <div class="form-section">
+        <h3>Work Information</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Role</mat-label>
+            <mat-select formControlName="role">
+              <mat-option *ngFor="let role of data.roles" [value]="role">
+                {{ role }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="employeeForm.get('role')?.invalid && employeeForm.get('role')?.touched">
+              Role is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Department</mat-label>
+            <mat-select formControlName="department">
+              <mat-option *ngFor="let dept of data.departments" [value]="dept">
+                {{ dept }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="employeeForm.get('department')?.invalid && employeeForm.get('department')?.touched">
+              Department is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Branch</mat-label>
+            <mat-select formControlName="branch">
+              <mat-option *ngFor="let branch of data.branches" [value]="branch.id">
+                {{ branch.name }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="employeeForm.get('branch')?.invalid && employeeForm.get('branch')?.touched">
+              Branch is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Joining Date</mat-label>
+            <input matInput [matDatepicker]="joiningPicker" formControlName="joiningDate">
+            <mat-datepicker-toggle matSuffix [for]="joiningPicker"></mat-datepicker-toggle>
+            <mat-datepicker #joiningPicker></mat-datepicker>
+            <mat-error *ngIf="employeeForm.get('joiningDate')?.invalid && employeeForm.get('joiningDate')?.touched">
+              Joining date is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="form-section" formGroupName="emergencyContact">
+        <h3>Emergency Contact (Optional)</h3>
+        
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Contact Name</mat-label>
+            <input matInput formControlName="name" placeholder="Enter contact name">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Contact Phone</mat-label>
+            <input matInput formControlName="phone" placeholder="Enter contact phone">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Relationship</mat-label>
+            <mat-select formControlName="relationship">
+              <mat-option value="spouse">Spouse</mat-option>
+              <mat-option value="parent">Parent</mat-option>
+              <mat-option value="sibling">Sibling</mat-option>
+              <mat-option value="child">Child</mat-option>
+              <mat-option value="friend">Friend</mat-option>
+              <mat-option value="other">Other</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="loading">Cancel</button>
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="loading">
+      <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+      <span *ngIf="!loading">Add Employee</span>
+      <span *ngIf="loading">Adding...</span>
+    </button>
+  </mat-dialog-actions>
+</div>
