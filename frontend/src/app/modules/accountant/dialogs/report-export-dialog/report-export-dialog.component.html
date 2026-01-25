@@ -1,0 +1,58 @@
+<div class="report-export-dialog">
+  <h2 mat-dialog-title>Export Report</h2>
+  
+  <mat-dialog-content>
+    <!-- Report Info -->
+    <div class="report-info">
+      <h3>{{ getReportTitle() }}</h3>
+      <div class="report-details">
+        <div class="detail-item" *ngIf="data.params.startDate">
+          <span class="label">Start Date:</span>
+          <span class="value">{{ data.params.startDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="data.params.endDate">
+          <span class="label">End Date:</span>
+          <span class="value">{{ data.params.endDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Format Selection -->
+    <form [formGroup]="exportForm" class="export-form">
+      <h4>Select Export Format</h4>
+      
+      <mat-radio-group formControlName="format" class="format-options">
+        <div *ngFor="let format of formatOptions" class="format-option">
+          <mat-radio-button [value]="format.value" class="format-radio">
+            <div class="format-content">
+              <div class="format-header">
+                <mat-icon>{{ format.icon }}</mat-icon>
+                <span class="format-name">{{ format.label }}</span>
+              </div>
+              <p class="format-description">{{ format.description }}</p>
+            </div>
+          </mat-radio-button>
+        </div>
+      </mat-radio-group>
+    </form>
+
+    <!-- Export Guidelines -->
+    <div class="export-guidelines">
+      <h4>Export Guidelines:</h4>
+      <ul>
+        <li><strong>PDF Format:</strong> Best for viewing, printing, and sharing formatted reports</li>
+        <li><strong>CSV Format:</strong> Ideal for data analysis and importing into accounting software</li>
+        <li>Reports are generated with current data and cannot be modified</li>
+        <li>All exported reports include timestamp and user information</li>
+      </ul>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="onExport()" [disabled]="!exportForm.valid">
+      <mat-icon>download</mat-icon>
+      Export Report
+    </button>
+  </mat-dialog-actions>
+</div>

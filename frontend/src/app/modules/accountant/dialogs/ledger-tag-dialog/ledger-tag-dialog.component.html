@@ -1,0 +1,107 @@
+<div class="ledger-tag-dialog">
+  <h2 mat-dialog-title>Manage Ledger Tags</h2>
+  
+  <mat-dialog-content>
+    <!-- Entry Details -->
+    <div class="entry-details">
+      <h3>Ledger Entry Details</h3>
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="label">Date:</span>
+          <span class="value">{{ data.entry.date | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Description:</span>
+          <span class="value">{{ data.entry.description }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Amount:</span>
+          <span class="value amount" [ngClass]="data.entry.type.toLowerCase()">
+            {{ formatCurrency(data.entry.amount) }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Type:</span>
+          <span class="value">
+            <mat-chip [color]="getTypeColor(data.entry.type)" selected>
+              <mat-icon>{{ getTypeIcon(data.entry.type) }}</mat-icon>
+              {{ data.entry.type }}
+            </mat-chip>
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Category:</span>
+          <span class="value">{{ data.entry.category }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Department:</span>
+          <span class="value">{{ data.entry.departmentCode }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Cost Center:</span>
+          <span class="value">{{ data.entry.costCenter }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Transaction ID:</span>
+          <span class="value transaction-id">{{ data.entry.transactionId }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tag Management Form -->
+    <form [formGroup]="tagForm" class="tag-form">
+      <h3>Tags</h3>
+      
+      <div formArrayName="tags" class="tags-section">
+        <div *ngFor="let tagControl of tagsArray.controls; let i = index" class="tag-input-row">
+          <mat-form-field appearance="outline" class="tag-input">
+            <mat-label>Tag {{ i + 1 }}</mat-label>
+            <input matInput [formControlName]="i" placeholder="Enter tag name">
+          </mat-form-field>
+          <button mat-icon-button type="button" (click)="removeTag(i)" 
+                  [disabled]="tagsArray.length === 1" matTooltip="Remove tag">
+            <mat-icon>remove_circle</mat-icon>
+          </button>
+        </div>
+        
+        <button mat-button type="button" (click)="addTag()" class="add-tag-btn">
+          <mat-icon>add</mat-icon>
+          Add Another Tag
+        </button>
+      </div>
+    </form>
+
+    <!-- Predefined Tags -->
+    <div class="predefined-tags">
+      <h4>Quick Tags</h4>
+      <p class="tags-description">Click on any tag below to add it quickly:</p>
+      <div class="predefined-tags-grid">
+        <mat-chip *ngFor="let tag of predefinedTags" 
+                  (click)="addPredefinedTag(tag)" 
+                  class="predefined-tag">
+          {{ tag }}
+        </mat-chip>
+      </div>
+    </div>
+
+    <!-- Tag Guidelines -->
+    <div class="tag-guidelines">
+      <h4>Tagging Guidelines:</h4>
+      <ul>
+        <li><strong>CAPEX:</strong> Capital expenditures (equipment, property)</li>
+        <li><strong>OPEX:</strong> Operating expenses (rent, utilities, supplies)</li>
+        <li><strong>REVENUE:</strong> Income from services</li>
+        <li><strong>EXPENSE:</strong> General business expenses</li>
+        <li><strong>ASSET:</strong> Items of value owned by the clinic</li>
+        <li><strong>LIABILITY:</strong> Debts or obligations</li>
+      </ul>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="onSave()">
+      Update Tags
+    </button>
+  </mat-dialog-actions>
+</div>

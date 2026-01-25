@@ -1,0 +1,160 @@
+<div class="reports">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Reports & Financial Statements</h1>
+      <p class="subtitle">Generate and export accounting reports</p>
+    </div>
+  </div>
+
+  <!-- Quick Reports -->
+  <div class="quick-reports">
+    <h2>Quick Reports</h2>
+    <div class="quick-reports-grid">
+      <mat-card class="quick-report-card" (click)="quickReport('daily-revenue')">
+        <mat-card-content>
+          <mat-icon>today</mat-icon>
+          <h3>Today's Revenue</h3>
+          <p>Generate today's revenue report</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="quick-report-card" (click)="quickReport('monthly-income')">
+        <mat-card-content>
+          <mat-icon>calendar_month</mat-icon>
+          <h3>Monthly Income</h3>
+          <p>Current month income summary</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="quick-report-card" (click)="quickReport('payment-mode')">
+        <mat-card-content>
+          <mat-icon>payment</mat-icon>
+          <h3>Payment Modes</h3>
+          <p>Payment method breakdown</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="quick-report-card" (click)="quickReport('aging-report')">
+        <mat-card-content>
+          <mat-icon>schedule</mat-icon>
+          <h3>Aging Report</h3>
+          <p>Outstanding receivables aging</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Custom Report Generator -->
+  <mat-card class="report-generator">
+    <mat-card-header>
+      <mat-card-title>Custom Report Generator</mat-card-title>
+      <mat-card-subtitle>Generate reports for specific date ranges</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="reportForm" class="report-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Report Type</mat-label>
+            <mat-select formControlName="reportType">
+              <mat-option *ngFor="let type of reportTypes" [value]="type.value">
+                <div class="report-option">
+                  <span class="report-name">{{ type.label }}</span>
+                  <span class="report-description">{{ type.description }}</span>
+                </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Start Date</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>End Date</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" (click)="generateReport()" 
+                  [disabled]="!reportForm.valid || loading">
+            <mat-icon *ngIf="!loading">assessment</mat-icon>
+            <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+            {{ loading ? 'Generating...' : 'Generate Report' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Report Templates -->
+  <mat-card class="report-templates">
+    <mat-card-header>
+      <mat-card-title>Available Report Templates</mat-card-title>
+      <mat-card-subtitle>Standard accounting reports</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="templates-grid">
+        <div *ngFor="let type of reportTypes" class="template-item">
+          <div class="template-header">
+            <mat-icon>description</mat-icon>
+            <h4>{{ type.label }}</h4>
+          </div>
+          <p class="template-description">{{ type.description }}</p>
+          <div class="template-features">
+            <mat-chip class="feature-chip">PDF Export</mat-chip>
+            <mat-chip class="feature-chip">CSV Export</mat-chip>
+            <mat-chip class="feature-chip">Date Range</mat-chip>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Report Guidelines -->
+  <mat-card class="guidelines-card">
+    <mat-card-header>
+      <mat-card-title>Report Guidelines</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="guidelines-content">
+        <div class="guideline-section">
+          <h4>Report Types:</h4>
+          <ul>
+            <li><strong>Daily Revenue:</strong> Shows all revenue transactions for a specific date</li>
+            <li><strong>Monthly Income:</strong> Comprehensive monthly financial summary</li>
+            <li><strong>Payment Mode:</strong> Breakdown of payments by method (Cash, UPI, Card, etc.)</li>
+            <li><strong>Aging Report:</strong> Outstanding receivables categorized by age</li>
+            <li><strong>Ledger Summary:</strong> General ledger entries with categorization</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Export Formats:</h4>
+          <ul>
+            <li><strong>PDF:</strong> Formatted reports suitable for printing and sharing</li>
+            <li><strong>CSV:</strong> Data files for further analysis in spreadsheet applications</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Usage Notes:</h4>
+          <ul>
+            <li>Reports are informational only - no approval authority</li>
+            <li>All data is read-only and reflects current system state</li>
+            <li>For discrepancies, flag items for Accounts Manager review</li>
+            <li>Export reports for external accounting system integration</li>
+          </ul>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,330 @@
+.ledger-management {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-content {
+      h1 {
+        margin: 0;
+        color: #1976d2;
+        font-size: 1.75rem;
+        font-weight: 500;
+      }
+
+      .subtitle {
+        margin: 4px 0 0 0;
+        color: #666;
+        font-size: 0.875rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .balance-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .balance-card {
+      &.debit {
+        border-left: 4px solid #f44336;
+      }
+
+      &.credit {
+        border-left: 4px solid #4caf50;
+      }
+
+      &.balance {
+        border-left: 4px solid #2196f3;
+
+        &.positive {
+          border-left-color: #4caf50;
+        }
+
+        &.negative {
+          border-left-color: #f44336;
+        }
+      }
+
+      .balance-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
+
+        .debit mat-icon {
+          color: #f44336;
+        }
+
+        .credit mat-icon {
+          color: #4caf50;
+        }
+
+        .balance mat-icon {
+          color: #2196f3;
+        }
+
+        .balance-info {
+          display: flex;
+          flex-direction: column;
+
+          .amount {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .label {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 24px;
+
+    .filters-form {
+      .filter-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        mat-form-field {
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .filter-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: stretch;
+
+          mat-form-field {
+            min-width: auto;
+          }
+        }
+      }
+    }
+  }
+
+  .table-card {
+    margin-bottom: 24px;
+
+    .table-container {
+      overflow-x: auto;
+
+      .ledger-table {
+        width: 100%;
+        min-width: 1000px;
+
+        .description-cell {
+          display: flex;
+          flex-direction: column;
+
+          .description {
+            font-weight: 500;
+            color: #333;
+          }
+
+          .transaction-id {
+            font-size: 0.75rem;
+            color: #666;
+            font-family: monospace;
+          }
+        }
+
+        .amount {
+          font-weight: 600;
+          font-size: 1rem;
+
+          &.debit {
+            color: #f44336;
+          }
+
+          &.credit {
+            color: #4caf50;
+          }
+        }
+
+        .category-chip {
+          background-color: #e3f2fd;
+          color: #1976d2;
+          font-size: 0.75rem;
+        }
+
+        .department-code,
+        .cost-center {
+          font-family: monospace;
+          font-size: 0.875rem;
+          color: #333;
+          background-color: #f5f5f5;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+
+        .tags-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          align-items: center;
+
+          .tag-chip {
+            background-color: #fff3e0;
+            color: #f57c00;
+            font-size: 0.7rem;
+            height: 24px;
+            line-height: 24px;
+          }
+
+          .more-tags {
+            font-size: 0.75rem;
+            color: #666;
+            font-style: italic;
+          }
+
+          .no-tags {
+            font-size: 0.75rem;
+            color: #999;
+            font-style: italic;
+          }
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+        }
+      }
+
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+
+        p {
+          margin-top: 16px;
+          color: #666;
+        }
+      }
+
+      .no-data-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+        text-align: center;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          color: #ccc;
+          margin-bottom: 16px;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          color: #666;
+        }
+
+        p {
+          margin: 0;
+          color: #999;
+        }
+      }
+    }
+  }
+
+  .summary-card {
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 24px;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 16px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+
+        .label {
+          font-size: 0.875rem;
+          color: #666;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .value {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #333;
+
+          &.debit {
+            color: #f44336;
+          }
+
+          &.credit {
+            color: #4caf50;
+          }
+
+          &.warning {
+            color: #ff9800;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+
+      .header-actions {
+        justify-content: center;
+      }
+    }
+
+    .balance-summary {
+      grid-template-columns: 1fr;
+    }
+  }
+}

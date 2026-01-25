@@ -1,0 +1,236 @@
+<div class="billing-records">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Billing Records Review</h1>
+      <p class="subtitle">View and verify all generated bills (Read-Only)</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportRecords()">
+        <mat-icon>download</mat-icon>
+        Export Records
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filters</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Start Date</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>End Date</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+              <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Department</mat-label>
+            <mat-select formControlName="department">
+              <mat-option *ngFor="let dept of departmentOptions" [value]="dept.value">
+                {{ dept.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Doctor Name</mat-label>
+            <input matInput formControlName="doctorName" placeholder="Search by doctor name">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Patient Name</mat-label>
+            <input matInput formControlName="patientName" placeholder="Search by patient name">
+          </mat-form-field>
+
+          <div class="filter-actions">
+            <button mat-button (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Records Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>Billing Records</mat-card-title>
+      <mat-card-subtitle>{{ dataSource.data.length }} records found</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="billing-table">
+          <!-- Bill Date Column -->
+          <ng-container matColumnDef="billDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Bill Date</th>
+            <td mat-cell *matCellDef="let record">
+              {{ record.billDate | date:'dd/MM/yyyy' }}
+            </td>
+          </ng-container>
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="patient-info">
+                <span class="patient-name">{{ record.patientName }}</span>
+                <span class="patient-id">ID: {{ record.patientId }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Doctor Name Column -->
+          <ng-container matColumnDef="doctorName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="doctor-info">
+                <span class="doctor-name">{{ record.doctorName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Department Column -->
+          <ng-container matColumnDef="department">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Department</th>
+            <td mat-cell *matCellDef="let record">
+              <mat-chip class="department-chip">{{ record.department }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Amount Column -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="amount">{{ formatCurrency(record.amount) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let record">
+              <mat-chip [ngClass]="'status-' + getStatusColor(record.status)">
+                <mat-icon>{{ getStatusIcon(record.status) }}</mat-icon>
+                {{ record.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Services Column -->
+          <ng-container matColumnDef="services">
+            <th mat-header-cell *matHeaderCellDef>Services</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="services-list">
+                <mat-chip *ngFor="let service of record.services.slice(0, 2)" class="service-chip">
+                  {{ service }}
+                </mat-chip>
+                <span *ngIf="record.services.length > 2" class="more-services">
+                  +{{ record.services.length - 2 }} more
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="action-buttons">
+                <button mat-icon-button (click)="viewBillDetails(record)" matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button mat-icon-button (click)="flagDiscrepancy(record)" matTooltip="Flag Discrepancy" 
+                        color="warn">
+                  <mat-icon>flag</mat-icon>
+                </button>
+                <mat-icon *ngIf="record.discrepancyFlag" class="discrepancy-indicator" 
+                         matTooltip="Discrepancy Flagged: {{ record.discrepancyFlag }}" color="warn">
+                  warning
+                </mat-icon>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading billing records...</p>
+        </div>
+
+        <!-- No Data State -->
+        <div class="no-data-state" *ngIf="!loading && dataSource.data.length === 0">
+          <mat-icon>receipt_long</mat-icon>
+          <h3>No billing records found</h3>
+          <p>Try adjusting your filters or check back later.</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]" 
+        showFirstLastButtons
+        aria-label="Select page of billing records">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Summary Card -->
+  <mat-card class="summary-card">
+    <mat-card-header>
+      <mat-card-title>Records Summary</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="label">Total Records</span>
+          <span class="value">{{ dataSource.data.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Total Amount</span>
+          <span class="value">{{ formatCurrency(dataSource.data.reduce((sum, record) => sum + record.amount, 0)) }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Paid Bills</span>
+          <span class="value success">{{ dataSource.data.filter(r => r.status === 'PAID').length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Pending Bills</span>
+          <span class="value warning">{{ dataSource.data.filter(r => r.status === 'PENDING').length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Overdue Bills</span>
+          <span class="value danger">{{ dataSource.data.filter(r => r.status === 'OVERDUE').length }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

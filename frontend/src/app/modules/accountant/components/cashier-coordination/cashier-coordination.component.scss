@@ -1,0 +1,327 @@
+.cashier-coordination {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-content {
+      h1 {
+        margin: 0;
+        color: #1976d2;
+        font-size: 1.75rem;
+        font-weight: 500;
+      }
+
+      .subtitle {
+        margin: 4px 0 0 0;
+        color: #666;
+        font-size: 0.875rem;
+      }
+    }
+
+    .header-actions {
+      .date-picker {
+        min-width: 200px;
+      }
+    }
+  }
+
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .summary-card {
+      &.cash {
+        border-left: 4px solid #4caf50;
+      }
+
+      &.transactions {
+        border-left: 4px solid #2196f3;
+      }
+
+      &.pending {
+        border-left: 4px solid #ff9800;
+      }
+
+      &.verified {
+        border-left: 4px solid #4caf50;
+      }
+
+      .summary-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
+
+        .cash mat-icon {
+          color: #4caf50;
+        }
+
+        .transactions mat-icon {
+          color: #2196f3;
+        }
+
+        .pending mat-icon {
+          color: #ff9800;
+        }
+
+        .verified mat-icon {
+          color: #4caf50;
+        }
+
+        .summary-info {
+          display: flex;
+          flex-direction: column;
+
+          .amount {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .label {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+    }
+  }
+
+  .tabs-card {
+    margin-bottom: 24px;
+
+    .tab-content {
+      padding: 24px;
+
+      .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        h3 {
+          margin: 0;
+          color: #333;
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+
+        .record-count {
+          color: #666;
+          font-size: 0.875rem;
+        }
+      }
+
+      .table-container {
+        overflow-x: auto;
+
+        .payments-table,
+        .handovers-table {
+          width: 100%;
+          min-width: 800px;
+
+          .receipt-number {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+          }
+
+          .patient-info,
+          .cashier-info {
+            display: flex;
+            flex-direction: column;
+
+            .patient-name,
+            .cashier-name {
+              font-weight: 500;
+              color: #333;
+            }
+
+            .bill-id,
+            .cashier-id {
+              font-size: 0.75rem;
+              color: #666;
+            }
+          }
+
+          .amount,
+          .cash-amount {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+          }
+
+          .payment-mode-chip {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            font-size: 0.75rem;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+              margin-right: 4px;
+            }
+          }
+
+          .transaction-count {
+            font-weight: 500;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+          }
+
+          .status-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .status-warning {
+            background-color: #fff3e0;
+            color: #f57c00;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .status-danger {
+            background-color: #ffebee;
+            color: #d32f2f;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .action-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+          }
+
+          .pending-row {
+            background-color: #fff3e0;
+          }
+        }
+
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 60px 20px;
+
+          p {
+            margin-top: 16px;
+            color: #666;
+          }
+        }
+
+        .no-data-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 60px 20px;
+          text-align: center;
+
+          mat-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            color: #ccc;
+            margin-bottom: 16px;
+          }
+
+          h3 {
+            margin: 0 0 8px 0;
+            color: #666;
+          }
+
+          p {
+            margin: 0;
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+
+  .guidelines-card {
+    .guidelines-content {
+      .guideline-section {
+        margin-bottom: 24px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        h4 {
+          margin: 0 0 12px 0;
+          color: #1976d2;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 20px;
+
+          li {
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: #666;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+
+      .header-actions {
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+}

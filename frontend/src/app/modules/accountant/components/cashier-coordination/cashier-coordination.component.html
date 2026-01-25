@@ -1,0 +1,336 @@
+<div class="cashier-coordination">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Cashier Coordination</h1>
+      <p class="subtitle">Reconcile payments and verify cash handovers from cashiers</p>
+    </div>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="date-picker">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="datePicker" formControlName="date" (dateChange)="onDateChange()">
+        <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
+        <mat-datepicker #datePicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Daily Summary Cards -->
+  <div class="summary-cards">
+    <mat-card class="summary-card cash">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>money</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ formatCurrency(dailySummary.totalCashReceived) }}</span>
+            <span class="label">Total Cash Received</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card transactions">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>receipt</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ dailySummary.totalTransactions }}</span>
+            <span class="label">Total Transactions</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card pending">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>schedule</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ dailySummary.pendingReconciliations }}</span>
+            <span class="label">Pending Reconciliations</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card verified">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>verified</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ dailySummary.verifiedHandovers }}</span>
+            <span class="label">Verified Handovers</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tabs for different views -->
+  <mat-card class="tabs-card">
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      <!-- Payment Reconciliation Tab -->
+      <mat-tab label="Payment Reconciliation">
+        <div class="tab-content">
+          <div class="table-header">
+            <h3>Cashier Payments Requiring Reconciliation</h3>
+            <span class="record-count">{{ paymentDataSource.data.length }} payments</span>
+          </div>
+
+          <div class="table-container">
+            <table mat-table [dataSource]="paymentDataSource" matSort class="payments-table">
+              <!-- Payment Date Column -->
+              <ng-container matColumnDef="paymentDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Payment Date</th>
+                <td mat-cell *matCellDef="let payment">
+                  {{ payment.paymentDate | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+              </ng-container>
+
+              <!-- Receipt Number Column -->
+              <ng-container matColumnDef="receiptNumber">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Receipt #</th>
+                <td mat-cell *matCellDef="let payment">
+                  <span class="receipt-number">{{ payment.receiptNumber }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Patient Name Column -->
+              <ng-container matColumnDef="patientName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+                <td mat-cell *matCellDef="let payment">
+                  <div class="patient-info">
+                    <span class="patient-name">{{ payment.patientName }}</span>
+                    <span class="bill-id">Bill: {{ payment.billId }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Amount Column -->
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+                <td mat-cell *matCellDef="let payment">
+                  <span class="amount">{{ formatCurrency(payment.amount) }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Payment Mode Column -->
+              <ng-container matColumnDef="paymentMode">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Payment Mode</th>
+                <td mat-cell *matCellDef="let payment">
+                  <mat-chip class="payment-mode-chip">
+                    <mat-icon>{{ getPaymentModeIcon(payment.paymentMode) }}</mat-icon>
+                    {{ payment.paymentMode }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Cashier Name Column -->
+              <ng-container matColumnDef="cashierName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Cashier</th>
+                <td mat-cell *matCellDef="let payment">
+                  <div class="cashier-info">
+                    <span class="cashier-name">{{ payment.cashierName }}</span>
+                    <span class="cashier-id">ID: {{ payment.cashierId }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                <td mat-cell *matCellDef="let payment">
+                  <mat-chip [ngClass]="'status-' + getStatusColor(payment.status)">
+                    <mat-icon>{{ getStatusIcon(payment.status) }}</mat-icon>
+                    {{ payment.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let payment">
+                  <div class="action-buttons">
+                    <button mat-icon-button (click)="viewPaymentDetails(payment)" matTooltip="View Details">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="reconcilePayment(payment)" 
+                            matTooltip="Reconcile Payment" color="primary"
+                            *ngIf="payment.status === 'PENDING'">
+                      <mat-icon>check_circle</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="flagDiscrepancy(payment)" 
+                            matTooltip="Flag Discrepancy" color="warn">
+                      <mat-icon>flag</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="sendFeedbackToCashier(payment.cashierId)" 
+                            matTooltip="Send Feedback">
+                      <mat-icon>feedback</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="paymentColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: paymentColumns;" 
+                  [ngClass]="{'pending-row': row.status === 'PENDING'}"></tr>
+            </table>
+
+            <!-- Loading State -->
+            <div class="loading-state" *ngIf="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Loading cashier payments...</p>
+            </div>
+
+            <!-- No Data State -->
+            <div class="no-data-state" *ngIf="!loading && paymentDataSource.data.length === 0">
+              <mat-icon>payments</mat-icon>
+              <h3>No payments to reconcile</h3>
+              <p>All cashier payments have been reconciled for the selected date.</p>
+            </div>
+          </div>
+
+          <!-- Paginator -->
+          <mat-paginator 
+            [pageSizeOptions]="[10, 25, 50]" 
+            showFirstLastButtons
+            aria-label="Select page of payments">
+          </mat-paginator>
+        </div>
+      </mat-tab>
+
+      <!-- Cash Handover Tab -->
+      <mat-tab label="Cash Handovers">
+        <div class="tab-content">
+          <div class="table-header">
+            <h3>Daily Cash Handovers from Cashiers</h3>
+            <span class="record-count">{{ handoverDataSource.data.length }} handovers</span>
+          </div>
+
+          <div class="table-container">
+            <table mat-table [dataSource]="handoverDataSource" matSort class="handovers-table">
+              <!-- Shift Date Column -->
+              <ng-container matColumnDef="shiftDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Shift Date</th>
+                <td mat-cell *matCellDef="let handover">
+                  {{ handover.shiftDate | date:'dd/MM/yyyy' }}
+                </td>
+              </ng-container>
+
+              <!-- Cashier Name Column -->
+              <ng-container matColumnDef="cashierName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Cashier</th>
+                <td mat-cell *matCellDef="let handover">
+                  <div class="cashier-info">
+                    <span class="cashier-name">{{ handover.cashierName || 'Cashier ' + handover.cashierId }}</span>
+                    <span class="cashier-id">ID: {{ handover.cashierId }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Total Cash Column -->
+              <ng-container matColumnDef="totalCash">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Total Cash</th>
+                <td mat-cell *matCellDef="let handover">
+                  <span class="cash-amount">{{ formatCurrency(handover.totalCash) }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Total Transactions Column -->
+              <ng-container matColumnDef="totalTransactions">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Transactions</th>
+                <td mat-cell *matCellDef="let handover">
+                  <span class="transaction-count">{{ handover.totalTransactions }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Handover Status Column -->
+              <ng-container matColumnDef="handoverStatus">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                <td mat-cell *matCellDef="let handover">
+                  <mat-chip [ngClass]="'status-' + getStatusColor(handover.handoverStatus)">
+                    <mat-icon>{{ getStatusIcon(handover.handoverStatus) }}</mat-icon>
+                    {{ handover.handoverStatus }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let handover">
+                  <div class="action-buttons">
+                    <button mat-icon-button (click)="verifyCashHandover(handover)" 
+                            matTooltip="Verify Handover" color="primary"
+                            *ngIf="handover.handoverStatus === 'PENDING'">
+                      <mat-icon>verified</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="View Details">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="sendFeedbackToCashier(handover.cashierId)" 
+                            matTooltip="Send Feedback">
+                      <mat-icon>feedback</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="handoverColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: handoverColumns;" 
+                  [ngClass]="{'pending-row': row.handoverStatus === 'PENDING'}"></tr>
+            </table>
+
+            <!-- No Data State -->
+            <div class="no-data-state" *ngIf="!loading && handoverDataSource.data.length === 0">
+              <mat-icon>account_balance</mat-icon>
+              <h3>No cash handovers</h3>
+              <p>No cash handovers found for the selected date.</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+
+  <!-- Integration Guidelines -->
+  <mat-card class="guidelines-card">
+    <mat-card-header>
+      <mat-card-title>Cashier Coordination Guidelines</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="guidelines-content">
+        <div class="guideline-section">
+          <h4>Payment Reconciliation Process:</h4>
+          <ul>
+            <li>Review all cashier payments for accuracy and completeness</li>
+            <li>Match payment receipts with corresponding billing records</li>
+            <li>Verify payment amounts and modes are correctly recorded</li>
+            <li>Flag any discrepancies for immediate resolution</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Cash Handover Verification:</h4>
+          <ul>
+            <li>Verify cash amounts match transaction records</li>
+            <li>Check for proper documentation and receipts</li>
+            <li>Ensure all transactions are accounted for</li>
+            <li>Report any discrepancies to management</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Communication with Cashiers:</h4>
+          <ul>
+            <li>Provide timely feedback on reconciliation issues</li>
+            <li>Request clarification for unclear transactions</li>
+            <li>Maintain professional communication standards</li>
+            <li>Document all interactions for audit purposes</li>
+          </ul>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

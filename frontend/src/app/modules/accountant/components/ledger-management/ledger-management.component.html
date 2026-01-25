@@ -1,0 +1,278 @@
+<div class="ledger-management">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Ledger Management</h1>
+      <p class="subtitle">Assign accounting tags and maintain structured ledger view</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportLedger()">
+        <mat-icon>download</mat-icon>
+        Export Ledger
+      </button>
+    </div>
+  </div>
+
+  <!-- Balance Summary -->
+  <div class="balance-summary">
+    <mat-card class="balance-card debit">
+      <mat-card-content>
+        <div class="balance-content">
+          <mat-icon>remove_circle</mat-icon>
+          <div class="balance-info">
+            <span class="amount">{{ formatCurrency(getTotalDebit()) }}</span>
+            <span class="label">Total Debit</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="balance-card credit">
+      <mat-card-content>
+        <div class="balance-content">
+          <mat-icon>add_circle</mat-icon>
+          <div class="balance-info">
+            <span class="amount">{{ formatCurrency(getTotalCredit()) }}</span>
+            <span class="label">Total Credit</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="balance-card balance" [ngClass]="getBalance() >= 0 ? 'positive' : 'negative'">
+      <mat-card-content>
+        <div class="balance-content">
+          <mat-icon>account_balance</mat-icon>
+          <div class="balance-info">
+            <span class="amount">{{ formatCurrency(getBalance()) }}</span>
+            <span class="label">Net Balance</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filters</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Start Date</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>End Date</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let type of typeOptions" [value]="type.value">
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let category of categoryOptions" [value]="category.value">
+                {{ category.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Department Code</mat-label>
+            <input matInput formControlName="departmentCode" placeholder="Search by department code">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Description</mat-label>
+            <input matInput formControlName="description" placeholder="Search by description">
+          </mat-form-field>
+
+          <div class="filter-actions">
+            <button mat-button (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Ledger Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>Ledger Entries</mat-card-title>
+      <mat-card-subtitle>{{ dataSource.data.length }} entries found</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="ledger-table">
+          <!-- Date Column -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+            <td mat-cell *matCellDef="let entry">
+              {{ entry.date | date:'dd/MM/yyyy' }}
+            </td>
+          </ng-container>
+
+          <!-- Description Column -->
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th>
+            <td mat-cell *matCellDef="let entry">
+              <div class="description-cell">
+                <span class="description">{{ entry.description }}</span>
+                <span class="transaction-id">{{ entry.transactionId }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Amount Column -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+            <td mat-cell *matCellDef="let entry">
+              <span class="amount" [ngClass]="entry.type.toLowerCase()">
+                {{ formatCurrency(entry.amount) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Type Column -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+            <td mat-cell *matCellDef="let entry">
+              <mat-chip [color]="getTypeColor(entry.type)" selected>
+                <mat-icon>{{ getTypeIcon(entry.type) }}</mat-icon>
+                {{ entry.type }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Category Column -->
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+            <td mat-cell *matCellDef="let entry">
+              <mat-chip class="category-chip">{{ entry.category }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Department Code Column -->
+          <ng-container matColumnDef="departmentCode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Dept. Code</th>
+            <td mat-cell *matCellDef="let entry">
+              <span class="department-code">{{ entry.departmentCode }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Cost Center Column -->
+          <ng-container matColumnDef="costCenter">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Cost Center</th>
+            <td mat-cell *matCellDef="let entry">
+              <span class="cost-center">{{ entry.costCenter }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Tags Column -->
+          <ng-container matColumnDef="tags">
+            <th mat-header-cell *matHeaderCellDef>Tags</th>
+            <td mat-cell *matCellDef="let entry">
+              <div class="tags-container">
+                <mat-chip *ngFor="let tag of entry.tags.slice(0, 2)" class="tag-chip">
+                  {{ tag }}
+                </mat-chip>
+                <span *ngIf="entry.tags.length > 2" class="more-tags">
+                  +{{ entry.tags.length - 2 }}
+                </span>
+                <span *ngIf="entry.tags.length === 0" class="no-tags">
+                  No tags
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let entry">
+              <div class="action-buttons">
+                <button mat-icon-button (click)="openTagDialog(entry)" matTooltip="Manage Tags" color="primary">
+                  <mat-icon>local_offer</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading ledger entries...</p>
+        </div>
+
+        <!-- No Data State -->
+        <div class="no-data-state" *ngIf="!loading && dataSource.data.length === 0">
+          <mat-icon>book</mat-icon>
+          <h3>No ledger entries found</h3>
+          <p>Try adjusting your filters or check back later.</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]" 
+        showFirstLastButtons
+        aria-label="Select page of ledger entries">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Ledger Summary -->
+  <mat-card class="summary-card">
+    <mat-card-header>
+      <mat-card-title>Ledger Summary</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="label">Total Entries</span>
+          <span class="value">{{ dataSource.data.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Debit Entries</span>
+          <span class="value debit">{{ dataSource.data.filter(e => e.type === 'DEBIT').length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Credit Entries</span>
+          <span class="value credit">{{ dataSource.data.filter(e => e.type === 'CREDIT').length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Tagged Entries</span>
+          <span class="value">{{ dataSource.data.filter(e => e.tags.length > 0).length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="label">Untagged Entries</span>
+          <span class="value warning">{{ dataSource.data.filter(e => e.tags.length === 0).length }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

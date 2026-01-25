@@ -1,0 +1,254 @@
+<div class="receivables-tracking">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Receivables Tracking</h1>
+      <p class="subtitle">View unpaid invoices and aging reports</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportReceivables()">
+        <mat-icon>download</mat-icon>
+        Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Aging Summary -->
+  <div class="aging-summary">
+    <mat-card class="aging-card current">
+      <mat-card-content>
+        <div class="aging-content">
+          <mat-icon>schedule</mat-icon>
+          <div class="aging-info">
+            <span class="amount">{{ formatCurrency(getReceivablesByCategory('0-7')) }}</span>
+            <span class="label">0-7 Days</span>
+            <span class="count">{{ dataSource.data.filter(r => r.agingCategory === '0-7').length }} invoices</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="aging-card warning">
+      <mat-card-content>
+        <div class="aging-content">
+          <mat-icon>warning</mat-icon>
+          <div class="aging-info">
+            <span class="amount">{{ formatCurrency(getReceivablesByCategory('8-30')) }}</span>
+            <span class="label">8-30 Days</span>
+            <span class="count">{{ dataSource.data.filter(r => r.agingCategory === '8-30').length }} invoices</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="aging-card critical">
+      <mat-card-content>
+        <div class="aging-content">
+          <mat-icon>error</mat-icon>
+          <div class="aging-info">
+            <span class="amount">{{ formatCurrency(getReceivablesByCategory('30+')) }}</span>
+            <span class="label">30+ Days</span>
+            <span class="count">{{ dataSource.data.filter(r => r.agingCategory === '30+').length }} invoices</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="aging-card total">
+      <mat-card-content>
+        <div class="aging-content">
+          <mat-icon>account_balance</mat-icon>
+          <div class="aging-info">
+            <span class="amount">{{ formatCurrency(getTotalReceivables()) }}</span>
+            <span class="label">Total Outstanding</span>
+            <span class="count">{{ dataSource.data.length }} invoices</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Critical Alert -->
+  <mat-card class="alert-card" *ngIf="getCriticalOverdueCount() > 0">
+    <mat-card-content>
+      <div class="alert-content">
+        <mat-icon color="warn">priority_high</mat-icon>
+        <div class="alert-message">
+          <strong>{{ getCriticalOverdueCount() }} invoices are overdue by 30+ days</strong>
+          <p>These require immediate attention from the Accounts Manager.</p>
+        </div>
+        <button mat-raised-button color="warn" (click)="notifyAccountsManager(dataSource.data[0])">
+          Notify Manager
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filters</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Aging Category</mat-label>
+            <mat-select formControlName="agingCategory">
+              <mat-option *ngFor="let category of agingCategoryOptions" [value]="category.value">
+                {{ category.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Patient Name</mat-label>
+            <input matInput formControlName="patientName" placeholder="Search by patient name">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Min Amount</mat-label>
+            <input matInput type="number" formControlName="minAmount" placeholder="0">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Max Amount</mat-label>
+            <input matInput type="number" formControlName="maxAmount" placeholder="100000">
+          </mat-form-field>
+
+          <div class="filter-actions">
+            <button mat-button (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Receivables Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>Outstanding Receivables</mat-card-title>
+      <mat-card-subtitle>{{ dataSource.data.length }} records found</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="receivables-table">
+          <!-- Due Date Column -->
+          <ng-container matColumnDef="dueDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Due Date</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="due-date-cell">
+                <span class="date">{{ record.dueDate | date:'dd/MM/yyyy' }}</span>
+                <span class="overdue" *ngIf="record.agingDays > 0">
+                  {{ record.agingDays }} days overdue
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="patient-info">
+                <span class="patient-name">{{ record.patientName }}</span>
+                <span class="patient-id">ID: {{ record.patientId }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Bill ID Column -->
+          <ng-container matColumnDef="billId">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Bill ID</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="bill-id">{{ record.billId }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Amount Column -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="amount" [ngClass]="record.agingCategory === '30+' ? 'critical' : ''">
+                {{ formatCurrency(record.amount) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Aging Days Column -->
+          <ng-container matColumnDef="agingDays">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Aging Days</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="aging-days" [ngClass]="record.agingCategory">
+                {{ record.agingDays }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Aging Category Column -->
+          <ng-container matColumnDef="agingCategory">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+            <td mat-cell *matCellDef="let record">
+              <mat-chip [ngClass]="'aging-' + getAgingColor(record.agingCategory)">
+                <mat-icon>{{ getAgingIcon(record.agingCategory) }}</mat-icon>
+                {{ record.agingCategory }} days
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Contact Info Column -->
+          <ng-container matColumnDef="contactInfo">
+            <th mat-header-cell *matHeaderCellDef>Contact</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="contact-info">{{ record.contactInfo }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="action-buttons">
+                <button mat-icon-button matTooltip="View Bill Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button mat-icon-button (click)="notifyAccountsManager(record)" 
+                        matTooltip="Notify Accounts Manager" color="warn"
+                        *ngIf="record.agingCategory === '30+'">
+                  <mat-icon>notification_important</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [ngClass]="{'critical-row': row.agingCategory === '30+'}"></tr>
+        </table>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading receivables...</p>
+        </div>
+
+        <!-- No Data State -->
+        <div class="no-data-state" *ngIf="!loading && dataSource.data.length === 0">
+          <mat-icon>account_balance</mat-icon>
+          <h3>No outstanding receivables</h3>
+          <p>All invoices have been paid or no data matches your filters.</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]" 
+        showFirstLastButtons
+        aria-label="Select page of receivables">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

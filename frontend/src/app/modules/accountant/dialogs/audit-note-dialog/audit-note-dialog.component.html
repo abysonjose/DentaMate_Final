@@ -1,0 +1,79 @@
+<div class="audit-note-dialog">
+  <h2 mat-dialog-title>Add Audit Note</h2>
+  
+  <mat-dialog-content>
+    <!-- Audit Log Details -->
+    <div class="log-details">
+      <h3>Audit Log Details</h3>
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="label">Timestamp:</span>
+          <span class="value">{{ data.log.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">User:</span>
+          <span class="value user-id">{{ data.log.userId }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Action:</span>
+          <span class="value">
+            <mat-chip [color]="getActionColor(data.log.action)" selected>
+              <mat-icon>{{ getActionIcon(data.log.action) }}</mat-icon>
+              {{ data.log.action }}
+            </mat-chip>
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Entity Type:</span>
+          <span class="value entity-type">{{ data.log.entityType }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Entity ID:</span>
+          <span class="value entity-id">{{ data.log.entityId }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Section -->
+    <div class="details-section">
+      <h4>Action Details:</h4>
+      <div class="details-content">
+        <pre>{{ data.log.details | json }}</pre>
+      </div>
+    </div>
+
+    <!-- Note Form -->
+    <form [formGroup]="noteForm" class="note-form">
+      <h3>Audit Note</h3>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Note</mat-label>
+        <textarea matInput 
+                  formControlName="note" 
+                  rows="6" 
+                  placeholder="Add clarifying notes, explanations, or observations about this audit log entry..."></textarea>
+        <mat-hint>Provide context, explanations, or any relevant information for audit purposes</mat-hint>
+      </mat-form-field>
+    </form>
+
+    <!-- Note Guidelines -->
+    <div class="note-guidelines">
+      <h4>Note Guidelines:</h4>
+      <ul>
+        <li>Be specific and factual in your observations</li>
+        <li>Include any relevant context or explanations</li>
+        <li>Note any discrepancies or unusual patterns</li>
+        <li>Reference related transactions or documents if applicable</li>
+        <li>Use professional language suitable for audit review</li>
+      </ul>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!noteForm.valid">
+      <mat-icon>save</mat-icon>
+      Save Note
+    </button>
+  </mat-dialog-actions>
+</div>

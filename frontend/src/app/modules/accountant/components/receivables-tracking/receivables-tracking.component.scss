@@ -1,0 +1,362 @@
+.receivables-tracking {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-content {
+      h1 {
+        margin: 0;
+        color: #1976d2;
+        font-size: 1.75rem;
+        font-weight: 500;
+      }
+
+      .subtitle {
+        margin: 4px 0 0 0;
+        color: #666;
+        font-size: 0.875rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .aging-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .aging-card {
+      &.current {
+        border-left: 4px solid #4caf50;
+      }
+
+      &.warning {
+        border-left: 4px solid #ff9800;
+      }
+
+      &.critical {
+        border-left: 4px solid #f44336;
+      }
+
+      &.total {
+        border-left: 4px solid #2196f3;
+      }
+
+      .aging-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
+
+        .current mat-icon {
+          color: #4caf50;
+        }
+
+        .warning mat-icon {
+          color: #ff9800;
+        }
+
+        .critical mat-icon {
+          color: #f44336;
+        }
+
+        .total mat-icon {
+          color: #2196f3;
+        }
+
+        .aging-info {
+          display: flex;
+          flex-direction: column;
+
+          .amount {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .label {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+          }
+
+          .count {
+            font-size: 0.75rem;
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+
+  .alert-card {
+    margin-bottom: 24px;
+    border-left: 4px solid #f44336;
+    background-color: #ffebee;
+
+    .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .alert-message {
+        flex: 1;
+
+        strong {
+          color: #d32f2f;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        p {
+          margin: 0;
+          color: #666;
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 24px;
+
+    .filters-form {
+      .filter-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        mat-form-field {
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .filter-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: stretch;
+
+          mat-form-field {
+            min-width: auto;
+          }
+        }
+      }
+    }
+  }
+
+  .table-card {
+    .table-container {
+      overflow-x: auto;
+
+      .receivables-table {
+        width: 100%;
+        min-width: 900px;
+
+        .due-date-cell {
+          display: flex;
+          flex-direction: column;
+
+          .date {
+            font-weight: 500;
+            color: #333;
+          }
+
+          .overdue {
+            font-size: 0.75rem;
+            color: #f44336;
+            font-weight: 500;
+          }
+        }
+
+        .patient-info {
+          display: flex;
+          flex-direction: column;
+
+          .patient-name {
+            font-weight: 500;
+            color: #333;
+          }
+
+          .patient-id {
+            font-size: 0.75rem;
+            color: #666;
+          }
+        }
+
+        .bill-id {
+          font-family: monospace;
+          font-size: 0.875rem;
+          color: #333;
+          background-color: #f5f5f5;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+
+        .amount {
+          font-weight: 600;
+          font-size: 1rem;
+          color: #333;
+
+          &.critical {
+            color: #f44336;
+            font-weight: 700;
+          }
+        }
+
+        .aging-days {
+          font-weight: 600;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 0.875rem;
+
+          &.0-7 {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+          }
+
+          &.8-30 {
+            background-color: #fff3e0;
+            color: #f57c00;
+          }
+
+          &.30+ {
+            background-color: #ffebee;
+            color: #d32f2f;
+          }
+        }
+
+        .aging-success {
+          background-color: #e8f5e8;
+          color: #2e7d32;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .aging-warning {
+          background-color: #fff3e0;
+          color: #f57c00;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .aging-danger {
+          background-color: #ffebee;
+          color: #d32f2f;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+
+        .contact-info {
+          font-size: 0.875rem;
+          color: #666;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+        }
+
+        .critical-row {
+          background-color: #fff3e0;
+        }
+      }
+
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+
+        p {
+          margin-top: 16px;
+          color: #666;
+        }
+      }
+
+      .no-data-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+        text-align: center;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          color: #4caf50;
+          margin-bottom: 16px;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          color: #4caf50;
+        }
+
+        p {
+          margin: 0;
+          color: #666;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+
+      .header-actions {
+        justify-content: center;
+      }
+    }
+
+    .aging-summary {
+      grid-template-columns: 1fr;
+    }
+  }
+}

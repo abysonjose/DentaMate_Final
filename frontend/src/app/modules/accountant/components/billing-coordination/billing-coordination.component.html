@@ -1,0 +1,386 @@
+<div class="billing-coordination">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Billing Staff Coordination</h1>
+      <p class="subtitle">Validate bills and coordinate with billing staff</p>
+    </div>
+    <div class="header-actions">
+      <form [formGroup]="filterForm" class="filter-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate" (dateChange)="onFilterChange()">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate" (dateChange)="onFilterChange()">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+      </form>
+    </div>
+  </div>
+
+  <!-- Validation Summary Cards -->
+  <div class="summary-cards">
+    <mat-card class="summary-card pending">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>assignment</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ validationSummary.pendingValidation }}</span>
+            <span class="label">Pending Validation</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card approved">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>check_circle</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ validationSummary.approvedBills }}</span>
+            <span class="label">Approved Bills</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card rejected">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>cancel</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ validationSummary.rejectedBills }}</span>
+            <span class="label">Rejected Bills</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card total">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>account_balance</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ formatCurrency(validationSummary.totalAmount) }}</span>
+            <span class="label">Total Amount</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tabs for different views -->
+  <mat-card class="tabs-card">
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      <!-- Bill Validation Tab -->
+      <mat-tab label="Bill Validation">
+        <div class="tab-content">
+          <div class="table-header">
+            <h3>Bills Requiring Validation</h3>
+            <span class="record-count">{{ billingDataSource.data.length }} bills</span>
+          </div>
+
+          <div class="table-container">
+            <table mat-table [dataSource]="billingDataSource" matSort class="billing-table">
+              <!-- Created Date Column -->
+              <ng-container matColumnDef="createdDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Created Date</th>
+                <td mat-cell *matCellDef="let bill">
+                  {{ bill.createdDate | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+              </ng-container>
+
+              <!-- Bill ID Column -->
+              <ng-container matColumnDef="billId">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Bill ID</th>
+                <td mat-cell *matCellDef="let bill">
+                  <span class="bill-id">{{ bill.billId }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Patient Name Column -->
+              <ng-container matColumnDef="patientName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+                <td mat-cell *matCellDef="let bill">
+                  <div class="patient-info">
+                    <span class="patient-name">{{ bill.patientName }}</span>
+                    <span class="patient-id">ID: {{ bill.patientId }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Doctor Name Column -->
+              <ng-container matColumnDef="doctorName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+                <td mat-cell *matCellDef="let bill">
+                  <div class="doctor-info">
+                    <span class="doctor-name">{{ bill.doctorName }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Services Column -->
+              <ng-container matColumnDef="services">
+                <th mat-header-cell *matHeaderCellDef>Services</th>
+                <td mat-cell *matCellDef="let bill">
+                  <div class="services-info">
+                    <span class="service-count">{{ bill.services.length }} services</span>
+                    <span class="total-quantity">{{ getTotalServices(bill.services) }} items</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Final Amount Column -->
+              <ng-container matColumnDef="finalAmount">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Final Amount</th>
+                <td mat-cell *matCellDef="let bill">
+                  <div class="amount-info">
+                    <span class="final-amount">{{ formatCurrency(bill.finalAmount) }}</span>
+                    <span class="original-amount" *ngIf="bill.totalAmount !== bill.finalAmount">
+                      Original: {{ formatCurrency(bill.totalAmount) }}
+                    </span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Billing Staff Name Column -->
+              <ng-container matColumnDef="billingStaffName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Billing Staff</th>
+                <td mat-cell *matCellDef="let bill">
+                  <div class="staff-info">
+                    <span class="staff-name">{{ bill.billingStaffName }}</span>
+                    <span class="staff-id">ID: {{ bill.billingStaffId }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                <td mat-cell *matCellDef="let bill">
+                  <mat-chip [ngClass]="'status-' + getStatusColor(bill.status)">
+                    <mat-icon>{{ getStatusIcon(bill.status) }}</mat-icon>
+                    {{ bill.status }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let bill">
+                  <div class="action-buttons">
+                    <button mat-menu-trigger mat-icon-button matTooltip="Validation Actions">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #validationMenu="matMenu">
+                      <button mat-menu-item (click)="validateBill(bill, 'APPROVED')">
+                        <mat-icon>check_circle</mat-icon>
+                        Approve Bill
+                      </button>
+                      <button mat-menu-item (click)="validateBill(bill, 'REJECTED')">
+                        <mat-icon>cancel</mat-icon>
+                        Reject Bill
+                      </button>
+                      <button mat-menu-item (click)="validateBill(bill, 'NEEDS_REVISION')">
+                        <mat-icon>edit</mat-icon>
+                        Request Revision
+                      </button>
+                      <mat-divider></mat-divider>
+                      <button mat-menu-item (click)="validateServicePricing(bill)">
+                        <mat-icon>price_check</mat-icon>
+                        Validate Pricing
+                      </button>
+                      <button mat-menu-item (click)="verifyTaxCalculations(bill)">
+                        <mat-icon>calculate</mat-icon>
+                        Verify Tax
+                      </button>
+                      <button mat-menu-item (click)="flagBillingDiscrepancy(bill)">
+                        <mat-icon>flag</mat-icon>
+                        Flag Discrepancy
+                      </button>
+                      <button mat-menu-item (click)="requestBillCorrection(bill)">
+                        <mat-icon>feedback</mat-icon>
+                        Request Correction
+                      </button>
+                      <button mat-menu-item (click)="sendFeedbackToBillingStaff(bill.billingStaffId)">
+                        <mat-icon>message</mat-icon>
+                        Send Feedback
+                      </button>
+                    </mat-menu>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="billingColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: billingColumns;" 
+                  [ngClass]="{'pending-validation': row.status === 'FINALIZED'}"></tr>
+            </table>
+
+            <!-- Loading State -->
+            <div class="loading-state" *ngIf="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Loading billing data...</p>
+            </div>
+
+            <!-- No Data State -->
+            <div class="no-data-state" *ngIf="!loading && billingDataSource.data.length === 0">
+              <mat-icon>assignment</mat-icon>
+              <h3>No bills to validate</h3>
+              <p>All bills have been validated for the selected period.</p>
+            </div>
+          </div>
+
+          <!-- Paginator -->
+          <mat-paginator 
+            [pageSizeOptions]="[10, 25, 50]" 
+            showFirstLastButtons
+            aria-label="Select page of bills">
+          </mat-paginator>
+        </div>
+      </mat-tab>
+
+      <!-- Audit Trail Tab -->
+      <mat-tab label="Audit Trail">
+        <div class="tab-content">
+          <div class="table-header">
+            <h3>Bill Revision Audit Trail</h3>
+            <span class="record-count">{{ auditDataSource.data.length }} revisions</span>
+          </div>
+
+          <div class="table-container">
+            <table mat-table [dataSource]="auditDataSource" matSort class="audit-table">
+              <!-- Revision Date Column -->
+              <ng-container matColumnDef="revisionDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Revision Date</th>
+                <td mat-cell *matCellDef="let audit">
+                  {{ audit.revisionDate | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+              </ng-container>
+
+              <!-- Bill ID Column -->
+              <ng-container matColumnDef="billId">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Bill ID</th>
+                <td mat-cell *matCellDef="let audit">
+                  <span class="bill-id">{{ audit.billId }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Original Amount Column -->
+              <ng-container matColumnDef="originalAmount">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Original Amount</th>
+                <td mat-cell *matCellDef="let audit">
+                  <span class="original-amount">{{ formatCurrency(audit.originalAmount) }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Revised Amount Column -->
+              <ng-container matColumnDef="revisedAmount">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Revised Amount</th>
+                <td mat-cell *matCellDef="let audit">
+                  <span class="revised-amount" 
+                        [ngClass]="audit.revisedAmount > audit.originalAmount ? 'increase' : 'decrease'">
+                    {{ formatCurrency(audit.revisedAmount) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Revision Reason Column -->
+              <ng-container matColumnDef="revisionReason">
+                <th mat-header-cell *matHeaderCellDef>Revision Reason</th>
+                <td mat-cell *matCellDef="let audit">
+                  <span class="revision-reason">{{ audit.revisionReason }}</span>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Review Status</th>
+                <td mat-cell *matCellDef="let audit">
+                  <mat-chip *ngIf="audit.accountantReview" 
+                           [ngClass]="'status-' + getStatusColor(audit.accountantReview.status)">
+                    <mat-icon>{{ getStatusIcon(audit.accountantReview.status) }}</mat-icon>
+                    {{ audit.accountantReview.status }}
+                  </mat-chip>
+                  <mat-chip *ngIf="!audit.accountantReview" class="status-warning">
+                    <mat-icon>schedule</mat-icon>
+                    Pending Review
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let audit">
+                  <div class="action-buttons">
+                    <button mat-icon-button (click)="viewBillRevisionHistory(audit.billId)" 
+                            matTooltip="View Full History">
+                      <mat-icon>history</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="auditColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: auditColumns;"></tr>
+            </table>
+
+            <!-- No Data State -->
+            <div class="no-data-state" *ngIf="auditDataSource.data.length === 0">
+              <mat-icon>history</mat-icon>
+              <h3>No audit records</h3>
+              <p>No bill revisions found for the selected period.</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+
+  <!-- Integration Guidelines -->
+  <mat-card class="guidelines-card">
+    <mat-card-header>
+      <mat-card-title>Billing Staff Coordination Guidelines</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="guidelines-content">
+        <div class="guideline-section">
+          <h4>Bill Validation Process:</h4>
+          <ul>
+            <li>Review all service codes and quantities for accuracy</li>
+            <li>Verify pricing against approved service rates</li>
+            <li>Check discount applications and approvals</li>
+            <li>Validate tax calculations and compliance</li>
+            <li>Ensure proper documentation is attached</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Quality Control Checks:</h4>
+          <ul>
+            <li>Cross-reference with doctor's treatment notes</li>
+            <li>Verify patient insurance coverage and claims</li>
+            <li>Check for duplicate billing entries</li>
+            <li>Validate department and cost center assignments</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Communication with Billing Staff:</h4>
+          <ul>
+            <li>Provide clear feedback on validation results</li>
+            <li>Request specific corrections when needed</li>
+            <li>Document all interactions for audit purposes</li>
+            <li>Escalate persistent issues to management</li>
+          </ul>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

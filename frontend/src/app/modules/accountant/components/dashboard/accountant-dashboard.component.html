@@ -1,0 +1,186 @@
+<div class="accountant-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Accountant Dashboard</h1>
+      <p class="subtitle">Financial Records & Reconciliation Workspace</p>
+    </div>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshData()" matTooltip="Refresh Data">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="alerts.length > 0">
+    <mat-card *ngFor="let alert of alerts" class="alert-card" [ngClass]="'alert-' + alert.type">
+      <div class="alert-content">
+        <mat-icon>{{ getAlertIcon(alert.type) }}</mat-icon>
+        <span class="alert-message">{{ alert.message }}</span>
+        <button mat-button color="primary" (click)="handleAlertAction(alert)">
+          {{ alert.action }}
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="stats-grid">
+    <mat-card *ngFor="let stat of quickStats" class="stat-card" [ngClass]="'stat-' + stat.color">
+      <mat-card-content>
+        <div class="stat-header">
+          <mat-icon>{{ stat.icon }}</mat-icon>
+          <span class="trend" [ngClass]="stat.trend.startsWith('+') ? 'positive' : 'neutral'">
+            {{ stat.trend }}
+          </span>
+        </div>
+        <div class="stat-value">
+          {{ stat.title.includes('Total') || stat.title.includes('Payments') || stat.title.includes('Outstanding') 
+             ? formatCurrency(stat.value) : stat.value }}
+        </div>
+        <div class="stat-title">{{ stat.title }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Financial Overview -->
+    <mat-card class="overview-card">
+      <mat-card-header>
+        <mat-card-title>Financial Overview</mat-card-title>
+        <mat-card-subtitle>Today's Summary</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="overview-metrics" *ngIf="financialOverview">
+          <div class="metric">
+            <span class="label">Daily Revenue</span>
+            <span class="value">{{ formatCurrency(financialOverview.dailyRevenue) }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Monthly Revenue</span>
+            <span class="value">{{ formatCurrency(financialOverview.monthlyRevenue) }}</span>
+          </div>
+          <div class="metric">
+            <span class="label">Flagged Transactions</span>
+            <span class="value warn">{{ financialOverview.flaggedTransactions }}</span>
+          </div>
+        </div>
+        <div class="loading-state" *ngIf="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading financial data...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Activities -->
+    <mat-card class="activities-card">
+      <mat-card-header>
+        <mat-card-title>Recent Activities</mat-card-title>
+        <mat-card-subtitle>Latest accounting actions</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="activity-list">
+          <div *ngFor="let activity of recentActivities" class="activity-item">
+            <mat-icon [ngClass]="'activity-' + activity.type">
+              {{ getActivityIcon(activity.type) }}
+            </mat-icon>
+            <div class="activity-content">
+              <div class="activity-action">{{ activity.action }}</div>
+              <div class="activity-description">{{ activity.description }}</div>
+              <div class="activity-time">{{ activity.timestamp | date:'short' }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Quick Actions -->
+    <mat-card class="actions-card">
+      <mat-card-header>
+        <mat-card-title>Quick Actions</mat-card-title>
+        <mat-card-subtitle>Common accounting tasks</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-buttons">
+          <button mat-raised-button color="primary" routerLink="/accountant/payment-verification">
+            <mat-icon>sync</mat-icon>
+            Reconcile Payments
+          </button>
+          <button mat-raised-button color="accent" routerLink="/accountant/billing-records">
+            <mat-icon>receipt_long</mat-icon>
+            Review Bills
+          </button>
+          <button mat-raised-button routerLink="/accountant/receivables-tracking">
+            <mat-icon>account_balance</mat-icon>
+            Track Receivables
+          </button>
+          <button mat-raised-button routerLink="/accountant/reports">
+            <mat-icon>assessment</mat-icon>
+            Generate Reports
+          </button>
+          <button mat-raised-button routerLink="/accountant/ledger-management">
+            <mat-icon>book</mat-icon>
+            Manage Ledger
+          </button>
+          <button mat-raised-button routerLink="/accountant/audit-support">
+            <mat-icon>fact_check</mat-icon>
+            Audit Support
+          </button>
+          <button mat-raised-button routerLink="/accountant/cashier-coordination">
+            <mat-icon>people</mat-icon>
+            Cashier Coordination
+          </button>
+          <button mat-raised-button routerLink="/accountant/billing-coordination">
+            <mat-icon>assignment</mat-icon>
+            Billing Coordination
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <mat-card class="navigation-card">
+    <mat-tab-group>
+      <mat-tab label="Dashboard">
+        <div class="tab-content">
+          <p>You are currently viewing the main dashboard with financial overview and quick actions.</p>
+        </div>
+      </mat-tab>
+      <mat-tab label="Today's Summary">
+        <div class="tab-content">
+          <div class="summary-grid" *ngIf="financialOverview">
+            <div class="summary-item">
+              <h3>Revenue</h3>
+              <p class="amount">{{ formatCurrency(financialOverview.dailyRevenue) }}</p>
+            </div>
+            <div class="summary-item">
+              <h3>Collections</h3>
+              <p class="amount">{{ formatCurrency(financialOverview.paymentsReceived) }}</p>
+            </div>
+            <div class="summary-item">
+              <h3>Outstanding</h3>
+              <p class="amount warn">{{ formatCurrency(financialOverview.outstandingDues) }}</p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+      <mat-tab label="Pending Tasks">
+        <div class="tab-content">
+          <div class="task-list">
+            <div class="task-item">
+              <mat-icon>sync_problem</mat-icon>
+              <span>{{ financialOverview?.pendingReconciliations || 0 }} payments need reconciliation</span>
+            </div>
+            <div class="task-item">
+              <mat-icon>flag</mat-icon>
+              <span>{{ financialOverview?.flaggedTransactions || 0 }} transactions flagged for review</span>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</div>

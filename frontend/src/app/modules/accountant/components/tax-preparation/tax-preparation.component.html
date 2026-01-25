@@ -1,0 +1,228 @@
+<div class="tax-preparation">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Tax & Regulatory Preparation</h1>
+      <p class="subtitle">View tax-related billing data and prepare summaries (Data Only)</p>
+    </div>
+  </div>
+
+  <!-- Year Selection -->
+  <mat-card class="year-selection">
+    <mat-card-content>
+      <form [formGroup]="taxForm" class="year-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Tax Year</mat-label>
+          <mat-select formControlName="year" (selectionChange)="onYearChange()">
+            <mat-option *ngFor="let year of availableYears" [value]="year">
+              {{ year }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <div class="export-actions">
+          <button mat-raised-button color="primary" (click)="exportTaxData('PDF')" [disabled]="loading">
+            <mat-icon>picture_as_pdf</mat-icon>
+            Export PDF
+          </button>
+          <button mat-raised-button color="accent" (click)="exportTaxData('CSV')" [disabled]="loading">
+            <mat-icon>table_chart</mat-icon>
+            Export CSV
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tax Summary -->
+  <div class="tax-summary" *ngIf="taxData && !loading">
+    <mat-card class="summary-card revenue">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>trending_up</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ formatCurrency(taxData.totalRevenue || 0) }}</span>
+            <span class="label">Total Revenue</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card expenses">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>trending_down</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ formatCurrency(taxData.totalExpenses || 0) }}</span>
+            <span class="label">Total Expenses</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card taxable">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>account_balance</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ formatCurrency(taxData.taxableIncome || 0) }}</span>
+            <span class="label">Taxable Income</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card gst">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>receipt</mat-icon>
+          <div class="summary-info">
+            <span class="amount">{{ formatCurrency(taxData.gstCollected || 0) }}</span>
+            <span class="label">GST Collected</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tax Breakdown -->
+  <mat-card class="tax-breakdown" *ngIf="taxData && !loading">
+    <mat-card-header>
+      <mat-card-title>Tax Breakdown</mat-card-title>
+      <mat-card-subtitle>Detailed tax-related information for {{ taxForm.get('year')?.value }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="breakdown-grid">
+        <!-- Revenue Breakdown -->
+        <div class="breakdown-section">
+          <h4>Revenue Breakdown</h4>
+          <div class="breakdown-items">
+            <div class="breakdown-item">
+              <span class="label">Service Revenue:</span>
+              <span class="value">{{ formatCurrency(taxData.serviceRevenue || 0) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">Product Revenue:</span>
+              <span class="value">{{ formatCurrency(taxData.productRevenue || 0) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">Other Income:</span>
+              <span class="value">{{ formatCurrency(taxData.otherIncome || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expense Breakdown -->
+        <div class="breakdown-section">
+          <h4>Expense Breakdown</h4>
+          <div class="breakdown-items">
+            <div class="breakdown-item">
+              <span class="label">Operating Expenses:</span>
+              <span class="value">{{ formatCurrency(taxData.operatingExpenses || 0) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">Equipment & Supplies:</span>
+              <span class="value">{{ formatCurrency(taxData.equipmentExpenses || 0) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">Staff Costs:</span>
+              <span class="value">{{ formatCurrency(taxData.staffCosts || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GST Information -->
+        <div class="breakdown-section">
+          <h4>GST Information</h4>
+          <div class="breakdown-items">
+            <div class="breakdown-item">
+              <span class="label">GST Collected:</span>
+              <span class="value">{{ formatCurrency(taxData.gstCollected || 0) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">GST Paid:</span>
+              <span class="value">{{ formatCurrency(taxData.gstPaid || 0) }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="label">Net GST:</span>
+              <span class="value" [ngClass]="(taxData.gstCollected - taxData.gstPaid) >= 0 ? 'positive' : 'negative'">
+                {{ formatCurrency((taxData.gstCollected || 0) - (taxData.gstPaid || 0)) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quarterly Summary -->
+        <div class="breakdown-section">
+          <h4>Quarterly Summary</h4>
+          <div class="breakdown-items">
+            <div class="breakdown-item" *ngFor="let quarter of taxData.quarterlyData || []">
+              <span class="label">Q{{ quarter.quarter }}:</span>
+              <span class="value">{{ formatCurrency(quarter.revenue || 0) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading tax data...</p>
+  </div>
+
+  <!-- Important Notice -->
+  <mat-card class="notice-card">
+    <mat-card-content>
+      <div class="notice-content">
+        <mat-icon color="warn">info</mat-icon>
+        <div class="notice-text">
+          <h4>Important Notice</h4>
+          <p>This data is for preparation purposes only. The Accountant does not have tax submission authority. 
+             Please consult with a qualified tax professional or the Accounts Manager for actual tax filing.</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tax Guidelines -->
+  <mat-card class="guidelines-card">
+    <mat-card-header>
+      <mat-card-title>Tax Preparation Guidelines</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="guidelines-content">
+        <div class="guideline-section">
+          <h4>Accountant Responsibilities:</h4>
+          <ul>
+            <li>Compile and organize tax-related financial data</li>
+            <li>Prepare summaries for tax filing purposes</li>
+            <li>Export data in formats suitable for tax software</li>
+            <li>Ensure data accuracy and completeness</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Data Included:</h4>
+          <ul>
+            <li><strong>Revenue:</strong> All service and product income</li>
+            <li><strong>Expenses:</strong> Deductible business expenses</li>
+            <li><strong>GST/VAT:</strong> Tax collected and paid</li>
+            <li><strong>Quarterly:</strong> Breakdown by fiscal quarters</li>
+          </ul>
+        </div>
+
+        <div class="guideline-section">
+          <h4>Important Notes:</h4>
+          <ul>
+            <li>Data is read-only and for preparation purposes only</li>
+            <li>No tax submission or filing authority</li>
+            <li>Consult tax professionals for actual filing</li>
+            <li>Export data for external accounting systems</li>
+          </ul>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

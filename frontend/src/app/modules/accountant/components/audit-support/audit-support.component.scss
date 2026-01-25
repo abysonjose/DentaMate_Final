@@ -1,0 +1,247 @@
+.audit-support {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-content {
+      h1 {
+        margin: 0;
+        color: #1976d2;
+        font-size: 1.75rem;
+        font-weight: 500;
+      }
+
+      .subtitle {
+        margin: 4px 0 0 0;
+        color: #666;
+        font-size: 0.875rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 24px;
+
+    .filters-form {
+      .filter-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        mat-form-field {
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .filter-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: stretch;
+
+          mat-form-field {
+            min-width: auto;
+          }
+        }
+      }
+    }
+  }
+
+  .table-card {
+    margin-bottom: 24px;
+
+    .table-container {
+      overflow-x: auto;
+
+      .audit-table {
+        width: 100%;
+        min-width: 1000px;
+
+        .user-id {
+          font-family: monospace;
+          font-size: 0.875rem;
+          color: #333;
+          background-color: #f5f5f5;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+
+        .entity-type {
+          font-weight: 500;
+          color: #666;
+          text-transform: uppercase;
+          font-size: 0.75rem;
+          letter-spacing: 0.5px;
+        }
+
+        .entity-id {
+          font-family: monospace;
+          font-size: 0.875rem;
+          color: #333;
+        }
+
+        .details-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .details-preview {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #666;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          button {
+            min-width: auto;
+            width: 32px;
+            height: 32px;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+        }
+
+        .notes-cell {
+          .has-notes {
+            font-size: 0.875rem;
+            color: #333;
+            font-style: italic;
+          }
+
+          .no-notes {
+            font-size: 0.875rem;
+            color: #999;
+            font-style: italic;
+          }
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+        }
+
+        mat-chip {
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+
+        p {
+          margin-top: 16px;
+          color: #666;
+        }
+      }
+
+      .no-data-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px;
+        text-align: center;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          color: #ccc;
+          margin-bottom: 16px;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          color: #666;
+        }
+
+        p {
+          margin: 0;
+          color: #999;
+        }
+      }
+    }
+  }
+
+  .guidelines-card {
+    .guidelines-content {
+      .guideline-section {
+        margin-bottom: 24px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        h4 {
+          margin: 0 0 12px 0;
+          color: #1976d2;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 20px;
+
+          li {
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: #666;
+
+            strong {
+              color: #333;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+
+      .header-actions {
+        justify-content: center;
+      }
+    }
+  }
+}

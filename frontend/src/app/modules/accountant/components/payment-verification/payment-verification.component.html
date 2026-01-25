@@ -1,0 +1,271 @@
+<div class="payment-verification">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Payment Verification</h1>
+      <p class="subtitle">Match payments with invoices and manage reconciliation</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportRecords()">
+        <mat-icon>download</mat-icon>
+        Export Records
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Summary -->
+  <div class="status-summary">
+    <mat-card class="summary-card matched">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>check_circle</mat-icon>
+          <div class="summary-info">
+            <span class="count">{{ getMatchedCount() }}</span>
+            <span class="label">Matched</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card pending">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>schedule</mat-icon>
+          <div class="summary-info">
+            <span class="count">{{ getPendingCount() }}</span>
+            <span class="label">Pending</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card flagged">
+      <mat-card-content>
+        <div class="summary-content">
+          <mat-icon>flag</mat-icon>
+          <div class="summary-info">
+            <span class="count">{{ getFlaggedCount() }}</span>
+            <span class="label">Flagged</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filters</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Start Date</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>End Date</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Payment Mode</mat-label>
+            <mat-select formControlName="paymentMode">
+              <mat-option *ngFor="let mode of paymentModeOptions" [value]="mode.value">
+                {{ mode.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Reconciliation Status</mat-label>
+            <mat-select formControlName="reconciliationStatus">
+              <mat-option *ngFor="let status of reconciliationStatusOptions" [value]="status.value">
+                {{ status.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Patient Name</mat-label>
+            <input matInput formControlName="patientName" placeholder="Search by patient name">
+          </mat-form-field>
+
+          <div class="filter-actions">
+            <button mat-button (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Payment Records Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>Payment Records</mat-card-title>
+      <mat-card-subtitle>{{ dataSource.data.length }} records found</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="payment-table">
+          <!-- Payment Date Column -->
+          <ng-container matColumnDef="paymentDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Payment Date</th>
+            <td mat-cell *matCellDef="let record">
+              {{ record.paymentDate | date:'dd/MM/yyyy HH:mm' }}
+            </td>
+          </ng-container>
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="patient-info">
+                <span class="patient-name">{{ record.patientName }}</span>
+                <span class="bill-id">Bill: {{ record.billId }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Amount Column -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Amount</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="amount">{{ formatCurrency(record.amount) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Payment Mode Column -->
+          <ng-container matColumnDef="paymentMode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Payment Mode</th>
+            <td mat-cell *matCellDef="let record">
+              <mat-chip class="payment-mode-chip">
+                <mat-icon>{{ getPaymentModeIcon(record.paymentMode) }}</mat-icon>
+                {{ record.paymentMode }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Transaction ID Column -->
+          <ng-container matColumnDef="transactionId">
+            <th mat-header-cell *matHeaderCellDef>Transaction ID</th>
+            <td mat-cell *matCellDef="let record">
+              <span class="transaction-id" *ngIf="record.transactionId">
+                {{ record.transactionId }}
+              </span>
+              <span class="no-transaction-id" *ngIf="!record.transactionId">
+                N/A
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Reconciliation Status Column -->
+          <ng-container matColumnDef="reconciliationStatus">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let record">
+              <mat-chip [ngClass]="'status-' + getStatusColor(record.reconciliationStatus)">
+                <mat-icon>{{ getStatusIcon(record.reconciliationStatus) }}</mat-icon>
+                {{ record.reconciliationStatus }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let record">
+              <div class="action-buttons">
+                <button mat-icon-button (click)="viewPaymentDetails(record)" matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button mat-icon-button (click)="openReconciliationDialog(record)" 
+                        matTooltip="Update Reconciliation" color="primary">
+                  <mat-icon>sync</mat-icon>
+                </button>
+                <button mat-menu-trigger mat-icon-button matTooltip="Quick Actions">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #quickActions="matMenu">
+                  <button mat-menu-item (click)="quickReconcile(record, 'MATCHED')">
+                    <mat-icon>check_circle</mat-icon>
+                    Mark as Matched
+                  </button>
+                  <button mat-menu-item (click)="quickReconcile(record, 'FLAGGED')">
+                    <mat-icon>flag</mat-icon>
+                    Flag for Review
+                  </button>
+                  <button mat-menu-item (click)="quickReconcile(record, 'PENDING')">
+                    <mat-icon>schedule</mat-icon>
+                    Mark as Pending
+                  </button>
+                </mat-menu>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              [ngClass]="{'flagged-row': row.reconciliationStatus === 'FLAGGED'}"></tr>
+        </table>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading payment records...</p>
+        </div>
+
+        <!-- No Data State -->
+        <div class="no-data-state" *ngIf="!loading && dataSource.data.length === 0">
+          <mat-icon>payments</mat-icon>
+          <h3>No payment records found</h3>
+          <p>Try adjusting your filters or check back later.</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]" 
+        showFirstLastButtons
+        aria-label="Select page of payment records">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Reconciliation Summary -->
+  <mat-card class="reconciliation-summary">
+    <mat-card-header>
+      <mat-card-title>Reconciliation Summary</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="label">Total Payments</span>
+          <span class="value">{{ dataSource.data.length }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total Amount</span>
+          <span class="value">{{ formatCurrency(dataSource.data.reduce((sum, record) => sum + record.amount, 0)) }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Reconciliation Rate</span>
+          <span class="value">{{ dataSource.data.length > 0 ? ((getMatchedCount() / dataSource.data.length) * 100).toFixed(1) : 0 }}%</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Pending Review</span>
+          <span class="value warn">{{ getPendingCount() + getFlaggedCount() }}</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

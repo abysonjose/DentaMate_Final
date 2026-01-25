@@ -1,0 +1,94 @@
+<div class="reconciliation-dialog">
+  <h2 mat-dialog-title>Update Reconciliation Status</h2>
+  
+  <mat-dialog-content>
+    <!-- Payment Details -->
+    <div class="payment-details">
+      <h3>Payment Details</h3>
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="label">Patient:</span>
+          <span class="value">{{ data.record.patientName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Bill ID:</span>
+          <span class="value">{{ data.record.billId }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Amount:</span>
+          <span class="value amount">{{ formatCurrency(data.record.amount) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Payment Mode:</span>
+          <span class="value">
+            <mat-icon>{{ getPaymentModeIcon(data.record.paymentMode) }}</mat-icon>
+            {{ data.record.paymentMode }}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Payment Date:</span>
+          <span class="value">{{ data.record.paymentDate | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="data.record.transactionId">
+          <span class="label">Transaction ID:</span>
+          <span class="value transaction-id">{{ data.record.transactionId }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reconciliation Form -->
+    <form [formGroup]="reconciliationForm" class="reconciliation-form">
+      <h3>Reconciliation Status</h3>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+            <div class="status-option">
+              <mat-icon [ngClass]="'status-' + status.color">{{ status.icon }}</mat-icon>
+              {{ status.label }}
+            </div>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Notes</mat-label>
+        <textarea matInput 
+                  formControlName="notes" 
+                  rows="4" 
+                  placeholder="Add any notes about this reconciliation..."></textarea>
+      </mat-form-field>
+    </form>
+
+    <!-- Status Guidelines -->
+    <div class="status-guidelines">
+      <h4>Status Guidelines:</h4>
+      <div class="guideline-item">
+        <mat-icon class="status-success">check_circle</mat-icon>
+        <div class="guideline-content">
+          <strong>Matched:</strong> Payment has been successfully matched with the corresponding invoice
+        </div>
+      </div>
+      <div class="guideline-item">
+        <mat-icon class="status-warning">schedule</mat-icon>
+        <div class="guideline-content">
+          <strong>Pending:</strong> Payment requires further verification or matching
+        </div>
+      </div>
+      <div class="guideline-item">
+        <mat-icon class="status-danger">flag</mat-icon>
+        <div class="guideline-content">
+          <strong>Flagged:</strong> Payment has discrepancies that need attention
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!reconciliationForm.valid">
+      Update Status
+    </button>
+  </mat-dialog-actions>
+</div>

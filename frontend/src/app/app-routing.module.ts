@@ -125,6 +125,14 @@ const routes: Routes = [
     data: { roles: ['cashier'] }
   },
 
+  // Accountant module
+  {
+    path: 'accountant',
+    loadChildren: () => import('./modules/accountant/accountant.module').then(m => m.AccountantModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['accountant'] }
+  },
+
   // Admin modules
   {
     path: 'branch-admin',

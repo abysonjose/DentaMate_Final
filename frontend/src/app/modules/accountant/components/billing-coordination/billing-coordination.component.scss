@@ -1,0 +1,375 @@
+.billing-coordination {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-content {
+      h1 {
+        margin: 0;
+        color: #1976d2;
+        font-size: 1.75rem;
+        font-weight: 500;
+      }
+
+      .subtitle {
+        margin: 4px 0 0 0;
+        color: #666;
+        font-size: 0.875rem;
+      }
+    }
+
+    .header-actions {
+      .filter-form {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+
+        mat-form-field {
+          min-width: 150px;
+        }
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          gap: 8px;
+        }
+      }
+    }
+  }
+
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .summary-card {
+      &.pending {
+        border-left: 4px solid #ff9800;
+      }
+
+      &.approved {
+        border-left: 4px solid #4caf50;
+      }
+
+      &.rejected {
+        border-left: 4px solid #f44336;
+      }
+
+      &.total {
+        border-left: 4px solid #2196f3;
+      }
+
+      .summary-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+        }
+
+        .pending mat-icon {
+          color: #ff9800;
+        }
+
+        .approved mat-icon {
+          color: #4caf50;
+        }
+
+        .rejected mat-icon {
+          color: #f44336;
+        }
+
+        .total mat-icon {
+          color: #2196f3;
+        }
+
+        .summary-info {
+          display: flex;
+          flex-direction: column;
+
+          .amount {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .label {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+    }
+  }
+
+  .tabs-card {
+    margin-bottom: 24px;
+
+    .tab-content {
+      padding: 24px;
+
+      .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        h3 {
+          margin: 0;
+          color: #333;
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+
+        .record-count {
+          color: #666;
+          font-size: 0.875rem;
+        }
+      }
+
+      .table-container {
+        overflow-x: auto;
+
+        .billing-table,
+        .audit-table {
+          width: 100%;
+          min-width: 1000px;
+
+          .bill-id {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+          }
+
+          .patient-info,
+          .doctor-info,
+          .staff-info {
+            display: flex;
+            flex-direction: column;
+
+            .patient-name,
+            .doctor-name,
+            .staff-name {
+              font-weight: 500;
+              color: #333;
+            }
+
+            .patient-id,
+            .staff-id {
+              font-size: 0.75rem;
+              color: #666;
+            }
+          }
+
+          .services-info {
+            display: flex;
+            flex-direction: column;
+
+            .service-count {
+              font-weight: 500;
+              color: #333;
+            }
+
+            .total-quantity {
+              font-size: 0.75rem;
+              color: #666;
+            }
+          }
+
+          .amount-info {
+            display: flex;
+            flex-direction: column;
+
+            .final-amount {
+              font-weight: 600;
+              color: #333;
+              font-size: 1rem;
+            }
+
+            .original-amount {
+              font-size: 0.75rem;
+              color: #666;
+              text-decoration: line-through;
+            }
+          }
+
+          .original-amount {
+            color: #666;
+          }
+
+          .revised-amount {
+            font-weight: 600;
+
+            &.increase {
+              color: #f44336;
+            }
+
+            &.decrease {
+              color: #4caf50;
+            }
+          }
+
+          .revision-reason {
+            font-size: 0.875rem;
+            color: #666;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .status-primary {
+            background-color: #e3f2fd;
+            color: #1976d2;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .status-success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .status-warning {
+            background-color: #fff3e0;
+            color: #f57c00;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .status-danger {
+            background-color: #ffebee;
+            color: #d32f2f;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .action-buttons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+          }
+
+          .pending-validation {
+            background-color: #fff3e0;
+          }
+        }
+
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 60px 20px;
+
+          p {
+            margin-top: 16px;
+            color: #666;
+          }
+        }
+
+        .no-data-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 60px 20px;
+          text-align: center;
+
+          mat-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            color: #ccc;
+            margin-bottom: 16px;
+          }
+
+          h3 {
+            margin: 0 0 8px 0;
+            color: #666;
+          }
+
+          p {
+            margin: 0;
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+
+  .guidelines-card {
+    .guidelines-content {
+      .guideline-section {
+        margin-bottom: 24px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        h4 {
+          margin: 0 0 12px 0;
+          color: #1976d2;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 20px;
+
+          li {
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: #666;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+}
