@@ -21,7 +21,8 @@ const serviceRoutes = {
   '/api/collaboration': 'http://collaboration-service:3017',
   '/api/notifications': 'http://notification-service:3018',
   '/api/analytics': 'http://analytics-service:3019',
-  '/api/audit': 'http://audit-service:3020'
+  '/api/audit': 'http://audit-service:3020',
+  '/api/saas-admin': 'http://saas-admin-service:3021'
 };
 
 const routingMiddleware = async (req, res, next) => {

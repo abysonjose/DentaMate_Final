@@ -1,0 +1,468 @@
+.saas-admin-dashboard {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  .top-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 64px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .menu-button {
+      margin-right: 16px;
+    }
+
+    .toolbar-title {
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+
+    .health-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      margin-right: 16px;
+
+      &.success {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+      }
+
+      &.primary {
+        background: rgba(33, 150, 243, 0.2);
+        color: #2196f3;
+      }
+
+      &.accent {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+      }
+
+      &.warn {
+        background: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+      }
+
+      .health-text {
+        font-size: 14px;
+        font-weight: 500;
+      }
+    }
+
+    .alerts-button,
+    .user-button {
+      margin-left: 8px;
+    }
+  }
+
+  .sidenav-container {
+    flex: 1;
+    margin-top: 64px;
+
+    .sidenav {
+      width: 320px;
+      background: #fafafa;
+      border-right: 1px solid #e0e0e0;
+
+      .quick-stats-panel {
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+        background: white;
+
+        h3 {
+          margin: 0 0 16px 0;
+          font-size: 16px;
+          font-weight: 500;
+          color: #333;
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+
+          .stat-item {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            background: #f5f5f5;
+
+            &.critical {
+              background: #ffebee;
+              border: 1px solid #ffcdd2;
+            }
+
+            .stat-value {
+              font-size: 18px;
+              font-weight: 600;
+              color: #333;
+              margin-bottom: 4px;
+            }
+
+            .stat-label {
+              font-size: 12px;
+              color: #666;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+          }
+        }
+
+        .loading-stats {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          padding: 20px;
+
+          span {
+            font-size: 14px;
+            color: #666;
+          }
+        }
+      }
+
+      .nav-list {
+        padding: 0;
+
+        .nav-expansion-panel {
+          box-shadow: none;
+          border-bottom: 1px solid #e0e0e0;
+
+          ::ng-deep .mat-expansion-panel-header {
+            padding: 0 16px;
+            height: 56px;
+
+            .mat-expansion-panel-header-title {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+
+              mat-icon {
+                color: #666;
+              }
+
+              span {
+                font-size: 14px;
+                font-weight: 500;
+              }
+            }
+          }
+
+          ::ng-deep .mat-expansion-panel-content {
+            .mat-expansion-panel-body {
+              padding: 0;
+            }
+          }
+
+          .child-nav-item {
+            padding-left: 56px;
+            height: 48px;
+
+            ::ng-deep .mat-list-item-content {
+              padding: 0 16px;
+            }
+
+            mat-icon {
+              color: #666;
+              font-size: 20px;
+            }
+
+            span {
+              font-size: 14px;
+            }
+
+            &.active {
+              background: #e3f2fd;
+              color: #1976d2;
+
+              mat-icon {
+                color: #1976d2;
+              }
+            }
+          }
+        }
+
+        .nav-item {
+          height: 56px;
+          border-bottom: 1px solid #e0e0e0;
+
+          ::ng-deep .mat-list-item-content {
+            padding: 0 16px;
+          }
+
+          mat-icon {
+            color: #666;
+          }
+
+          span {
+            font-size: 14px;
+            font-weight: 500;
+          }
+
+          &.active {
+            background: #e3f2fd;
+            color: #1976d2;
+
+            mat-icon {
+              color: #1976d2;
+            }
+          }
+
+          &:hover {
+            background: #f5f5f5;
+          }
+        }
+
+        .nav-badge {
+          margin-left: auto;
+          font-size: 11px;
+          height: 20px;
+          line-height: 20px;
+          min-height: 20px;
+        }
+      }
+    }
+
+    .main-content {
+      background: #f5f5f5;
+      min-height: calc(100vh - 64px);
+      padding: 0;
+    }
+  }
+}
+
+// Alerts Menu Styles
+::ng-deep .alerts-menu {
+  .mat-menu-panel {
+    min-width: 400px;
+    max-width: 500px;
+    max-height: 600px;
+  }
+
+  .alerts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 8px;
+    border-bottom: 1px solid #e0e0e0;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .alerts-count {
+      font-size: 12px;
+      color: #666;
+      background: #f5f5f5;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+  }
+
+  .alerts-list {
+    max-height: 400px;
+    overflow-y: auto;
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background: #f9f9f9;
+      }
+
+      &.unread {
+        background: #fff3e0;
+        border-left: 4px solid #ff9800;
+      }
+
+      .alert-icon {
+        flex-shrink: 0;
+        margin-top: 2px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+
+          &.warn {
+            color: #f44336;
+          }
+
+          &.accent {
+            color: #ff9800;
+          }
+
+          &.primary {
+            color: #2196f3;
+          }
+
+          &.basic {
+            color: #666;
+          }
+        }
+      }
+
+      .alert-content {
+        flex: 1;
+        min-width: 0;
+
+        .alert-title {
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 4px;
+          color: #333;
+        }
+
+        .alert-message {
+          font-size: 13px;
+          color: #666;
+          line-height: 1.4;
+          margin-bottom: 4px;
+        }
+
+        .alert-time {
+          font-size: 11px;
+          color: #999;
+        }
+      }
+
+      .alert-dismiss {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        margin-top: -4px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+
+  .no-alerts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 40px 20px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #4caf50;
+    }
+
+    span {
+      font-size: 14px;
+    }
+  }
+}
+
+// User Menu Styles
+::ng-deep .mat-menu-panel {
+  .user-info {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #f9f9f9;
+
+    .user-name {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .user-email {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .saas-admin-dashboard {
+    .sidenav-container {
+      .sidenav {
+        width: 280px;
+
+        .quick-stats-panel {
+          padding: 16px;
+
+          .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+
+            .stat-item {
+              padding: 8px;
+
+              .stat-value {
+                font-size: 16px;
+              }
+
+              .stat-label {
+                font-size: 11px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  ::ng-deep .alerts-menu .mat-menu-panel {
+    min-width: 320px;
+    max-width: 90vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .saas-admin-dashboard {
+    .top-toolbar {
+      .toolbar-title {
+        font-size: 18px;
+      }
+
+      .health-indicator {
+        display: none;
+      }
+    }
+
+    .sidenav-container {
+      .sidenav {
+        width: 100vw;
+      }
+    }
+  }
+}

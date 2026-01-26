@@ -1,0 +1,196 @@
+<div class="saas-admin-dashboard">
+  <!-- Top Navigation Bar -->
+  <mat-toolbar class="top-toolbar" color="primary">
+    <button mat-icon-button (click)="toggleSidenav()" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+    
+    <span class="toolbar-title">DentaMate SaaS Admin</span>
+    
+    <span class="spacer"></span>
+    
+    <!-- System Health Indicator -->
+    <div class="health-indicator" [class]="getHealthColor(quickStats.systemHealth)">
+      <mat-icon [class]="getHealthColor(quickStats.systemHealth)">
+        {{ getHealthIcon(quickStats.systemHealth) }}
+      </mat-icon>
+      <span class="health-text">{{ quickStats.systemHealth }}%</span>
+    </div>
+    
+    <!-- Alerts Button -->
+    <button mat-icon-button [matMenuTriggerFor]="alertsMenu" class="alerts-button">
+      <mat-icon [matBadge]="unreadAlertsCount" [matBadgeHidden]="unreadAlertsCount === 0" matBadgeColor="warn">
+        notifications
+      </mat-icon>
+    </button>
+    
+    <!-- User Menu -->
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-button">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Alerts Menu -->
+  <mat-menu #alertsMenu="matMenu" class="alerts-menu">
+    <div class="alerts-header">
+      <h3>System Alerts</h3>
+      <span class="alerts-count">{{ unreadAlertsCount }} unread</span>
+    </div>
+    
+    <div class="alerts-list" *ngIf="alerts.length > 0; else noAlerts">
+      <div 
+        *ngFor="let alert of alerts.slice(0, 5)" 
+        class="alert-item"
+        [class.unread]="!alert.isRead"
+        (click)="markAlertAsRead(alert)"
+      >
+        <div class="alert-icon">
+          <mat-icon [class]="getAlertColor(alert.severity)">
+            {{ getAlertIcon(alert.type) }}
+          </mat-icon>
+        </div>
+        <div class="alert-content">
+          <div class="alert-title">{{ alert.title }}</div>
+          <div class="alert-message">{{ alert.message }}</div>
+          <div class="alert-time">{{ alert.timestamp | date:'short' }}</div>
+        </div>
+        <button 
+          mat-icon-button 
+          class="alert-dismiss"
+          (click)="dismissAlert(alert, $event)"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    
+    <ng-template #noAlerts>
+      <div class="no-alerts">
+        <mat-icon>check_circle</mat-icon>
+        <span>No alerts</span>
+      </div>
+    </ng-template>
+    
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="navigateTo('/saas-admin/audit-logs')">
+      <mat-icon>list</mat-icon>
+      <span>View All Alerts</span>
+    </button>
+  </mat-menu>
+
+  <!-- User Menu -->
+  <mat-menu #userMenu="matMenu">
+    <div class="user-info" *ngIf="currentUser$ | async as user">
+      <div class="user-name">{{ user.name }}</div>
+      <div class="user-email">{{ user.email }}</div>
+      <div class="user-role">SaaS Administrator</div>
+    </div>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="openUserProfile()">
+      <mat-icon>person</mat-icon>
+      <span>Profile</span>
+    </button>
+    <button mat-menu-item (click)="openSettings()">
+      <mat-icon>settings</mat-icon>
+      <span>Settings</span>
+    </button>
+    <button mat-menu-item (click)="openHelp()">
+      <mat-icon>help</mat-icon>
+      <span>Help</span>
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
+
+  <!-- Main Layout -->
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Side Navigation -->
+    <mat-sidenav 
+      #sidenav 
+      [opened]="sidenavOpened" 
+      mode="side" 
+      class="sidenav"
+    >
+      <!-- Quick Stats Panel -->
+      <div class="quick-stats-panel">
+        <h3>Quick Stats</h3>
+        <div class="stats-grid" *ngIf="!isLoadingStats; else loadingStats">
+          <div class="stat-item">
+            <div class="stat-value">{{ formatNumber(quickStats.totalClinics) }}</div>
+            <div class="stat-label">Total Clinics</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ formatNumber(quickStats.activeLicenses) }}</div>
+            <div class="stat-label">Active Licenses</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ formatCurrency(quickStats.monthlyRevenue) }}</div>
+            <div class="stat-label">Monthly Revenue</div>
+          </div>
+          <div class="stat-item critical" *ngIf="quickStats.criticalAlerts > 0">
+            <div class="stat-value">{{ quickStats.criticalAlerts }}</div>
+            <div class="stat-label">Critical Alerts</div>
+          </div>
+        </div>
+        
+        <ng-template #loadingStats>
+          <div class="loading-stats">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Loading stats...</span>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Navigation Menu -->
+      <mat-nav-list class="nav-list">
+        <ng-container *ngFor="let item of navigationItems">
+          <!-- Parent items with children -->
+          <mat-expansion-panel *ngIf="item.children && item.children.length > 0" class="nav-expansion-panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>{{ item.icon }}</mat-icon>
+                <span>{{ item.label }}</span>
+                <mat-chip *ngIf="item.badge" class="nav-badge">{{ item.badge }}</mat-chip>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            
+            <mat-nav-list>
+              <a 
+                *ngFor="let child of item.children"
+                mat-list-item 
+                [routerLink]="child.route"
+                routerLinkActive="active"
+                class="child-nav-item"
+              >
+                <mat-icon matListIcon>{{ child.icon }}</mat-icon>
+                <span matLine>{{ child.label }}</span>
+                <mat-chip *ngIf="child.badge" class="nav-badge">{{ child.badge }}</mat-chip>
+              </a>
+            </mat-nav-list>
+          </mat-expansion-panel>
+          
+          <!-- Direct navigation items -->
+          <a 
+            *ngIf="!item.children || item.children.length === 0"
+            mat-list-item 
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            class="nav-item"
+          >
+            <mat-icon matListIcon>{{ item.icon }}</mat-icon>
+            <span matLine>{{ item.label }}</span>
+            <mat-chip *ngIf="item.badge" class="nav-badge">{{ item.badge }}</mat-chip>
+          </a>
+        </ng-container>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content Area -->
+    <mat-sidenav-content class="main-content">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

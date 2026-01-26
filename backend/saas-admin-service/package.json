@@ -1,0 +1,35 @@
+{
+  "name": "saas-admin-service",
+  "version": "1.0.0",
+  "description": "SaaS Admin Service for DentaMate Platform Management",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "express": "^5.0.1",
+    "mongoose": "^8.8.4",
+    "redis": "^4.7.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.4.1",
+    "winston": "^3.17.0",
+    "uuid": "^11.0.3",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "jest": "^29.7.0",
+    "eslint": "^9.17.0"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}
