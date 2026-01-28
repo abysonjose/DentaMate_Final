@@ -137,6 +137,32 @@ services:
       - redis
       - tenant-organization-service
 
+  # Nursing Care Service (Node.js)
+  nursing-care-service:
+    build: ./backend/nursing-care-service
+    container_name: dentamate-nursing-care-service
+    restart: always
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/dentamate_nursing_care?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key
+      - FRONTEND_URL=http://localhost:4200
+      - API_GATEWAY_URL=http://api-gateway:3000
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:8080
+      - TOKEN_QUEUE_SERVICE_URL=http://token-queue-service:3005
+      - LOG_LEVEL=info
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+    depends_on:
+      - mongodb
+      - redis
+      - tenant-organization-service
+
   # Frontend (Angular)
   frontend:
     build: ./frontend
