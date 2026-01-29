@@ -1,0 +1,37 @@
+{
+  "name": "prescription-ocr-service",
+  "version": "1.0.0",
+  "description": "OCR and normalization service for prescription processing in DentaMate platform",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py",
+    "dev": "uvicorn app:app --reload --host 0.0.0.0 --port 8007",
+    "test": "pytest tests/",
+    "lint": "flake8 src/ tests/",
+    "format": "black src/ tests/",
+    "install": "pip install -r requirements.txt",
+    "install-dev": "pip install -r requirements.txt -r requirements-dev.txt",
+    "docker-build": "docker build -t prescription-ocr-service .",
+    "docker-run": "docker run -p 8007:8007 prescription-ocr-service"
+  },
+  "keywords": [
+    "ocr",
+    "prescription",
+    "medical",
+    "fastapi",
+    "python",
+    "tesseract",
+    "easyocr",
+    "dentamate"
+  ],
+  "author": "DentaMate Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dentamate/prescription-ocr-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dentamate/prescription-ocr-service/issues"
+  },
+  "homepage": "https://github.com/dentamate/prescription-ocr-service#readme"
+}
