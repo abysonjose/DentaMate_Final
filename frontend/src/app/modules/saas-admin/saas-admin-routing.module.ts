@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from '../../core/guards/auth.guard';
 import { RoleGuard } from '../../core/guards/role.guard';
 
+// Components
 import { SaasAdminDashboardComponent } from './components/dashboard/saas-admin-dashboard.component';
 import { PlatformOverviewComponent } from './components/platform-overview/platform-overview.component';
 import { LicenseManagementComponent } from './components/license-management/license-management.component';
@@ -18,7 +18,7 @@ const routes: Routes = [
   {
     path: '',
     component: SaasAdminDashboardComponent,
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [RoleGuard],
     data: { roles: ['SAAS_ADMIN'] },
     children: [
       {

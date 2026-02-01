@@ -1,61 +1,59 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-export interface PlatformOverview {
-  overview: {
-    totalClinics: number;
-    activeClinics: number;
-    inactiveClinics: number;
-    totalRevenue: number;
-    activeUsers: number;
-    systemHealth: number;
-  };
-  growth: {
-    newSignups: number;
-    churnedClinics: number;
-    netGrowth: number;
-    revenueGrowth: {
-      current: number;
-      previous: number;
-      growthPercentage: number;
-    };
-  };
-  distribution: {
-    subscriptionDistribution: Array<{
-      plan: string;
-      clinics: number;
-      revenue: number;
-    }>;
-    geographicDistribution: Array<{
-      region: string;
-      clinics: number;
-      users: number;
-    }>;
-  };
-  alerts: Array<{
-    id: string;
-    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-    message: string;
-    timestamp: Date;
-    entityType: string;
-    entityId: string;
-    tenantId?: string;
-  }>;
+export interface PlatformMetrics {
+  totalTenants: number;
+  activeTenants: number;
+  trialTenants: number;
+  suspendedTenants: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
+  systemUptime: number;
+  activeServices: number;
+  totalServices: number;
+}
+
+export interface GrowthMetrics {
+  newSignups: number;
+  churnRate: number;
+  netGrowth: number;
+  revenueGrowth: number;
+}
+
+export interface ServiceStatus {
+  name: string;
+  status: 'healthy' | 'warning' | 'error';
+  uptime: number;
+  responseTime: number;
+  lastCheck: Date;
 }
 
 export interface SystemAlert {
   id: string;
-  type: 'LICENSE_EXPIRY' | 'USAGE_LIMIT' | 'PAYMENT_FAILED' | 'SYSTEM_ERROR' | 'SECURITY_INCIDENT';
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  type: 'error' | 'warning' | 'info' | 'license_expiring' | 'service_down' | 'payment_failed';
   title: string;
   message: string;
   timestamp: Date;
-  isRead: boolean;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  acknowledged: boolean;
+}
+
+export interface ChartData {
+  labels: string[];
+  values: number[];
+}
+
+export interface RecentActivity {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  timestamp: Date;
+  userId?: string;
   tenantId?: string;
-  actionRequired: boolean;
-  actionUrl?: string;
 }
 
 export interface MaintenanceMode {
@@ -64,7 +62,7 @@ export interface MaintenanceMode {
   scheduledStart?: Date;
   scheduledEnd?: Date;
   affectedServices: string[];
-  notifyUsers: boolean;
+  bypassUsers: string[];
 }
 
 @Injectable({
@@ -72,49 +70,51 @@ export interface MaintenanceMode {
 })
 export class SaasAdminService {
   private readonly apiUrl = `${environment.apiUrl}/saas-admin`;
-  
-  private alertsSubject = new BehaviorSubject<SystemAlert[]>([]);
-  public alerts$ = this.alertsSubject.asObservable();
-  
-  private maintenanceModeSubject = new BehaviorSubject<MaintenanceMode>({
-    enabled: false,
-    message: '',
-    affectedServices: [],
-    notifyUsers: false
-  });
-  public maintenanceMode$ = this.maintenanceModeSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    this.loadSystemAlerts();
-    this.loadMaintenanceStatus();
-  }
+  constructor(private http: HttpClient) {}
 
   // Dashboard & Overview
-  getDashboardOverview(period: string = '30d'): Observable<{ success: boolean; data: PlatformOverview }> {
-    const params = new HttpParams().set('period', period);
-    return this.http.get<{ success: boolean; data: PlatformOverview }>(`${this.apiUrl}/dashboard/overview`, { params });
+  getPlatformMetrics(): Observable<PlatformMetrics> {
+    return this.http.get<PlatformMetrics>(`${this.apiUrl}/dashboard/metrics`);
   }
 
-  getUsageAnalytics(period: string = '30d'): Observable<any> {
-    const params = new HttpParams().set('period', period);
-    return this.http.get(`${this.apiUrl}/analytics/usage`, { params });
+  getGrowthMetrics(): Observable<GrowthMetrics> {
+    return this.http.get<GrowthMetrics>(`${this.apiUrl}/dashboard/growth`);
   }
 
-  getRevenueAnalytics(period: string = '12m'): Observable<any> {
-    const params = new HttpParams().set('period', period);
-    return this.http.get(`${this.apiUrl}/analytics/revenue`, { params });
+  getServiceStatuses(): Observable<ServiceStatus[]> {
+    return this.http.get<ServiceStatus[]>(`${this.apiUrl}/system/services/status`);
   }
 
-  getCustomerAnalytics(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/analytics/customers`);
+  getSystemAlerts(): Observable<SystemAlert[]> {
+    return this.http.get<SystemAlert[]>(`${this.apiUrl}/alerts`);
   }
 
-  // System Alerts Management
-  private loadSystemAlerts(): void {
-    // In a real implementation, this would load from the backend
-    // For now, we'll simulate some alerts
-    const mockAlerts: SystemAlert[] = [
-      {
+  dismissAlert(alertId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/alerts/${alertId}/dismiss`, {});
+  }
+
+  acknowledgeAlert(alertId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/alerts/${alertId}/acknowledge`, {});
+  }
+
+  // Chart Data
+  getRevenueChartData(months: number): Observable<ChartData> {
+    const params = new HttpParams().set('months', months.toString());
+    return this.http.get<ChartData>(`${this.apiUrl}/analytics/revenue-chart`, { params });
+  }
+
+  getSignupChartData(days: number): Observable<ChartData> {
+    const params = new HttpParams().set('days', days.toString());
+    return this.http.get<ChartData>(`${this.apiUrl}/analytics/signup-chart`, { params });
+  }
+
+  getTenantDistributionData(): Observable<ChartData> {
+    return this.http.get<ChartData>(`${this.apiUrl}/analytics/tenant-distribution`);
+  }
+
+  // Recent Activities
+  getRecentActivit
         id: 'alert_1',
         type: 'LICENSE_EXPIRY',
         severity: 'HIGH',

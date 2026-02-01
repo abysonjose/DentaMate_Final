@@ -14,13 +14,17 @@ import { AuthRoutingModule } from './auth-routing.module';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { TenantSelectorComponent } from './components/tenant-selector/tenant-selector.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { AuthApiService } from './services/auth-api.service';
 
 @NgModule({
   declarations: [
     LoginComponent,
     RegisterComponent,
-    TenantSelectorComponent
+    TenantSelectorComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent
   ],
   imports: [
     CommonModule,

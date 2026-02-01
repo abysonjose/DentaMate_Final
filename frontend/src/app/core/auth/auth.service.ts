@@ -133,11 +133,16 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  hasRole(role: string): boolean {
+  hasAnyRole(roles: string[]): boolean {
     const user = this.getCurrentUser();
-    return user?.role === role;
+    return user ? roles.includes(user.role) : false;
   }
 
+  setAuthData(user: User, tokens: { accessToken: string; refreshToken: string }): void {
+    this.setSession({ success: true, user, tokens });
+    this.currentUserSubject.next(user);
+  }
+}
   hasAnyRole(roles: string[]): boolean {
     const user = this.getCurrentUser();
     return user ? roles.includes(user.role) : false;

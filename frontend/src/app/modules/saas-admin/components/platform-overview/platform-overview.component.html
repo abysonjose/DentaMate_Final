@@ -1,0 +1,252 @@
+<div class="platform-overview">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Platform Overview</h1>
+      <p>Real-time insights into your DentaMate SaaS platform</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="overview-content" *ngIf="!loading; else loadingTemplate">
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+      <mat-card class="metric-card primary">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon>business</mat-icon>
+            <span class="metric-label">Total Tenants</span>
+          </div>
+          <div class="metric-value">{{ platformMetrics.totalTenants }}</div>
+          <div class="metric-change positive">
+            <mat-icon>trending_up</mat-icon>
+            <span>+{{ growthMetrics.newSignups }} this month</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card success">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon>verified_user</mat-icon>
+            <span class="metric-label">Active Licenses</span>
+          </div>
+          <div class="metric-value">{{ platformMetrics.activeTenants }}</div>
+          <div class="metric-change positive">
+            <mat-icon>trending_up</mat-icon>
+            <span>{{ formatPercentage((platformMetrics.activeTenants / platformMetrics.totalTenants) * 100) }} active</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card revenue">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon>attach_money</mat-icon>
+            <span class="metric-label">Monthly Revenue</span>
+          </div>
+          <div class="metric-value">{{ formatCurrency(platformMetrics.monthlyRevenue) }}</div>
+          <div class="metric-change positive">
+            <mat-icon>trending_up</mat-icon>
+            <span>+{{ formatPercentage(growthMetrics.revenueGrowth) }} growth</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="metric-card uptime">
+        <mat-card-content>
+          <div class="metric-header">
+            <mat-icon>monitor_heart</mat-icon>
+            <span class="metric-label">System Uptime</span>
+          </div>
+          <div class="metric-value">{{ formatPercentage(platformMetrics.systemUptime) }}</div>
+          <div class="metric-change">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ platformMetrics.activeServices }}/{{ platformMetrics.totalServices }} services</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="charts-row">
+        <!-- Tenant Distribution Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Tenant Distribution</mat-card-title>
+            <mat-card-subtitle>Current tenant status breakdown</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="tenantDistributionChart.data"
+                      [options]="tenantDistributionChart.options"
+                      [type]="tenantDistributionChart.type">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Revenue Trend Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>Revenue Trend</mat-card-title>
+            <mat-card-subtitle>Monthly revenue over the last 12 months</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="revenueChart.data"
+                      [options]="revenueChart.options"
+                      [type]="revenueChart.type">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <div class="charts-row">
+        <!-- New Signups Chart -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>New Signups</mat-card-title>
+            <mat-card-subtitle>Daily signups over the last 30 days</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="signupChart.data"
+                      [options]="signupChart.options"
+                      [type]="signupChart.type">
+              </canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Growth Metrics -->
+        <mat-card class="growth-metrics-card">
+          <mat-card-header>
+            <mat-card-title>Growth Metrics</mat-card-title>
+            <mat-card-subtitle>Key performance indicators</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="growth-metrics">
+              <div class="growth-metric">
+                <div class="metric-icon">
+                  <mat-icon color="primary">person_add</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-title">New Signups</span>
+                  <span class="metric-value">{{ growthMetrics.newSignups }}</span>
+                  <span class="metric-period">this month</span>
+                </div>
+              </div>
+
+              <div class="growth-metric">
+                <div class="metric-icon">
+                  <mat-icon color="accent">trending_down</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-title">Churn Rate</span>
+                  <span class="metric-value">{{ formatPercentage(growthMetrics.churnRate) }}</span>
+                  <span class="metric-period">monthly</span>
+                </div>
+              </div>
+
+              <div class="growth-metric">
+                <div class="metric-icon">
+                  <mat-icon color="primary">trending_up</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-title">Net Growth</span>
+                  <span class="metric-value">{{ formatPercentage(growthMetrics.netGrowth) }}</span>
+                  <span class="metric-period">monthly</span>
+                </div>
+              </div>
+
+              <div class="growth-metric">
+                <div class="metric-icon">
+                  <mat-icon color="primary">attach_money</mat-icon>
+                </div>
+                <div class="metric-info">
+                  <span class="metric-title">Revenue Growth</span>
+                  <span class="metric-value">{{ formatPercentage(growthMetrics.revenueGrowth) }}</span>
+                  <span class="metric-period">monthly</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Service Status and Recent Activities -->
+    <div class="bottom-section">
+      <!-- Service Status -->
+      <mat-card class="service-status-card">
+        <mat-card-header>
+          <mat-card-title>Service Status</mat-card-title>
+          <mat-card-subtitle>Real-time status of all microservices</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="service-list">
+            <div class="service-item" *ngFor="let service of serviceStatuses">
+              <div class="service-info">
+                <mat-icon [color]="getServiceStatusColor(service.status)">
+                  {{ getServiceStatusIcon(service.status) }}
+                </mat-icon>
+                <div class="service-details">
+                  <span class="service-name">{{ service.name }}</span>
+                  <span class="service-metrics">
+                    {{ formatPercentage(service.uptime) }} uptime • {{ service.responseTime }}ms avg
+                  </span>
+                </div>
+              </div>
+              <div class="service-status">
+                <mat-chip [color]="getServiceStatusColor(service.status)" selected>
+                  {{ service.status | titlecase }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Recent Activities -->
+      <mat-card class="recent-activities-card">
+        <mat-card-header>
+          <mat-card-title>Recent Activities</mat-card-title>
+          <mat-card-subtitle>Latest platform activities</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="activities-list">
+            <div class="activity-item" *ngFor="let activity of recentActivities">
+              <div class="activity-icon">
+                <mat-icon>{{ getActivityIcon(activity.type) }}</mat-icon>
+              </div>
+              <div class="activity-content">
+                <div class="activity-title">{{ activity.title }}</div>
+                <div class="activity-description">{{ activity.description }}</div>
+                <div class="activity-time">{{ activity.timestamp | date:'short' }}</div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Loading Template -->
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading platform overview...</p>
+    </div>
+  </ng-template>
+</div>

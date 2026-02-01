@@ -52,12 +52,20 @@ export class RegisterComponent implements OnInit {
   }
 
   loadTenants(): void {
-    // For now, use mock data. Later connect to real API
-    this.tenants = [
-      { id: '1', name: 'Demo Dental Clinic', domain: 'demo', isActive: true },
-      { id: '2', name: 'City Dental Care', domain: 'city', isActive: true },
-      { id: '3', name: 'Smile Dental Center', domain: 'smile', isActive: true }
-    ];
+    this.authApiService.getTenants().subscribe({
+      next: (tenants) => {
+        this.tenants = tenants.filter(t => t.isActive);
+      },
+      error: (error) => {
+        console.error('Failed to load tenants:', error);
+        // Fallback to mock data if API fails
+        this.tenants = [
+          { id: '1', name: 'Demo Dental Clinic', domain: 'demo', isActive: true },
+          { id: '2', name: 'City Dental Care', domain: 'city', isActive: true },
+          { id: '3', name: 'Smile Dental Center', domain: 'smile', isActive: true }
+        ];
+      }
+    });
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -111,14 +119,13 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  private showSuccess(message: string): void {
+  private showError(message: string): void {
     this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      panelClass: ['success-snackbar']
+      duration: 5000,
+      panelClass: ['error-snackbar']
     });
   }
-
-  private showError(message: string): void {
+}  private showError(message: string): void {
     this.snackBar.open(message, 'Close', {
       duration: 5000,
       panelClass: ['error-snackbar']

@@ -1,24 +1,25 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { Subject, takeUntil, filter } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil, filter } from 'rxjs/operators';
+import { SaasAdminService } from '../../services/saas-admin.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { SaasAdminService, SystemAlert } from '../../services/saas-admin.service';
 
 interface NavigationItem {
+  path: string;
   label: string;
   icon: string;
-  route: string;
   badge?: number;
-  children?: NavigationItem[];
+  badgeColor?: string;
 }
 
-interface QuickStats {
-  totalClinics: number;
-  activeLicenses: number;
-  monthlyRevenue: number;
-  systemHealth: number;
-  criticalAlerts: number;
-  expiringLicenses: number;
+interface Alert {
+  id: string;
+  type: 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  timestamp: Date;
+  actions?: { label: string; action: () => void }[];
 }
 
 @Component({
@@ -29,124 +30,72 @@ interface QuickStats {
 export class SaasAdminDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
-  currentUser$ = this.authService.currentUser$;
-  alerts: SystemAlert[] = [];
-  unreadAlertsCount = 0;
-  criticalAlertsCount = 0;
+  currentUser: any;
+  currentRoute = 'overview';
   sidenavOpened = true;
-  currentRoute = '';
-  
-  quickStats: QuickStats = {
-    totalClinics: 0,
-    activeLicenses: 0,
-    monthlyRevenue: 0,
-    systemHealth: 0,
-    criticalAlerts: 0,
-    expiringLicenses: 0
-  };
-  
-  isLoadingStats = true;
+  alerts: Alert[] = [];
   
   navigationItems: NavigationItem[] = [
     {
+      path: 'overview',
       label: 'Platform Overview',
-      icon: 'dashboard',
-      route: '/saas-admin/overview'
+      icon: 'dashboard'
     },
     {
+      path: 'licenses',
       label: 'License Management',
       icon: 'verified_user',
-      route: '/saas-admin/licenses'
+      badge: 0,
+      badgeColor: 'warn'
     },
     {
+      path: 'subscription-plans',
       label: 'Subscription Plans',
-      icon: 'subscriptions',
-      route: '/saas-admin/subscription-plans'
+      icon: 'payment'
     },
     {
+      path: 'tenant-onboarding',
       label: 'Tenant Onboarding',
-      icon: 'group_add',
-      route: '/saas-admin/tenant-onboarding'
+      icon: 'business'
     },
     {
-      label: 'Analytics & Reports',
-      icon: 'analytics',
-      route: '',
-      children: [
-        {
-          label: 'Revenue Analytics',
-          icon: 'trending_up',
-          route: '/saas-admin/revenue-analytics'
-        },
-        {
-          label: 'Usage Analytics',
-          icon: 'bar_chart',
-          route: '/saas-admin/usage-analytics'
-        },
-        {
-          label: 'Customer Analytics',
-          icon: 'people_alt',
-          route: '/saas-admin/customer-analytics'
-        }
-      ]
+      path: 'revenue-analytics',
+      label: 'Revenue Analytics',
+      icon: 'trending_up'
     },
     {
-      label: 'System Management',
-      icon: 'settings',
-      route: '',
-      children: [
-        {
-          label: 'System Monitoring',
-          icon: 'monitor_heart',
-          route: '/saas-admin/system-monitoring'
-        },
-        {
-          label: 'Feature Control',
-          icon: 'toggle_on',
-          route: '/saas-admin/feature-control'
-        },
-        {
-          label: 'Maintenance Control',
-          icon: 'build',
-          route: '/saas-admin/maintenance'
-        }
-      ]
+      path: 'system-monitoring',
+      label: 'System Monitoring',
+      icon: 'monitor_heart'
     },
     {
-      label: 'Audit & Compliance',
-      icon: 'security',
-      route: '',
-      children: [
-        {
-          label: 'Audit Logs',
-          icon: 'history',
-          route: '/saas-admin/audit-logs'
-        },
-        {
-          label: 'Security Events',
-          icon: 'shield',
-          route: '/saas-admin/security-events'
-        },
-        {
-          label: 'Compliance Reports',
-          icon: 'assignment',
-          route: '/saas-admin/compliance-reports'
-        }
-      ]
+      path: 'feature-control',
+      label: 'Feature Control',
+      icon: 'tune'
+    },
+    {
+      path: 'audit-logs',
+      label: 'Audit Logs',
+      icon: 'history'
+    },
+    {
+      path: 'maintenance',
+      label: 'Maintenance',
+      icon: 'build'
     }
   ];
 
   constructor(
-    private authService: AuthService,
+    private router: Router,
     private saasAdminService: SaasAdminService,
-    private router: Router
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.loadSystemAlerts();
-    this.loadQuickStats();
-    this.subscribeToRouteChanges();
-    this.subscribeToRealTimeUpdates();
+    this.loadCurrentUser();
+    this.setupRouteTracking();
+    this.loadAlerts();
+    this.loadNavigationBadges();
   }
 
   ngOnDestroy(): void {
@@ -154,183 +103,111 @@ export class SaasAdminDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private subscribeToRouteChanges(): void {
+  private loadCurrentUser(): void {
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser = user;
+      });
+  }
+
+  private setupRouteTracking(): void {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
         takeUntil(this.destroy$)
       )
       .subscribe((event: NavigationEnd) => {
-        this.currentRoute = event.url;
+        const urlSegments = event.urlAfterRedirects.split('/');
+        this.currentRoute = urlSegments[urlSegments.length - 1] || 'overview';
       });
   }
 
-  private loadSystemAlerts(): void {
-    this.saasAdminService.alerts$
+  private loadAlerts(): void {
+    this.saasAdminService.getSystemAlerts()
       .pipe(takeUntil(this.destroy$))
       .subscribe(alerts => {
-        this.alerts = alerts;
-        this.unreadAlertsCount = this.saasAdminService.getUnreadAlertsCount();
-        this.criticalAlertsCount = this.saasAdminService.getCriticalAlertsCount();
-        this.quickStats.criticalAlerts = this.criticalAlertsCount;
+        this.alerts = alerts.map(alert => ({
+          ...alert,
+          actions: this.getAlertActions(alert)
+        }));
       });
   }
 
-  private loadQuickStats(): void {
-    this.isLoadingStats = true;
-    
-    this.saasAdminService.getDashboardOverview('7d')
+  private loadNavigationBadges(): void {
+    // Load expiring licenses count
+    this.saasAdminService.getExpiringLicensesCount(30)
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.success) {
-            const data = response.data;
-            this.quickStats = {
-              totalClinics: data.overview.totalClinics,
-              activeLicenses: data.overview.activeClinics,
-              monthlyRevenue: data.overview.totalRevenue,
-              systemHealth: data.overview.systemHealth,
-              criticalAlerts: this.criticalAlertsCount,
-              expiringLicenses: data.alerts.filter(alert => alert.severity === 'HIGH').length
-            };
-          }
-          this.isLoadingStats = false;
-        },
-        error: (error) => {
-          console.error('Error loading quick stats:', error);
-          this.isLoadingStats = false;
+      .subscribe(count => {
+        const licenseItem = this.navigationItems.find(item => item.path === 'licenses');
+        if (licenseItem) {
+          licenseItem.badge = count;
+          licenseItem.badgeColor = count > 0 ? 'warn' : 'primary';
         }
       });
   }
 
-  private subscribeToRealTimeUpdates(): void {
-    // Subscribe to real-time updates every 30 seconds
-    this.saasAdminService.subscribeToRealTimeUpdates()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          if (data.success) {
-            // Update quick stats with latest data
-            const overview = data.data.overview;
-            this.quickStats = {
-              ...this.quickStats,
-              totalClinics: overview.totalClinics,
-              activeLicenses: overview.activeClinics,
-              monthlyRevenue: overview.totalRevenue,
-              systemHealth: overview.systemHealth
-            };
+  private getAlertActions(alert: any): { label: string; action: () => void }[] {
+    switch (alert.type) {
+      case 'license_expiring':
+        return [
+          {
+            label: 'View Licenses',
+            action: () => this.router.navigate(['/saas-admin/licenses'])
           }
-        },
-        error: (error) => {
-          console.error('Real-time update error:', error);
-        }
-      });
+        ];
+      case 'service_down':
+        return [
+          {
+            label: 'Check Status',
+            action: () => this.router.navigate(['/saas-admin/system-monitoring'])
+          }
+        ];
+      case 'payment_failed':
+        return [
+          {
+            label: 'View Revenue',
+            action: () => this.router.navigate(['/saas-admin/revenue-analytics'])
+          }
+        ];
+      default:
+        return [];
+    }
+  }
+
+  navigateTo(path: string): void {
+    this.router.navigate(['/saas-admin', path]);
+  }
+
+  dismissAlert(alertId: string): void {
+    this.alerts = this.alerts.filter(alert => alert.id !== alertId);
+    this.saasAdminService.dismissAlert(alertId).subscribe();
   }
 
   toggleSidenav(): void {
     this.sidenavOpened = !this.sidenavOpened;
   }
 
-  navigateTo(route: string): void {
-    if (route) {
-      this.router.navigate([route]);
-    }
-  }
-
-  markAlertAsRead(alert: SystemAlert): void {
-    this.saasAdminService.markAlertAsRead(alert.id);
-    
-    if (alert.actionUrl) {
-      this.router.navigate([alert.actionUrl]);
-    }
-  }
-
-  dismissAlert(alert: SystemAlert, event: Event): void {
-    event.stopPropagation();
-    this.saasAdminService.dismissAlert(alert.id);
-  }
-
-  getAlertIcon(type: SystemAlert['type']): string {
-    switch (type) {
-      case 'LICENSE_EXPIRY':
-        return 'schedule';
-      case 'USAGE_LIMIT':
-        return 'warning';
-      case 'PAYMENT_FAILED':
-        return 'payment';
-      case 'SYSTEM_ERROR':
-        return 'error';
-      case 'SECURITY_INCIDENT':
-        return 'security';
-      default:
-        return 'info';
-    }
-  }
-
-  getAlertColor(severity: SystemAlert['severity']): string {
-    switch (severity) {
-      case 'CRITICAL':
-        return 'warn';
-      case 'HIGH':
-        return 'accent';
-      case 'MEDIUM':
-        return 'primary';
-      case 'LOW':
-        return 'basic';
-      default:
-        return 'basic';
-    }
-  }
-
-  getHealthColor(health: number): string {
-    if (health >= 95) return 'success';
-    if (health >= 85) return 'primary';
-    if (health >= 70) return 'accent';
-    return 'warn';
-  }
-
-  getHealthIcon(health: number): string {
-    if (health >= 95) return 'check_circle';
-    if (health >= 85) return 'info';
-    if (health >= 70) return 'warning';
-    return 'error';
-  }
-
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  }
-
-  formatNumber(num: number): string {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-  }
-
   logout(): void {
-    this.authService.logout().subscribe(() => {
-      this.router.navigate(['/auth/login']);
-    });
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 
-  openUserProfile(): void {
-    // Navigate to user profile or open profile dialog
-    console.log('Open user profile');
+  getAlertIcon(type: string): string {
+    switch (type) {
+      case 'error': return 'error';
+      case 'warning': return 'warning';
+      case 'info': return 'info';
+      default: return 'notifications';
+    }
   }
 
-  openSettings(): void {
-    this.router.navigate(['/saas-admin/system-configuration']);
-  }
-
-  openHelp(): void {
-    // Open help documentation or support
-    console.log('Open help');
+  getAlertColor(type: string): string {
+    switch (type) {
+      case 'error': return 'warn';
+      case 'warning': return 'accent';
+      case 'info': return 'primary';
+      default: return 'primary';
+    }
   }
 }

@@ -40,23 +40,21 @@ export class LoginComponent implements OnInit {
   }
 
   loadTenants(): void {
-    // For now, use mock data. Later connect to real API
-    this.tenants = [
-      { id: '1', name: 'Demo Dental Clinic', domain: 'demo', isActive: true },
-      { id: '2', name: 'City Dental Care', domain: 'city', isActive: true },
-      { id: '3', name: 'Smile Dental Center', domain: 'smile', isActive: true }
-    ];
-    
-    // Uncomment when tenant API is ready
-    // this.authApiService.getTenants().subscribe({
-    //   next: (tenants) => {
-    //     this.tenants = tenants.filter(t => t.isActive);
-    //   },
-    //   error: (error) => {
-    //     console.error('Failed to load tenants:', error);
-    //     this.showError('Failed to load clinic list');
-    //   }
-    // });
+    this.authApiService.getTenants().subscribe({
+      next: (tenants) => {
+        this.tenants = tenants.filter(t => t.isActive);
+      },
+      error: (error) => {
+        console.error('Failed to load tenants:', error);
+        // Fallback to mock data if API fails
+        this.tenants = [
+          { id: '1', name: 'Demo Dental Clinic', domain: 'demo', isActive: true },
+          { id: '2', name: 'City Dental Care', domain: 'city', isActive: true },
+          { id: '3', name: 'Smile Dental Center', domain: 'smile', isActive: true }
+        ];
+        this.showError('Failed to load clinic list. Using demo data.');
+      }
+    });
   }
 
   onLogin(): void {
@@ -96,8 +94,37 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  onForgotPassword(): void {
+    this.router.navigate(['/auth/forgot-password']);
+  }
+
+  getErrorMessage(field: string): string {
+    const control = this.loginForm.get(field);
+    if (control?.hasError('required')) {
+      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
+    }
+    if (control?.hasError('email')) {
+      return 'Please enter a valid email address';
+    }
+    if (control?.hasError('minlength')) {
+      return `${field.charAt(0).toUpperCase() + field.slice(1)} must be at least ${control.errors?.['minlength'].requiredLength} characters`;
+    }
+    return '';
+  }
+
   private showSuccess(message: string): void {
     this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
       duration: 3000,
       panelClass: ['success-snackbar']
     });

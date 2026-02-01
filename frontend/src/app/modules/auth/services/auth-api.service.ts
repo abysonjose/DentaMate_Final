@@ -68,4 +68,39 @@ export class AuthApiService {
   logout(): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/logout`, {});
   }
+
+  requestPasswordReset(email: string, tenantId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email, tenantId });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
+  }
+
+  verifyEmail(token: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/verify-email`, { token });
+  }
+
+  resendVerificationEmail(email: string, tenantId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/resend-verification`, { email, tenantId });
+  }
+
+  generateTwoFactorSecret(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/otp/generate`, {});
+  }
+
+  verifyTwoFactorToken(token: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/otp/verify`, { token });
+  }
+}
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/refresh`, { refreshToken });
+  }
+
+  getTenants(): Observable<Tenant[]> {
+    return this.http.get<Tenant[]>(`${this.apiUrl}/tenants`);
+  }
+
+  logout(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/logout`, {});
+  }
 }
