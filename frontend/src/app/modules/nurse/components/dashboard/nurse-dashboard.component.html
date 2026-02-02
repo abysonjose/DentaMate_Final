@@ -1,131 +1,195 @@
-<!-- Nurse Dashboard Header -->
-<div class="dashboard-header">
-  <div class="header-content">
-    <div class="shift-info">
-      <h1 class="dashboard-title">
-        <mat-icon>local_hospital</mat-icon>
-        Nurse Dashboard
-      </h1>
-      <div class="shift-details" *ngIf="currentShift">
-        <span class="shift-time">{{ currentShift.startTime }} - {{ currentShift.endTime }}</span>
-        <mat-chip-listbox>
-          <mat-chip [class]="'status-' + currentShift.status">
-            {{ currentShift.status | titlecase }}
-          </mat-chip>
-        </mat-chip-listbox>
-      </div>
-    </div>
-    
-    <div class="header-actions">
-      <div class="current-time">
-        {{ getCurrentTime() }}
-      </div>
-      <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
-        <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
-      </button>
-      <button mat-icon-button [matBadge]="getUnreadNotificationsCount()" 
-              [matBadgeHidden]="getUnreadNotificationsCount() === 0"
-              matBadgeColor="warn">
-        <mat-icon>notifications</mat-icon>
-      </button>
-    </div>
+<div class="nurse-dashboard">
+  <div class="dashboard-header">
+    <h1>Nurse Dashboard</h1>
+    <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="isLoading">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
   </div>
 
-  <!-- Shift Progress Bar -->
-  <div class="shift-progress" *ngIf="currentShift">
-    <mat-progress-bar mode="determinate" [value]="getShiftProgress()"></mat-progress-bar>
-    <span class="progress-text">Shift Progress: {{ getShiftProgress() | number:'1.0-0' }}%</span>
-  </div>
-</div>
+  <div class="dashboard-content" *ngIf="!isLoading; else loadingTemplate">
+    <!-- Quick Stats -->
+    <div class="stats-row">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon patients">people</mat-icon>
+            <div class="stat-info">
+              <h3>{{ assignedPatients.length }}</h3>
+              <p>Assigned Patients</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-<!-- Quick Stats Cards -->
-<div class="quick-stats" *ngIf="!isLoading">
-  <mat-card class="stat-card patients-card">
-    <mat-card-content>
-      <div class="stat-content">
-        <mat-icon class="stat-icon">people</mat-icon>
-        <div class="stat-details">
-          <div class="stat-number">{{ assignedPatients.length }}</div>
-          <div class="stat-label">Assigned Patients</div>
-        </div>
-      </div>
-      <div class="stat-subtitle">
-        {{ getPatientsAwaitingPreparation() }} awaiting preparation
-      </div>
-    </mat-card-content>
-  </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon tasks">assignment</mat-icon>
+            <div class="stat-info">
+              <h3>{{ pendingTasks.length }}</h3>
+              <p>Pending Tasks</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-  <mat-card class="stat-card tasks-card">
-    <mat-card-content>
-      <div class="stat-content">
-        <mat-icon class="stat-icon">assignment</mat-icon>
-        <div class="stat-details">
-          <div class="stat-number">{{ pendingTasks.length }}</div>
-          <div class="stat-label">Pending Tasks</div>
-        </div>
-      </div>
-      <div class="stat-subtitle">
-        {{ getUrgentTasksCount() }} urgent tasks
-      </div>
-    </mat-card-content>
-  </mat-card>
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <mat-icon class="stat-icon vitals">favorite</mat-icon>
+            <div class="stat-info">
+              <h3>{{ vitalsToRecord.length }}</h3>
+              <p>Vitals to Record</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
-  <mat-card class="stat-card doctors-card">
-    <mat-card-content>
-      <div class="stat-content">
-        <mat-icon class="stat-icon">medical_services</mat-icon>
-        <div class="stat-details">
-          <div class="stat-number">{{ currentShift?.assignedDoctors?.length || 0 }}</div>
-          <div class="stat-label">Assigned Doctors</div>
-        </div>
-      </div>
-      <div class="stat-subtitle">
-        {{ currentShift?.assignedRooms?.length || 0 }} treatment rooms
-      </div>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="stat-card queue-card">
-    <mat-card-content>
-      <div class="stat-content">
-        <mat-icon class="stat-icon">queue</mat-icon>
-        <div class="stat-details">
-          <div class="stat-number">{{ queueStatus.reduce((sum, q) => sum + q.waitingCount, 0) }}</div>
-          <div class="stat-label">Patients in Queue</div>
-        </div>
-      </div>
-      <div class="stat-subtitle">
-        Across all assigned doctors
-      </div>
-    </mat-card-content>
-  </mat-card>
-</div>
-
-<!-- Navigation Tabs -->
-<div class="navigation-section">
-  <mat-tab-group [(selectedIndex)]="selectedTabIndex" class="nurse-tabs">
-    <mat-tab *ngFor="let item of navigationItems" [label]="item.label">
-      <ng-template matTabContent>
+    <!-- Main Content Tabs -->
+    <mat-tab-group class="main-tabs">
+      <mat-tab label="Assigned Patients">
         <div class="tab-content">
-          <button mat-raised-button color="primary" 
-                  (click)="navigateToSection(item.route)"
-                  class="navigate-button">
-            <mat-icon>{{ item.icon }}</mat-icon>
-            Go to {{ item.label }}
-          </button>
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>My Assigned Patients</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-container" *ngIf="assignedPatients.length > 0; else noPatients">
+                <table mat-table [dataSource]="assignedPatients" class="patients-table">
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef>Patient Name</th>
+                    <td mat-cell *matCellDef="let patient">{{ patient.firstName }} {{ patient.lastName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="room">
+                    <th mat-header-cell *matHeaderCellDef>Room</th>
+                    <td mat-cell *matCellDef="let patient">{{ patient.roomNumber || 'N/A' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="condition">
+                    <th mat-header-cell *matHeaderCellDef>Condition</th>
+                    <td mat-cell *matCellDef="let patient">
+                      <mat-chip-listbox>
+                        <mat-chip [color]="getConditionColor(patient.condition)">
+                          {{ patient.condition }}
+                        </mat-chip>
+                      </mat-chip-listbox>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="lastVitals">
+                    <th mat-header-cell *matHeaderCellDef>Last Vitals</th>
+                    <td mat-cell *matCellDef="let patient">{{ patient.lastVitalsTime | date:'short' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let patient">
+                      <button mat-icon-button [routerLink]="['/nurse/patient-care']" [queryParams]="{patientId: patient.id}">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['name', 'room', 'condition', 'lastVitals', 'actions']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['name', 'room', 'condition', 'lastVitals', 'actions'];"></tr>
+                </table>
+              </div>
+              <ng-template #noPatients>
+                <div class="no-data">
+                  <mat-icon>people_outline</mat-icon>
+                  <p>No patients assigned</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
         </div>
-      </ng-template>
-    </mat-tab>
-  </mat-tab-group>
+      </mat-tab>
+
+      <mat-tab label="Pending Tasks">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Pending Tasks</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="tasks-list" *ngIf="pendingTasks.length > 0; else noTasks">
+                <mat-expansion-panel *ngFor="let task of pendingTasks" class="task-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon [color]="getTaskPriorityColor(task.priority)">{{ getTaskIcon(task.type) }}</mat-icon>
+                      {{ task.title }}
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Due: {{ task.dueTime | date:'short' }}
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <div class="task-details">
+                    <p><strong>Patient:</strong> {{ task.patientName }}</p>
+                    <p><strong>Description:</strong> {{ task.description }}</p>
+                    <p><strong>Priority:</strong> {{ task.priority }}</p>
+                    <div class="task-actions">
+                      <button mat-raised-button color="primary" (click)="completeTask(task.id)">
+                        Mark Complete
+                      </button>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </div>
+              <ng-template #noTasks>
+                <div class="no-data">
+                  <mat-icon>assignment_turned_in</mat-icon>
+                  <p>No pending tasks</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Vitals to Record">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Vitals Recording Queue</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="vitals-queue" *ngIf="vitalsToRecord.length > 0; else noVitals">
+                <div class="vitals-item" *ngFor="let vital of vitalsToRecord">
+                  <div class="vitals-info">
+                    <h4>{{ vital.patientName }}</h4>
+                    <p>Room: {{ vital.roomNumber }}</p>
+                    <p>Scheduled: {{ vital.scheduledTime | date:'short' }}</p>
+                  </div>
+                  <div class="vitals-actions">
+                    <button mat-raised-button color="primary" [routerLink]="['/nurse/patient-care']" 
+                            [queryParams]="{patientId: vital.patientId, action: 'vitals'}">
+                      Record Vitals
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noVitals>
+                <div class="no-data">
+                  <mat-icon>favorite_border</mat-icon>
+                  <p>No vitals to record</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading dashboard data...</p>
+    </div>
+  </ng-template>
 </div>
 
-<!-- Main Content Area -->
-<div class="main-content">
-  <router-outlet></router-outlet>
-</div>
-
-<!-- Loading Overlay -->
-<div class="loading-overlay" *ngIf="isLoading">
-  <mat-spinner diameter="50"></mat-spinner>
-  <p>Loading nurse dashboard...</p>
-</div>
+<router-outlet></router-outlet>

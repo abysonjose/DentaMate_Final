@@ -6,7 +6,7 @@ const API_GATEWAY_URL = 'http://localhost:3000';
 
 // Test JWT token - create a simple one for testing
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'dentamate-collaboration-jwt-secret-2024-super-secure-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'dentamate-collaboration-jwt-secret-2024-super-secure-key';
 
 const testUser = {
   userId: 'test-doctor-001',

@@ -11,6 +11,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: string;
+  roles?: string[]; // Support for multiple roles
   tenantId: string;
 }
 
@@ -53,7 +54,8 @@ export class AuthService {
     const user = this.getStoredUser();
     
     if (token && user) {
-      this.currentUserSubject.next(user);
+      const enhancedUser = this.enhanceUserFromToken(user);
+      this.currentUserSubject.next(enhancedUser);
     }
   }
 
@@ -64,8 +66,9 @@ export class AuthService {
       .pipe(
         tap(response => {
           if (response.success) {
+            const enhancedUser = this.enhanceUserFromToken(response.user);
             this.setSession(response);
-            this.currentUserSubject.next(response.user);
+            this.currentUserSubject.next(enhancedUser);
           }
         }),
         catchError(error => {
@@ -84,7 +87,7 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('current_user');
     this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/auth/login']);
   }
 
   refreshToken(): Observable<any> {
@@ -135,23 +138,50 @@ export class AuthService {
 
   hasAnyRole(roles: string[]): boolean {
     const user = this.getCurrentUser();
-    return user ? roles.includes(user.role) : false;
+    if (!user) return false;
+    
+    // Check both single role and roles array
+    const userRoles = user.roles || [user.role];
+    return roles.some(role => userRoles.includes(role));
   }
 
-  setAuthData(user: User, tokens: { accessToken: string; refreshToken: string }): void {
-    this.setSession({ success: true, user, tokens });
-    this.currentUserSubject.next(user);
-  }
-}
-  hasAnyRole(roles: string[]): boolean {
+  getUserRoles(): string[] {
     const user = this.getCurrentUser();
-    return user ? roles.includes(user.role) : false;
+    if (!user) return [];
+    
+    return user.roles || [user.role];
+  }
+
+  private parseJwtPayload(token: string): any {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('Error parsing JWT:', error);
+      return null;
+    }
+  }
+
+  private enhanceUserFromToken(user: User): User {
+    const token = this.getToken();
+    if (token) {
+      const payload = this.parseJwtPayload(token);
+      if (payload && payload.roles) {
+        user.roles = Array.isArray(payload.roles) ? payload.roles : [payload.roles];
+      }
+    }
+    return user;
   }
 
   setAuthData(user: User, tokens: { accessToken: string; refreshToken: string }): void {
     localStorage.setItem('access_token', tokens.accessToken);
     localStorage.setItem('refresh_token', tokens.refreshToken);
     localStorage.setItem('current_user', JSON.stringify(user));
-    this.currentUserSubject.next(user);
+    const enhancedUser = this.enhanceUserFromToken(user);
+    this.currentUserSubject.next(enhancedUser);
   }
 }

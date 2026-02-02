@@ -1,83 +1,58 @@
 <div class="lab-staff-dashboard">
-  <!-- Header Section -->
   <div class="dashboard-header">
-    <div class="header-content">
-      <div class="welcome-section">
-        <h1>Lab Staff Dashboard</h1>
-        <p *ngIf="profile" class="welcome-text">
-          Welcome back, {{ profile.name }} | {{ profile.department | titlecase }} Department
-        </p>
-      </div>
-      <div class="header-actions">
-        <button mat-icon-button (click)="onRefreshData()" matTooltip="Refresh Data">
-          <mat-icon>refresh</mat-icon>
-        </button>
-      </div>
-    </div>
+    <h1>Laboratory Dashboard</h1>
+    <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="isLoading">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading dashboard data...</p>
-  </div>
-
-  <!-- Dashboard Content -->
-  <div *ngIf="!isLoading" class="dashboard-content">
-    
-    <!-- Quick Stats Cards -->
-    <div class="stats-grid">
-      <mat-card class="stat-card pending">
+  <div class="dashboard-content" *ngIf="!isLoading; else loadingTemplate">
+    <!-- Quick Stats -->
+    <div class="stats-row">
+      <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>assignment</mat-icon>
-            </div>
+            <mat-icon class="stat-icon pending">pending_actions</mat-icon>
             <div class="stat-info">
-              <h3>{{ quickStats.pendingRequests }}</h3>
-              <p>Pending Requests</p>
+              <h3>{{ pendingTests.length }}</h3>
+              <p>Pending Tests</p>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="stat-card urgent">
+      <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>priority_high</mat-icon>
-            </div>
+            <mat-icon class="stat-icon progress">science</mat-icon>
             <div class="stat-info">
-              <h3>{{ quickStats.urgentRequests }}</h3>
-              <p>Urgent Requests</p>
+              <h3>{{ inProgressTests.length }}</h3>
+              <p>In Progress</p>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="stat-card completed">
+      <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>check_circle</mat-icon>
-            </div>
+            <mat-icon class="stat-icon completed">check_circle</mat-icon>
             <div class="stat-info">
-              <h3>{{ quickStats.completedToday }}</h3>
+              <h3>{{ completedTests.length }}</h3>
               <p>Completed Today</p>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="stat-card ai-processing">
+      <mat-card class="stat-card">
         <mat-card-content>
           <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>psychology</mat-icon>
-            </div>
+            <mat-icon class="stat-icon samples">local_hospital</mat-icon>
             <div class="stat-info">
-              <h3>{{ quickStats.aiProcessingQueue }}</h3>
-              <p>AI Processing</p>
+              <h3>{{ sampleCollection.length }}</h3>
+              <p>Sample Collection</p>
             </div>
           </div>
         </mat-card-content>
@@ -85,178 +60,207 @@
     </div>
 
     <!-- Main Content Tabs -->
-    <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="onTabChange($event.index)">
-      
-      <!-- Today's Worklist Tab -->
-      <mat-tab label="Today's Worklist">
+    <mat-tab-group class="main-tabs">
+      <mat-tab label="Pending Tests">
         <div class="tab-content">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>
-                <mat-icon>list_alt</mat-icon>
-                Today's Diagnostic Requests
-              </mat-card-title>
-              <mat-card-subtitle>
-                {{ todayWorklist.length }} items in your worklist
-              </mat-card-subtitle>
+              <mat-card-title>Tests Awaiting Processing</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div *ngIf="todayWorklist.length === 0" class="empty-state">
-                <mat-icon>assignment_turned_in</mat-icon>
-                <p>No pending requests for today. Great job!</p>
-              </div>
-              
-              <div *ngIf="todayWorklist.length > 0" class="worklist-items">
-                <div *ngFor="let item of todayWorklist" 
-                     class="worklist-item" 
-                     (click)="onWorklistItemClick(item)">
-                  <div class="item-header">
-                    <div class="patient-info">
-                      <h4>{{ item.patientName }}</h4>
-                      <span class="request-id">ID: {{ item.requestId }}</span>
+              <div class="tests-list" *ngIf="pendingTests.length > 0; else noPendingTests">
+                <div class="test-item" *ngFor="let test of pendingTests">
+                  <div class="test-header">
+                    <div class="test-info">
+                      <h4>{{ test.testName }}</h4>
+                      <p>Patient: {{ test.patientName }}</p>
+                      <p>Ordered by: Dr. {{ test.doctorName }}</p>
+                      <p>Ordered: {{ test.orderedAt | date:'short' }}</p>
                     </div>
-                    <div class="item-badges">
-                      <mat-chip [color]="getPriorityColor(item.priority)" selected>
-                        {{ item.priority | titlecase }}
-                      </mat-chip>
-                      <mat-chip [color]="getStatusColor(item.status)" selected>
-                        {{ item.status | titlecase }}
+                    <div class="test-priority">
+                      <mat-chip [color]="getTestPriorityColor(test.priority)">
+                        {{ test.priority }}
                       </mat-chip>
                     </div>
                   </div>
-                  <div class="item-details">
-                    <div class="test-type">
-                      <mat-icon>medical_services</mat-icon>
-                      <span>{{ item.testType | titlecase }}</span>
+                  <div class="test-details">
+                    <div class="detail-item">
+                      <mat-icon>{{ getTestTypeIcon(test.testType) }}</mat-icon>
+                      <span>{{ test.testType }}</span>
                     </div>
-                    <div class="scheduled-time" *ngIf="item.scheduledAt">
-                      <mat-icon>schedule</mat-icon>
-                      <span>{{ item.scheduledAt | date:'short' }}</span>
+                    <div class="detail-item" *ngIf="test.sampleType">
+                      <mat-icon>science</mat-icon>
+                      <span>{{ test.sampleType }}</span>
                     </div>
-                    <div class="duration">
-                      <mat-icon>timer</mat-icon>
-                      <span>{{ formatDuration(item.estimatedDuration) }}</span>
+                    <div class="detail-item" *ngIf="test.instructions">
+                      <mat-icon>description</mat-icon>
+                      <span>{{ test.instructions }}</span>
                     </div>
+                  </div>
+                  <div class="test-actions">
+                    <button mat-raised-button color="primary" (click)="startTest(test)">
+                      <mat-icon>play_arrow</mat-icon>
+                      Start Test
+                    </button>
                   </div>
                 </div>
               </div>
+              <ng-template #noPendingTests>
+                <div class="no-data">
+                  <mat-icon>pending_actions</mat-icon>
+                  <p>No pending tests</p>
+                </div>
+              </ng-template>
             </mat-card-content>
           </mat-card>
         </div>
       </mat-tab>
 
-      <!-- Alerts & Notifications Tab -->
-      <mat-tab label="Alerts">
+      <mat-tab label="In Progress">
         <div class="tab-content">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>
-                <mat-icon>notifications</mat-icon>
-                Recent Alerts
-                <mat-chip *ngIf="alerts.length > 0" [color]="'warn'" selected>
-                  {{ alerts.length }}
-                </mat-chip>
-              </mat-card-title>
+              <mat-card-title>Tests Currently Being Processed</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div *ngIf="alerts.length === 0" class="empty-state">
-                <mat-icon>notifications_off</mat-icon>
-                <p>No active alerts. All systems running smoothly!</p>
-              </div>
-              
-              <div *ngIf="alerts.length > 0" class="alerts-list">
-                <div *ngFor="let alert of alerts" 
-                     class="alert-item" 
-                     [class]="'alert-' + alert.severity"
-                     (click)="onAlertClick(alert)">
-                  <div class="alert-icon">
-                    <mat-icon [color]="getAlertColor(alert.severity)">
-                      {{ getAlertIcon(alert.type) }}
-                    </mat-icon>
-                  </div>
-                  <div class="alert-content">
-                    <h4>{{ alert.title }}</h4>
-                    <p>{{ alert.message }}</p>
-                    <div class="alert-meta">
-                      <span class="timestamp">{{ alert.timestamp | date:'short' }}</span>
-                      <mat-chip *ngIf="alert.actionRequired" color="warn" selected>
-                        Action Required
-                      </mat-chip>
+              <div class="tests-list" *ngIf="inProgressTests.length > 0; else noInProgressTests">
+                <div class="test-item" *ngFor="let test of inProgressTests">
+                  <div class="test-header">
+                    <div class="test-info">
+                      <h4>{{ test.testName }}</h4>
+                      <p>Patient: {{ test.patientName }}</p>
+                      <p>Started: {{ test.startedAt | date:'short' }}</p>
+                      <p>Expected completion: {{ test.expectedCompletionAt | date:'short' }}</p>
+                    </div>
+                    <div class="test-status">
+                      <mat-chip color="primary">In Progress</mat-chip>
                     </div>
                   </div>
+                  <div class="test-progress">
+                    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                    <p>Processing...</p>
+                  </div>
+                  <div class="test-actions">
+                    <button mat-raised-button color="accent" (click)="enterTestResult(test)">
+                      <mat-icon>assignment_turned_in</mat-icon>
+                      Enter Results
+                    </button>
+                  </div>
                 </div>
               </div>
+              <ng-template #noInProgressTests>
+                <div class="no-data">
+                  <mat-icon>science</mat-icon>
+                  <p>No tests in progress</p>
+                </div>
+              </ng-template>
             </mat-card-content>
           </mat-card>
         </div>
       </mat-tab>
 
-      <!-- Performance Metrics Tab -->
-      <mat-tab label="Performance">
+      <mat-tab label="Sample Collection">
         <div class="tab-content">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>
-                <mat-icon>analytics</mat-icon>
-                Performance Metrics
-              </mat-card-title>
+              <mat-card-title>Sample Collection Queue</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div *ngIf="metrics" class="metrics-grid">
-                <div class="metric-item">
-                  <div class="metric-label">Average Processing Time</div>
-                  <div class="metric-value">{{ metrics.averageProcessingTime }} min</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-label">Quality Score</div>
-                  <div class="metric-value">{{ metrics.qualityScore }}%</div>
-                  <mat-progress-bar 
-                    mode="determinate" 
-                    [value]="metrics.qualityScore"
-                    [color]="metrics.qualityScore >= 90 ? 'primary' : metrics.qualityScore >= 75 ? 'accent' : 'warn'">
-                  </mat-progress-bar>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-label">Rework Requests</div>
-                  <div class="metric-value">{{ metrics.reworkRequests }}</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-label">Reports Uploaded</div>
-                  <div class="metric-value">{{ metrics.completedReports }}</div>
+              <div class="samples-list" *ngIf="sampleCollection.length > 0; else noSamples">
+                <div class="sample-item" *ngFor="let sample of sampleCollection">
+                  <div class="sample-info">
+                    <h4>{{ sample.patientName }}</h4>
+                    <p>Test: {{ sample.testName }}</p>
+                    <p>Sample Type: {{ sample.sampleType }}</p>
+                    <p>Collection Time: {{ sample.scheduledCollectionTime | date:'short' }}</p>
+                  </div>
+                  <div class="sample-instructions" *ngIf="sample.collectionInstructions">
+                    <mat-icon>info</mat-icon>
+                    <span>{{ sample.collectionInstructions }}</span>
+                  </div>
+                  <div class="sample-actions">
+                    <button mat-raised-button color="primary" (click)="collectSample(sample)">
+                      <mat-icon>local_hospital</mat-icon>
+                      Collect Sample
+                    </button>
+                  </div>
                 </div>
               </div>
+              <ng-template #noSamples>
+                <div class="no-data">
+                  <mat-icon>local_hospital</mat-icon>
+                  <p>No samples to collect</p>
+                </div>
+              </ng-template>
             </mat-card-content>
           </mat-card>
         </div>
       </mat-tab>
 
+      <mat-tab label="Completed Tests">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Recently Completed Tests</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="table-container" *ngIf="completedTests.length > 0; else noCompletedTests">
+                <table mat-table [dataSource]="completedTests" class="completed-tests-table">
+                  <ng-container matColumnDef="completedAt">
+                    <th mat-header-cell *matHeaderCellDef>Completed</th>
+                    <td mat-cell *matCellDef="let test">{{ test.completedAt | date:'short' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="testName">
+                    <th mat-header-cell *matHeaderCellDef>Test</th>
+                    <td mat-cell *matCellDef="let test">{{ test.testName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="patientName">
+                    <th mat-header-cell *matHeaderCellDef>Patient</th>
+                    <td mat-cell *matCellDef="let test">{{ test.patientName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let test">
+                      <mat-chip [color]="getTestStatusColor(test.status)">
+                        {{ test.status }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="reportSent">
+                    <th mat-header-cell *matHeaderCellDef>Report Sent</th>
+                    <td mat-cell *matCellDef="let test">
+                      <mat-icon *ngIf="test.reportSent" color="primary">check_circle</mat-icon>
+                      <mat-icon *ngIf="!test.reportSent" color="warn">pending</mat-icon>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['completedAt', 'testName', 'patientName', 'status', 'reportSent']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['completedAt', 'testName', 'patientName', 'status', 'reportSent'];"></tr>
+                </table>
+              </div>
+              <ng-template #noCompletedTests>
+                <div class="no-data">
+                  <mat-icon>check_circle</mat-icon>
+                  <p>No completed tests today</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
     </mat-tab-group>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <h3>Quick Actions</h3>
-      <div class="actions-grid">
-        <button mat-raised-button color="primary" routerLink="/lab-staff/worklist">
-          <mat-icon>assignment</mat-icon>
-          View All Requests
-        </button>
-        <button mat-raised-button color="accent" routerLink="/lab-staff/upload">
-          <mat-icon>cloud_upload</mat-icon>
-          Upload Report
-        </button>
-        <button mat-raised-button routerLink="/lab-staff/history">
-          <mat-icon>history</mat-icon>
-          View History
-        </button>
-        <button mat-raised-button routerLink="/lab-staff/compliance">
-          <mat-icon>verified</mat-icon>
-          Compliance Audit
-        </button>
-      </div>
-    </div>
-
   </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading laboratory data...</p>
+    </div>
+  </ng-template>
 </div>
 
-<!-- Router Outlet for Child Routes -->
 <router-outlet></router-outlet>

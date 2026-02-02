@@ -1,0 +1,18 @@
+<div class="main-layout">
+  <!-- Navbar -->
+  <app-navbar [user]="currentUser"></app-navbar>
+  
+  <!-- Content Area -->
+  <div class="content-wrapper">
+    <!-- Sidebar -->
+    <app-role-sidebar [user]="currentUser"></app-role-sidebar>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+  
+  <!-- Footer -->
+  <app-footer></app-footer>
+</div>

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import List
 import os
 
@@ -9,7 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database Configuration
-    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_URL: str = "mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/?appName=Cluster0"
     DATABASE_NAME: str = "prescription_ocr_db"
     
     # Redis Configuration
@@ -17,7 +18,7 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     
     # JWT Configuration
-    JWT_SECRET_KEY: str = "your-super-secret-jwt-key-here"
+    JWT_SECRET_KEY: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", "your-super-secret-jwt-key-here"))
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 30
     

@@ -1,0 +1,124 @@
+<h2 mat-dialog-title>Enter Test Results</h2>
+<div class="dialog-subtitle">{{ data.testName }} - {{ data.patientName }}</div>
+
+<mat-dialog-content>
+  <form [formGroup]="resultForm" class="result-form">
+    <!-- Test Results -->
+    <div class="form-section">
+      <h3>Test Results</h3>
+      <div formGroupName="results">
+        <!-- Dynamic form fields based on test template -->
+        <div *ngIf="testTemplate && testTemplate.parameters; else defaultResults">
+          <div *ngFor="let param of testTemplate.parameters" class="parameter-field">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ param.label }}</mat-label>
+              <input matInput 
+                     [type]="getParameterType(param)"
+                     [formControlName]="param.name"
+                     [placeholder]="param.placeholder || ''">
+              <span matSuffix *ngIf="param.unit">{{ param.unit }}</span>
+              <mat-hint *ngIf="param.referenceRange">
+                Normal range: {{ param.referenceRange }}
+              </mat-hint>
+              <mat-error>{{ getParameterValidationError(param.name) }}</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Default results form -->
+        <ng-template #defaultResults>
+          <div class="default-results">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Result Value</mat-label>
+              <input matInput formControlName="value" placeholder="Enter test result">
+              <mat-error *ngIf="resultForm.get('results.value')?.errors?.['required']">
+                Result value is required
+              </mat-error>
+            </mat-form-field>
+
+            <div class="result-details-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Unit</mat-label>
+                <input matInput formControlName="unit" placeholder="mg/dL, mmol/L, etc.">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Reference Range</mat-label>
+                <input matInput formControlName="referenceRange" placeholder="Normal range">
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Interpretation</mat-label>
+              <mat-select formControlName="interpretation">
+                <mat-option value="normal">Normal</mat-option>
+                <mat-option value="abnormal-high">Abnormal - High</mat-option>
+                <mat-option value="abnormal-low">Abnormal - Low</mat-option>
+                <mat-option value="critical">Critical</mat-option>
+                <mat-option value="inconclusive">Inconclusive</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="form-section">
+      <h3>Additional Information</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Laboratory Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="3" 
+                  placeholder="Any technical notes or observations during testing"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Abnormal Findings</mat-label>
+        <textarea matInput formControlName="abnormalFindings" rows="2" 
+                  placeholder="Describe any abnormal findings or deviations"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Recommendations</mat-label>
+        <textarea matInput formControlName="recommendations" rows="2" 
+                  placeholder="Any recommendations for follow-up or additional testing"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Test Status -->
+    <div class="form-section">
+      <h3>Test Status</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="completed">Completed</mat-option>
+          <mat-option value="completed-with-issues">Completed with Issues</mat-option>
+          <mat-option value="requires-retest">Requires Retest</mat-option>
+          <mat-option value="cancelled">Cancelled</mat-option>
+        </mat-select>
+        <mat-error *ngIf="resultForm.get('status')?.errors?.['required']">
+          Status is required
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Quality Control Notice -->
+    <div class="qc-notice">
+      <mat-icon>verified</mat-icon>
+      <div class="notice-text">
+        <p><strong>Quality Control:</strong></p>
+        <p>Ensure all results have been verified and quality control procedures have been followed before submitting.</p>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!resultForm.valid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+    <span *ngIf="!isSubmitting">Submit Results</span>
+    <span *ngIf="isSubmitting">Submitting...</span>
+  </button>
+</mat-dialog-actions>

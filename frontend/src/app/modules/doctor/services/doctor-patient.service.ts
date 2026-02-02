@@ -389,7 +389,7 @@ export class DoctorPatientService {
   }
 
   // Patient Statistics
-  getPatientStats(patientId: string): Observable<{
+  getPatientStatistics(patientId: string): Observable<{
     totalVisits: number;
     lastVisit: Date;
     upcomingAppointments: number;
@@ -492,18 +492,6 @@ export class DoctorPatientService {
 
   removeMedicalCondition(patientId: string, condition: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${patientId}/conditions/${encodeURIComponent(condition)}`);
-  }
-
-  // Patient Statistics
-  getPatientStats(patientId: string): Observable<{
-    totalVisits: number;
-    lastVisit: Date;
-    upcomingAppointments: number;
-    activePrescriptions: number;
-    pendingLabResults: number;
-    treatmentCompliance: number;
-  }> {
-    return this.http.get(`${this.apiUrl}/${patientId}/stats`);
   }
 
   // Patient Notes

@@ -1,0 +1,192 @@
+<div class="pending-prescriptions">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>
+        <mat-icon>receipt_long</mat-icon>
+        Pending Prescriptions
+      </h2>
+      <div class="header-actions">
+        <button mat-icon-button (click)="refreshPrescriptions()" [disabled]="isLoading">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-container">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search prescriptions</mat-label>
+          <input matInput 
+                 [formControl]="searchControl"
+                 placeholder="Patient name, doctor, or prescription number">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Status Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [formControl]="statusFilter">
+            <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+              {{ status.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Priority Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select [formControl]="priorityFilter">
+            <mat-option *ngFor="let priority of priorityOptions" [value]="priority.value">
+              {{ priority.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Clear Filters -->
+        <button mat-button (click)="clearFilters()">
+          <mat-icon>clear</mat-icon>
+          Clear Filters
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading prescriptions...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon color="warn">error</mat-icon>
+          <p>{{ error }}</p>
+          <button mat-raised-button color="primary" (click)="refreshPrescriptions()">
+            Try Again
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Prescriptions Table -->
+  <mat-card *ngIf="!isLoading && !error" class="table-card">
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="prescriptions-table">
+          
+          <!-- Prescription Number Column -->
+          <ng-container matColumnDef="prescriptionNumber">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Prescription #</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="prescription-number">
+                <strong>{{ prescription.prescriptionNumber }}</strong>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="patient-info">
+                <div class="patient-name">{{ prescription.patientName }}</div>
+                <div class="patient-phone" *ngIf="prescription.patientPhone">
+                  {{ prescription.patientPhone }}
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Doctor Name Column -->
+          <ng-container matColumnDef="doctorName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+            <td mat-cell *matCellDef="let prescription">
+              {{ prescription.doctorName }}
+            </td>
+          </ng-container>
+
+          <!-- Prescribed Date Column -->
+          <ng-container matColumnDef="prescribedDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Prescribed Date</th>
+            <td mat-cell *matCellDef="let prescription">
+              {{ prescription.prescribedDate | date:'short' }}
+            </td>
+          </ng-container>
+
+          <!-- Total Items Column -->
+          <ng-container matColumnDef="totalItems">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Items</th>
+            <td mat-cell *matCellDef="let prescription">
+              <mat-chip color="primary" selected>
+                {{ prescription.totalItems }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Priority Column -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+            <td mat-cell *matCellDef="let prescription">
+              <mat-chip [color]="getPriorityColor(prescription.priority)" selected>
+                {{ prescription.priority | titlecase }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let prescription">
+              <mat-chip [color]="getStatusColor(prescription.status)" selected>
+                {{ getStatusLabel(prescription.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let prescription">
+              <div class="actions-container">
+                <button mat-icon-button 
+                        (click)="viewPrescriptionDetails(prescription)"
+                        matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              class="prescription-row"
+              [class.urgent-row]="row.priority === 'urgent'"
+              [class.emergency-row]="row.priority === 'emergency'"></tr>
+        </table>
+
+        <!-- No Data -->
+        <div *ngIf="dataSource.data.length === 0" class="no-data">
+          <mat-icon>receipt_long</mat-icon>
+          <p>No pending prescriptions found</p>
+          <p class="no-data-subtitle">All prescriptions have been processed or there are no new prescriptions.</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator 
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [pageSize]="25"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

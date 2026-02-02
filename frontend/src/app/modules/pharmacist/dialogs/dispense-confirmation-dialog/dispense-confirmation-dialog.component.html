@@ -1,0 +1,146 @@
+<div class="dispense-confirmation-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>medication</mat-icon>
+    Confirm Medicine Dispensing
+  </h2>
+
+  <mat-dialog-content>
+    <div class="confirmation-content">
+      
+      <!-- Prescription Summary -->
+      <mat-card class="prescription-summary">
+        <mat-card-header>
+          <mat-card-title>Prescription Summary</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <label>Prescription Number:</label>
+              <span class="prescription-number">{{ prescription.prescriptionNumber }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Patient:</label>
+              <span>{{ prescription.patientName }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Doctor:</label>
+              <span>Dr. {{ prescription.doctorName }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Total Items to Dispense:</label>
+              <span class="highlight">{{ getTotalItemsToDispense() }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Medications to Dispense -->
+      <mat-card class="medications-summary">
+        <mat-card-header>
+          <mat-card-title>Medications to Dispense</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="medications-list">
+            <div *ngFor="let medication of dispenseRequest.medications" class="medication-item">
+              <div class="medication-info">
+                <div class="medication-name">
+                  <strong>{{ getMedicationName(medication.medicationId) }}</strong>
+                </div>
+                <div class="medication-details">
+                  <div class="detail-item">
+                    <label>Quantity to Dispense:</label>
+                    <span class="quantity">{{ medication.quantityToDispense }}</span>
+                  </div>
+                  <div class="detail-item" *ngIf="medication.batchNumber">
+                    <label>Batch Number:</label>
+                    <span class="batch">{{ medication.batchNumber }}</span>
+                  </div>
+                  <div class="detail-item" *ngIf="medication.substitutedWith">
+                    <label>Substituted With:</label>
+                    <span class="substitution">{{ medication.substitutedWith }}</span>
+                  </div>
+                  <div class="detail-item" *ngIf="medication.notes">
+                    <label>Notes:</label>
+                    <span class="notes">{{ medication.notes }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Verification Checklist -->
+      <mat-card class="verification-checklist">
+        <mat-card-header>
+          <mat-card-title>Verification Checklist</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="checklist-items">
+            <div class="checklist-item">
+              <mat-icon [color]="dispenseRequest.patientVerified ? 'primary' : 'warn'">
+                {{ dispenseRequest.patientVerified ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span [class.verified]="dispenseRequest.patientVerified" 
+                    [class.not-verified]="!dispenseRequest.patientVerified">
+                Patient identity verified
+              </span>
+            </div>
+            <div class="checklist-item">
+              <mat-icon [color]="dispenseRequest.counselingProvided ? 'primary' : 'warn'">
+                {{ dispenseRequest.counselingProvided ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span [class.verified]="dispenseRequest.counselingProvided" 
+                    [class.not-verified]="!dispenseRequest.counselingProvided">
+                Patient counseling provided
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Additional Notes -->
+      <mat-card *ngIf="dispenseRequest.notes" class="notes-card">
+        <mat-card-header>
+          <mat-card-title>Additional Notes</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="notes-text">{{ dispenseRequest.notes }}</p>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Warning Message -->
+      <mat-card class="warning-card">
+        <mat-card-content>
+          <div class="warning-content">
+            <mat-icon color="warn">warning</mat-icon>
+            <div class="warning-text">
+              <p><strong>Important:</strong> Please confirm that all information is correct before proceeding.</p>
+              <p>This action will:</p>
+              <ul>
+                <li>Deduct the specified quantities from inventory</li>
+                <li>Update the prescription status</li>
+                <li>Generate stock deduction records</li>
+                <li>Trigger low stock alerts if applicable</li>
+              </ul>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">
+      <mat-icon>cancel</mat-icon>
+      Cancel
+    </button>
+    <button mat-raised-button 
+            color="primary" 
+            (click)="onConfirm()"
+            [disabled]="!dispenseRequest.patientVerified || !dispenseRequest.counselingProvided">
+      <mat-icon>medication</mat-icon>
+      Confirm Dispensing
+    </button>
+  </mat-dialog-actions>
+</div>

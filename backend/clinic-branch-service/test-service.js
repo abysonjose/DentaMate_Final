@@ -8,7 +8,7 @@ async function testService() {
     console.log('Testing Clinic & Branch Service...');
     
     // Test MongoDB connection
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dentamate_clinic_branch_test';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate_clinic_branch_test?appName=Cluster0';
     await mongoose.connect(mongoUri);
     console.log('✓ MongoDB connection successful');
     

@@ -1,10 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { PharmacistService, PharmacyOverview, StockAlert, Prescription } from '../../services/pharmacist.service';
-import { PrescriptionDetailsDialogComponent } from '../../dialogs/prescription-details-dialog/prescription-details-dialog.component';
-import { StockRefillRequestDialogComponent } from '../../dialogs/stock-refill-request-dialog/stock-refill-request-dialog.component';
+import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { PharmacistService, PharmacistDashboardData } from '../../services/pharmacist.service';
 
 @Component({
   selector: 'app-pharmacist-dashboard',
@@ -14,34 +12,35 @@ import { StockRefillRequestDialogComponent } from '../../dialogs/stock-refill-re
 export class PharmacistDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
-  overview: PharmacyOverview = {
-    pendingPrescriptions: 0,
-    medicinesDispensed: 0,
-    lowStockAlerts: 0,
-    expiryAlerts: 0,
-    todayRevenue: 0,
-    pendingPayments: 0
-  };
-
-  criticalAlerts: StockAlert[] = [];
-  recentPrescriptions: Prescription[] = [];
+  dashboardData: PharmacistDashboardData | null = null;
   isLoading = true;
-  currentTime = new Date();
+  error: string | null = null;
 
-  // Chart data for analytics
-  dispensingTrends: any[] = [];
-  stockLevels: any[] = [];
+  navigationItems = [
+    {
+      path: 'pending-prescriptions',
+      label: 'Pending Prescriptions',
+      icon: 'receipt_long',
+      description: 'View and process pending prescriptions'
+    },
+    {
+      path: 'dispense-medicines',
+      label: 'Dispense Medicines',
+      icon: 'medication',
+      description: 'Dispense medicines to patients'
+    },
+    {
+      path: 'stock-deduction-confirmation',
+      label: 'Stock Deduction',
+      icon: 'inventory_2',
+      description: 'Confirm stock deductions and view low stock alerts'
+    }
+  ];
 
   constructor(
     private pharmacistService: PharmacistService,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar
-  ) {
-    // Update current time every minute
-    setInterval(() => {
-      this.currentTime = new Date();
-    }, 60000);
-  }
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -52,121 +51,56 @@ export class PharmacistDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadDashboardData(): void {
+  private loadDashboardData(): void {
     this.isLoading = true;
+    this.error = null;
 
-    forkJoin({
-      overview: this.pharmacistService.getPharmacyOverview(),
-      alerts: this.pharmacistService.getStockAlerts(),
-      prescriptions: this.pharmacistService.getPendingPrescriptions()
-    }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (data) => {
-        this.overview = data.overview;
-        this.criticalAlerts = data.alerts.filter(alert => 
-          alert.severity === 'critical' || alert.severity === 'high'
-        ).slice(0, 5);
-        this.recentPrescriptions = data.prescriptions.slice(0, 5);
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading dashboard data:', error);
-        this.snackBar.open('Error loading dashboard data', 'Close', { duration: 3000 });
-        this.isLoading = false;
-      }
-    });
-  }
-
-  viewPrescriptionDetails(prescription: Prescription): void {
-    const dialogRef = this.dialog.open(PrescriptionDetailsDialogComponent, {
-      width: '800px',
-      data: { prescription }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.action === 'dispensed') {
-        this.loadDashboardData();
-      }
-    });
-  }
-
-  requestStockRefill(alert: StockAlert): void {
-    const dialogRef = this.dialog.open(StockRefillRequestDialogComponent, {
-      width: '600px',
-      data: { 
-        medicineId: alert.medicineId,
-        medicineName: alert.medicineName,
-        currentStock: alert.currentStock
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result?.success) {
-        this.snackBar.open('Stock refill request submitted successfully', 'Close', { duration: 3000 });
-        this.loadDashboardData();
-      }
-    });
-  }
-
-  acknowledgeAlert(alert: StockAlert): void {
-    this.pharmacistService.acknowledgeAlert(alert.id)
+    this.pharmacistService.getDashboardData()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
-          this.snackBar.open('Alert acknowledged', 'Close', { duration: 2000 });
-          this.loadDashboardData();
+        next: (data) => {
+          this.dashboardData = data;
+          this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error acknowledging alert:', error);
-          this.snackBar.open('Error acknowledging alert', 'Close', { duration: 3000 });
+          console.error('Error loading dashboard data:', error);
+          this.error = 'Failed to load dashboard data. Please try again.';
+          this.isLoading = false;
         }
       });
   }
 
-  getAlertIcon(alertType: string): string {
-    switch (alertType) {
-      case 'low_stock': return 'inventory_2';
-      case 'out_of_stock': return 'remove_shopping_cart';
-      case 'expiry_warning': return 'schedule';
-      case 'expired': return 'dangerous';
-      default: return 'warning';
-    }
-  }
-
-  getAlertColor(severity: string): string {
-    switch (severity) {
-      case 'critical': return 'warn';
-      case 'high': return 'accent';
-      case 'medium': return 'primary';
-      default: return '';
-    }
-  }
-
-  getPrescriptionStatusColor(status: string): string {
-    switch (status) {
-      case 'pending': return 'warn';
-      case 'verified': return 'primary';
-      case 'dispensed': return 'accent';
-      default: return '';
-    }
-  }
-
-  getPaymentStatusColor(status: string): string {
-    switch (status) {
-      case 'paid': return 'accent';
-      case 'pending': return 'warn';
-      case 'failed': return 'warn';
-      default: return '';
-    }
+  navigateTo(path: string): void {
+    this.router.navigate(['/pharmacist', path]);
   }
 
   refreshDashboard(): void {
     this.loadDashboardData();
   }
 
-  navigateToSection(section: string): void {
-    // Navigation logic will be implemented based on routing structure
-    console.log(`Navigate to ${section}`);
+  getActivityIcon(type: string): string {
+    switch (type) {
+      case 'prescription_dispensed':
+        return 'medication';
+      case 'stock_updated':
+        return 'inventory';
+      case 'low_stock_alert':
+        return 'warning';
+      default:
+        return 'info';
+    }
+  }
+
+  getActivityColor(type: string): string {
+    switch (type) {
+      case 'prescription_dispensed':
+        return 'primary';
+      case 'stock_updated':
+        return 'accent';
+      case 'low_stock_alert':
+        return 'warn';
+      default:
+        return 'primary';
+    }
   }
 }

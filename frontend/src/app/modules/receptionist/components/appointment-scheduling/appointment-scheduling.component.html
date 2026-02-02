@@ -1,0 +1,149 @@
+<div class="appointment-scheduling">
+  <div class="scheduling-header">
+    <h1>Appointment Scheduling</h1>
+    <button mat-raised-button color="primary" (click)="bookNewAppointment()">
+      <mat-icon>add</mat-icon>
+      Book New Appointment
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Select Date</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="onDateChange($event.value)">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Filter by Doctor</mat-label>
+          <mat-select [(ngModel)]="selectedDoctor" (selectionChange)="onDoctorChange()">
+            <mat-option value="">All Doctors</mat-option>
+            <mat-option *ngFor="let doctor of doctors" [value]="doctor.id">
+              {{ doctor.firstName }} {{ doctor.lastName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-icon-button (click)="loadAppointments()" [disabled]="isLoading">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Appointments List -->
+  <mat-card class="appointments-card">
+    <mat-card-header>
+      <mat-card-title>
+        Appointments for {{ selectedDate | date:'fullDate' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ appointments.length }} appointments
+        <span *ngIf="selectedDoctor"> for selected doctor</span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="appointments-container" *ngIf="!isLoading; else loadingTemplate">
+        <div class="appointments-timeline" *ngIf="appointments.length > 0; else noAppointments">
+          <div class="appointment-slot" *ngFor="let appointment of appointments">
+            <div class="time-slot">
+              <div class="time">{{ appointment.appointmentDateTime | date:'shortTime' }}</div>
+              <div class="duration">{{ appointment.durationMinutes || 30 }} min</div>
+            </div>
+            
+            <div class="appointment-card">
+              <div class="appointment-header">
+                <div class="patient-info">
+                  <h3>{{ appointment.patientName }}</h3>
+                  <p>{{ appointment.patientPhone }}</p>
+                </div>
+                <div class="appointment-status">
+                  <mat-chip [color]="getAppointmentStatusColor(appointment.status)">
+                    {{ appointment.status }}
+                  </mat-chip>
+                </div>
+              </div>
+              
+              <div class="appointment-details">
+                <div class="detail-item">
+                  <mat-icon>person</mat-icon>
+                  <span>Dr. {{ appointment.doctorName }}</span>
+                </div>
+                <div class="detail-item">
+                  <mat-icon>{{ getAppointmentTypeIcon(appointment.appointmentType) }}</mat-icon>
+                  <span>{{ appointment.appointmentType }}</span>
+                </div>
+                <div class="detail-item" *ngIf="appointment.reason">
+                  <mat-icon>description</mat-icon>
+                  <span>{{ appointment.reason }}</span>
+                </div>
+                <div class="detail-item" *ngIf="appointment.tokenNumber">
+                  <mat-icon>confirmation_number</mat-icon>
+                  <span>Token: {{ appointment.tokenNumber }}</span>
+                </div>
+              </div>
+              
+              <div class="appointment-actions">
+                <button mat-icon-button 
+                        *ngIf="appointment.status === 'confirmed'"
+                        (click)="checkInPatient(appointment)"
+                        matTooltip="Check In Patient">
+                  <mat-icon>login</mat-icon>
+                </button>
+                
+                <button mat-icon-button 
+                        (click)="sendReminder(appointment)"
+                        matTooltip="Send Reminder">
+                  <mat-icon>notifications</mat-icon>
+                </button>
+                
+                <button mat-icon-button 
+                        (click)="rescheduleAppointment(appointment)"
+                        matTooltip="Reschedule">
+                  <mat-icon>schedule</mat-icon>
+                </button>
+                
+                <button mat-icon-button 
+                        (click)="viewAppointmentDetails(appointment.id)"
+                        matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <button mat-icon-button 
+                        color="warn"
+                        (click)="cancelAppointment(appointment)"
+                        matTooltip="Cancel Appointment">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #noAppointments>
+          <div class="no-appointments">
+            <mat-icon>event_available</mat-icon>
+            <h3>No appointments scheduled</h3>
+            <p>No appointments found for the selected date and doctor.</p>
+            <button mat-raised-button color="primary" (click)="bookNewAppointment()">
+              Book First Appointment
+            </button>
+          </div>
+        </ng-template>
+      </div>
+      
+      <ng-template #loadingTemplate>
+        <div class="loading-container">
+          <mat-spinner></mat-spinner>
+          <p>Loading appointments...</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+</div>

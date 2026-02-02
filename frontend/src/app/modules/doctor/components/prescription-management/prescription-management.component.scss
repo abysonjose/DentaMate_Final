@@ -1,0 +1,175 @@
+.prescription-management {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+
+    .prescriptions-table {
+      width: 100%;
+      
+      th {
+        font-weight: 600;
+        color: #333;
+      }
+
+      td {
+        padding: 12px 8px;
+      }
+
+      .patient-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        strong {
+          color: #333;
+        }
+
+        small {
+          color: #666;
+          font-size: 12px;
+        }
+      }
+
+      .medications-summary {
+        color: #666;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .recent-summary {
+    margin-top: 24px;
+
+    .prescription-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+
+      .prescription-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        background: #fafafa;
+
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+
+          strong {
+            color: #333;
+          }
+
+          .status-chip {
+            font-size: 12px;
+            height: 24px;
+          }
+        }
+
+        .card-content {
+          margin-bottom: 12px;
+
+          .medication-list {
+            .medication-item {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 4px;
+              font-size: 14px;
+
+              .med-name {
+                color: #333;
+                font-weight: 500;
+              }
+
+              .med-dosage {
+                color: #666;
+              }
+            }
+
+            .more-medications {
+              color: #888;
+              font-size: 12px;
+              font-style: italic;
+              margin-top: 4px;
+            }
+          }
+        }
+
+        .card-actions {
+          border-top: 1px solid #e0e0e0;
+          padding-top: 12px;
+          margin-top: 12px;
+        }
+      }
+    }
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+
+    mat-spinner {
+      margin-bottom: 20px;
+    }
+
+    p {
+      color: #666;
+      margin: 0;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .prescription-management {
+    padding: 16px;
+
+    .management-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .prescription-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+}

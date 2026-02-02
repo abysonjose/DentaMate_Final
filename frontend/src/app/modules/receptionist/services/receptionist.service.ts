@@ -1,186 +1,166 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-export interface DashboardStats {
-  totalAppointments: number;
-  checkedInPatients: number;
-  walkInPatients: number;
-  activeQueues: number;
-  pendingCheckIns: number;
-  doctorDelays: number;
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: string[];
 }
 
-export interface RecentActivity {
-  id: string;
-  type: 'registration' | 'appointment' | 'checkin' | 'token';
-  description: string;
-  timestamp: Date;
-  icon: string;
-  userId: string;
+export interface AppointmentBooking {
+  patientId: string;
+  doctorId: string;
+  appointmentDateTime: string;
+  appointmentType: string;
+  reason: string;
+  notes?: string;
+  priority?: string;
 }
 
-export interface Alert {
-  id: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-  message: string;
-  timestamp: Date;
-  actionable?: boolean;
-  metadata?: any;
+export interface PatientRegistration {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  gender: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  emergencyContact: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReceptionistService {
-  private readonly apiUrl = `${environment.apiUrl}/receptionist`;
-  private readonly wsUrl = `${environment.wsUrl}/receptionist`;
-  
-  private alertsSubject = new BehaviorSubject<Alert[]>([]);
-  public alerts$ = this.alertsSubject.asObservable();
+  private readonly APPOINTMENT_API = `${environment.apiUrl}/appointments`;
+  private readonly PATIENT_API = `${environment.apiUrl}/patients`;
+  private readonly QUEUE_API = `${environment.apiUrl}/queue`;
 
   constructor(private http: HttpClient) {}
 
-  // Dashboard Data
-  getDashboardStats(): Observable<DashboardStats> {
-    return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`);
+  // Dashboard data
+  getTodayAppointments(): Observable<ApiResponse> {
+    const today = new Date().toISOString().split('T')[0];
+    return this.http.get<ApiResponse>(`${this.APPOINTMENT_API}/date/${today}`);
   }
 
-  getRecentActivities(limit: number = 20): Observable<RecentActivity[]> {
-    const params = new HttpParams().set('limit', limit.toString());
-    return this.http.get<RecentActivity[]>(`${this.apiUrl}/activities/recent`, { params });
+  getWaitingPatients(): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.QUEUE_API}/waiting`);
   }
 
-  // Real-time Updates
-  subscribeToUpdates(): void {
-    // WebSocket connection for real-time updates
-    // Implementation would depend on your WebSocket setup
+  getRecentRegistrations(): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.PATIENT_API}/recent`);
   }
 
-  // Alert Management
-  addAlert(alert: Omit<Alert, 'id' | 'timestamp'>): void {
-    const newAlert: Alert = {
-      ...alert,
-      id: this.generateId(),
-      timestamp: new Date()
-    };
-    
-    const currentAlerts = this.alertsSubject.value;
-    this.alertsSubject.next([newAlert, ...currentAlerts]);
+  getQueueStatus(): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.QUEUE_API}/status`);
   }
 
-  removeAlert(alertId: string): void {
-    const currentAlerts = this.alertsSubject.value;
-    const filteredAlerts = currentAlerts.filter(alert => alert.id !== alertId);
-    this.alertsSubject.next(filteredAlerts);
+  // Appointment management
+  bookAppointment(appointmentData: AppointmentBooking): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.APPOINTMENT_API}`, appointmentData);
   }
 
-  clearAllAlerts(): void {
-    this.alertsSubject.next([]);
+  getAvailableSlots(doctorId: string, date: string): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.APPOINTMENT_API}/slots/${doctorId}/${date}`);
   }
 
-  // Activity Logging
-  logActivity(activity: Omit<RecentActivity, 'id' | 'timestamp'>): Observable<RecentActivity> {
-    const activityData = {
-      ...activity,
-      timestamp: new Date()
-    };
-    return this.http.post<RecentActivity>(`${this.apiUrl}/activities`, activityData);
+  getAppointmentDetails(appointmentId: string): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.APPOINTMENT_API}/${appointmentId}`);
   }
 
-  // System Status
-  getSystemStatus(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/system/status`);
+  updateAppointmentStatus(appointmentId: string, status: string): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.APPOINTMENT_API}/${appointmentId}/status`, { status });
   }
 
-  // Performance Metrics
-  getPerformanceMetrics(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/metrics/performance`);
+  rescheduleAppointment(appointmentId: string, newDateTime: string): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.APPOINTMENT_API}/${appointmentId}/reschedule`, { 
+      newDateTime 
+    });
   }
 
-  // Utility Methods
-  private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+  cancelAppointment(appointmentId: string, reason: string): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.APPOINTMENT_API}/${appointmentId}/cancel`, { 
+      reason 
+    });
   }
 
-  // Keyboard Shortcuts Management
-  registerKeyboardShortcuts(): void {
-    // Register global keyboard shortcuts for receptionist actions
-    document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
+  // Patient management
+  registerPatient(patientData: PatientRegistration): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.PATIENT_API}/register`, patientData);
   }
 
-  private handleKeyboardShortcuts(event: KeyboardEvent): void {
-    if (event.ctrlKey || event.metaKey) {
-      switch (event.key.toLowerCase()) {
-        case 'r':
-          event.preventDefault();
-          this.triggerQuickAction('register-patient');
-          break;
-        case 'b':
-          event.preventDefault();
-          this.triggerQuickAction('book-appointment');
-          break;
-        case 'i':
-          event.preventDefault();
-          this.triggerQuickAction('check-in');
-          break;
-        case 'q':
-          event.preventDefault();
-          this.triggerQuickAction('view-queues');
-          break;
-        case 'f':
-          event.preventDefault();
-          this.triggerQuickAction('find-patient');
-          break;
-      }
-    }
+  searchPatients(query: string): Observable<ApiResponse> {
+    const params = new HttpParams().set('q', query);
+    return this.http.get<ApiResponse>(`${this.PATIENT_API}/search`, { params });
   }
 
-  private triggerQuickAction(action: string): void {
-    // Emit events for quick actions
-    // This would be handled by the dashboard component
-    console.log(`Quick action triggered: ${action}`);
+  getPatientDetails(patientId: string): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.PATIENT_API}/${patientId}`);
   }
 
-  // Data Refresh
-  refreshDashboardData(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/dashboard/refresh`, {});
+  updatePatientInfo(patientId: string, patientData: Partial<PatientRegistration>): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.PATIENT_API}/${patientId}`, patientData);
   }
 
-  // Branch Context
-  setBranchContext(branchId: string): void {
-    // Set the current branch context for all operations
-    localStorage.setItem('currentBranchId', branchId);
+  // Queue management
+  checkInPatient(appointmentId: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.QUEUE_API}/checkin`, { appointmentId });
   }
 
-  getCurrentBranchId(): string | null {
-    return localStorage.getItem('currentBranchId');
+  generateToken(patientId: string, appointmentId: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.QUEUE_API}/token`, { 
+      patientId, 
+      appointmentId 
+    });
   }
 
-  // User Preferences
-  getUserPreferences(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/preferences`);
+  getTokenStatus(tokenId: string): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.QUEUE_API}/token/${tokenId}`);
   }
 
-  updateUserPreferences(preferences: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/preferences`, preferences);
+  // Doctor and staff information
+  getDoctors(): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${environment.apiUrl}/staff/doctors`);
   }
 
-  // Emergency Actions
-  triggerEmergencyAlert(message: string, severity: 'low' | 'medium' | 'high'): Observable<any> {
-    return this.http.post(`${this.apiUrl}/emergency/alert`, { message, severity });
+  getDoctorSchedule(doctorId: string, date: string): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${environment.apiUrl}/staff/doctors/${doctorId}/schedule/${date}`);
   }
 
-  // Audit Trail
-  getAuditTrail(startDate?: Date, endDate?: Date): Observable<any[]> {
-    let params = new HttpParams();
-    if (startDate) {
-      params = params.set('startDate', startDate.toISOString());
-    }
-    if (endDate) {
-      params = params.set('endDate', endDate.toISOString());
-    }
-    return this.http.get<any[]>(`${this.apiUrl}/audit`, { params });
+  // Reports and analytics
+  getAppointmentStats(startDate: string, endDate: string): Observable<ApiResponse> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+    return this.http.get<ApiResponse>(`${this.APPOINTMENT_API}/stats`, { params });
+  }
+
+  getPatientRegistrationStats(startDate: string, endDate: string): Observable<ApiResponse> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+    return this.http.get<ApiResponse>(`${this.PATIENT_API}/registration-stats`, { params });
+  }
+
+  // Communication
+  sendAppointmentReminder(appointmentId: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.APPOINTMENT_API}/${appointmentId}/reminder`, {});
+  }
+
+  sendAppointmentConfirmation(appointmentId: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.APPOINTMENT_API}/${appointmentId}/confirmation`, {});
   }
 }

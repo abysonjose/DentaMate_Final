@@ -1,0 +1,351 @@
+.dispense-medicines {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  .page-header {
+    margin-bottom: 24px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0;
+      color: #1976d2;
+      font-size: 24px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
+
+  .search-card {
+    margin-bottom: 24px;
+
+    .search-form {
+      .search-field {
+        width: 100%;
+        max-width: 500px;
+      }
+    }
+
+    .search-results {
+      margin-top: 20px;
+
+      h4 {
+        margin: 0 0 16px 0;
+        color: #333;
+      }
+
+      .results-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+
+        .result-card {
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+
+          .result-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .result-main {
+              flex: 1;
+
+              .prescription-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 8px;
+
+                strong {
+                  color: #1976d2;
+                  font-family: 'Courier New', monospace;
+                }
+
+                .patient-name {
+                  font-weight: 500;
+                }
+              }
+
+              .prescription-details {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 14px;
+                color: #666;
+              }
+            }
+
+            .result-actions {
+              mat-icon {
+                color: #999;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .selected-prescription {
+    .prescription-details-card {
+      margin-bottom: 24px;
+
+      .prescription-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+
+        .info-item {
+          label {
+            display: block;
+            font-weight: 500;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 4px;
+          }
+
+          span {
+            color: #333;
+          }
+        }
+      }
+
+      .prescription-notes {
+        margin-top: 16px;
+        padding: 12px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+
+        label {
+          font-weight: 500;
+          color: #666;
+          font-size: 14px;
+        }
+
+        p {
+          margin: 8px 0 0 0;
+          color: #333;
+        }
+      }
+    }
+
+    .dispense-form-card {
+      .dispense-form {
+        .medications-section {
+          margin-bottom: 32px;
+
+          h4 {
+            margin: 0 0 20px 0;
+            color: #333;
+          }
+
+          .medication-item {
+            margin-bottom: 16px;
+
+            .medication-card {
+              .medication-header {
+                margin-bottom: 16px;
+
+                .medication-name {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+
+                  strong {
+                    color: #333;
+                    font-size: 16px;
+                  }
+                }
+              }
+
+              .medication-details {
+                .quantity-info {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                  gap: 16px;
+                  margin-bottom: 20px;
+                  padding: 12px;
+                  background-color: #f9f9f9;
+                  border-radius: 4px;
+
+                  .quantity-item {
+                    label {
+                      display: block;
+                      font-size: 12px;
+                      color: #666;
+                      margin-bottom: 4px;
+                    }
+
+                    span {
+                      font-weight: 500;
+                      color: #333;
+                    }
+                  }
+                }
+
+                .dispense-controls {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 16px;
+
+                  .full-width {
+                    grid-column: 1 / -1;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        .verification-section {
+          margin-bottom: 32px;
+
+          h4 {
+            margin: 0 0 20px 0;
+            color: #333;
+          }
+
+          .verification-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            mat-checkbox {
+              .mat-checkbox-label {
+                font-size: 14px;
+                line-height: 1.4;
+              }
+            }
+
+            .full-width {
+              width: 100%;
+            }
+          }
+        }
+
+        .dispense-summary {
+          padding: 20px;
+          background-color: #f5f5f5;
+          border-radius: 8px;
+          margin-bottom: 20px;
+
+          h4 {
+            margin: 0 0 16px 0;
+            color: #333;
+          }
+
+          .summary-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .summary-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+
+              label {
+                font-weight: 500;
+                color: #666;
+              }
+
+              span {
+                font-weight: 600;
+                color: #333;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .dispense-medicines {
+    padding: 16px;
+
+    .page-header {
+      h2 {
+        font-size: 20px;
+      }
+    }
+
+    .selected-prescription {
+      .prescription-details-card {
+        .prescription-info-grid {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+      }
+
+      .dispense-form-card {
+        .dispense-form {
+          .medications-section {
+            .medication-item {
+              .medication-card {
+                .medication-details {
+                  .quantity-info {
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                  }
+
+                  .dispense-controls {
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                  }
+                }
+              }
+            }
+          }
+
+          .dispense-summary {
+            .summary-info {
+              .summary-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Material form field styling
+::ng-deep .dispense-medicines {
+  .mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      background-color: white;
+    }
+  }
+
+  .mat-mdc-card {
+    .mat-mdc-card-header {
+      .mat-mdc-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    }
+  }
+}

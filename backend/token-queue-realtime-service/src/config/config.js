@@ -1,6 +1,6 @@
 module.exports = {
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/dentamate_queue'
+    uri: process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate_queue?appName=Cluster0'
   },
   redis: {
     uri: process.env.REDIS_URI || 'redis://localhost:6379'

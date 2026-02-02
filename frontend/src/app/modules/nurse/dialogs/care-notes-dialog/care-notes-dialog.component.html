@@ -1,0 +1,81 @@
+<h2 mat-dialog-title>Add Care Notes - {{ data.patientName }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="careNotesForm" class="care-notes-form">
+    <!-- Note Type -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Note Type</mat-label>
+      <mat-select formControlName="type">
+        <mat-option *ngFor="let type of noteTypes" [value]="type.value">
+          {{ type.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="careNotesForm.get('type')?.errors?.['required']">
+        Note type is required
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Priority -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Priority</mat-label>
+      <mat-select formControlName="priority">
+        <mat-option *ngFor="let priority of priorities" [value]="priority.value">
+          {{ priority.label }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="careNotesForm.get('priority')?.errors?.['required']">
+        Priority is required
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Title -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="Brief summary of the note">
+      <mat-hint align="end">{{ getTitleCharacterCount() }}/100</mat-hint>
+      <mat-error *ngIf="careNotesForm.get('title')?.errors?.['required']">
+        Title is required
+      </mat-error>
+      <mat-error *ngIf="careNotesForm.get('title')?.errors?.['maxlength']">
+        Title cannot exceed 100 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Description -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="6" 
+                placeholder="Detailed description of observations, care provided, patient response, etc."></textarea>
+      <mat-hint align="end">{{ getDescriptionCharacterCount() }}/1000</mat-hint>
+      <mat-error *ngIf="careNotesForm.get('description')?.errors?.['required']">
+        Description is required
+      </mat-error>
+      <mat-error *ngIf="careNotesForm.get('description')?.errors?.['maxlength']">
+        Description cannot exceed 1000 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Guidelines -->
+    <div class="guidelines">
+      <h4>Care Note Guidelines:</h4>
+      <ul>
+        <li>Be objective and factual in your observations</li>
+        <li>Include specific details about patient condition and response</li>
+        <li>Document any changes in patient status</li>
+        <li>Note any interventions performed and their outcomes</li>
+        <li>Use professional medical terminology</li>
+        <li>Ensure accuracy and completeness of information</li>
+      </ul>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!careNotesForm.valid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+    <span *ngIf="!isSubmitting">Add Care Note</span>
+    <span *ngIf="isSubmitting">Adding...</span>
+  </button>
+</mat-dialog-actions>

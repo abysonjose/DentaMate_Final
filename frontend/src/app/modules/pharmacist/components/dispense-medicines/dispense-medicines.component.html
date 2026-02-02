@@ -1,0 +1,251 @@
+<div class="dispense-medicines">
+  <!-- Header -->
+  <div class="page-header">
+    <h2>
+      <mat-icon>medication</mat-icon>
+      Dispense Medicines
+    </h2>
+  </div>
+
+  <!-- Prescription Search -->
+  <mat-card class="search-card">
+    <mat-card-header>
+      <mat-card-title>Find Prescription</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="searchForm" class="search-form">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search by prescription number, patient name, or phone</mat-label>
+          <input matInput 
+                 formControlName="searchQuery"
+                 placeholder="Enter search term...">
+          <mat-icon matSuffix>search</mat-icon>
+          <mat-progress-spinner 
+            *ngIf="isSearching"
+            matSuffix
+            diameter="20"
+            mode="indeterminate">
+          </mat-progress-spinner>
+        </mat-form-field>
+      </form>
+
+      <!-- Search Results -->
+      <div *ngIf="prescriptionSearchResults.length > 0" class="search-results">
+        <h4>Search Results</h4>
+        <div class="results-list">
+          <mat-card 
+            *ngFor="let prescription of prescriptionSearchResults" 
+            class="result-card"
+            (click)="selectPrescription(prescription)">
+            <mat-card-content>
+              <div class="result-content">
+                <div class="result-main">
+                  <div class="prescription-info">
+                    <strong>{{ prescription.prescriptionNumber }}</strong>
+                    <span class="patient-name">{{ prescription.patientName }}</span>
+                  </div>
+                  <div class="prescription-details">
+                    <span>Dr. {{ prescription.doctorName }}</span>
+                    <span>{{ prescription.prescribedDate | date:'short' }}</span>
+                    <mat-chip [color]="getPriorityColor(prescription.priority)" selected>
+                      {{ prescription.priority | titlecase }}
+                    </mat-chip>
+                  </div>
+                </div>
+                <div class="result-actions">
+                  <mat-icon>arrow_forward</mat-icon>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Selected Prescription -->
+  <div *ngIf="selectedPrescription" class="selected-prescription">
+    
+    <!-- Prescription Details -->
+    <mat-card class="prescription-details-card">
+      <mat-card-header>
+        <mat-card-title>
+          Prescription Details
+          <mat-chip [color]="getPriorityColor(selectedPrescription.priority)" selected>
+            {{ selectedPrescription.priority | titlecase }}
+          </mat-chip>
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ selectedPrescription.prescriptionNumber }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="prescription-info-grid">
+          <div class="info-item">
+            <label>Patient:</label>
+            <span>{{ selectedPrescription.patientName }}</span>
+          </div>
+          <div class="info-item">
+            <label>Doctor:</label>
+            <span>Dr. {{ selectedPrescription.doctorName }}</span>
+          </div>
+          <div class="info-item">
+            <label>Prescribed Date:</label>
+            <span>{{ selectedPrescription.prescribedDate | date:'short' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Total Items:</label>
+            <span>{{ selectedPrescription.totalItems }}</span>
+          </div>
+        </div>
+        
+        <div *ngIf="selectedPrescription.notes" class="prescription-notes">
+          <label>Notes:</label>
+          <p>{{ selectedPrescription.notes }}</p>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="checkStockAvailability()">
+          <mat-icon>inventory</mat-icon>
+          Check Stock
+        </button>
+        <button mat-button (click)="resetForm()">
+          <mat-icon>clear</mat-icon>
+          Clear Selection
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Dispense Form -->
+    <mat-card class="dispense-form-card">
+      <mat-card-header>
+        <mat-card-title>Dispense Medicines</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="dispenseForm" class="dispense-form">
+          
+          <!-- Medications List -->
+          <div class="medications-section">
+            <h4>Medications to Dispense</h4>
+            
+            <div 
+              *ngFor="let medicationControl of medicationsFormArray.controls; let i = index"
+              [formGroup]="getMedicationFormGroup(i)"
+              class="medication-item">
+              
+              <mat-card class="medication-card">
+                <mat-card-content>
+                  <div class="medication-header">
+                    <div class="medication-name">
+                      <strong>{{ medicationControl.get('medicationName')?.value }}</strong>
+                      <mat-chip 
+                        [color]="getStockStatusColor(medicationControl.get('stockAvailable')?.value, medicationControl.get('quantityRemaining')?.value)"
+                        selected>
+                        {{ getStockStatusText(medicationControl.get('stockAvailable')?.value, medicationControl.get('quantityRemaining')?.value) }}
+                      </mat-chip>
+                    </div>
+                  </div>
+
+                  <div class="medication-details">
+                    <div class="quantity-info">
+                      <div class="quantity-item">
+                        <label>Prescribed:</label>
+                        <span>{{ medicationControl.get('quantityPrescribed')?.value }}</span>
+                      </div>
+                      <div class="quantity-item">
+                        <label>Remaining:</label>
+                        <span>{{ medicationControl.get('quantityRemaining')?.value }}</span>
+                      </div>
+                      <div class="quantity-item">
+                        <label>Stock Available:</label>
+                        <span>{{ medicationControl.get('stockAvailable')?.value }}</span>
+                      </div>
+                    </div>
+
+                    <div class="dispense-controls">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Quantity to Dispense</mat-label>
+                        <input matInput 
+                               type="number"
+                               formControlName="quantityToDispense"
+                               [min]="1"
+                               [max]="medicationControl.get('quantityRemaining')?.value"
+                               (change)="onQuantityChange(i)">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Batch Number (Optional)</mat-label>
+                        <input matInput formControlName="batchNumber">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Notes (Optional)</mat-label>
+                        <textarea matInput 
+                                  formControlName="notes"
+                                  rows="2"></textarea>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <!-- Verification Section -->
+          <div class="verification-section">
+            <h4>Verification & Counseling</h4>
+            
+            <div class="verification-controls">
+              <mat-checkbox formControlName="patientVerified" color="primary">
+                Patient identity verified (ID, phone, or other verification method)
+              </mat-checkbox>
+
+              <mat-checkbox formControlName="counselingProvided" color="primary">
+                Patient counseling provided (dosage, side effects, instructions)
+              </mat-checkbox>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Additional Notes</mat-label>
+                <textarea matInput 
+                          formControlName="notes"
+                          placeholder="Any additional notes about the dispensing process"
+                          rows="3"></textarea>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="dispense-summary">
+            <h4>Dispense Summary</h4>
+            <div class="summary-info">
+              <div class="summary-item">
+                <label>Total Items to Dispense:</label>
+                <span>{{ getTotalItemsToDispense() }}</span>
+              </div>
+              <div class="summary-item">
+                <label>Can Dispense All:</label>
+                <mat-chip [color]="canDispenseAll() ? 'primary' : 'warn'" selected>
+                  {{ canDispenseAll() ? 'Yes' : 'No' }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </form>
+      </mat-card-content>
+      
+      <mat-card-actions align="end">
+        <button mat-button (click)="resetForm()" [disabled]="isDispensing">
+          Cancel
+        </button>
+        <button mat-raised-button 
+                color="primary"
+                (click)="dispenseMedicines()"
+                [disabled]="!dispenseForm.valid || isDispensing || !canDispenseAll()">
+          <mat-icon *ngIf="isDispensing">hourglass_empty</mat-icon>
+          <mat-icon *ngIf="!isDispensing">medication</mat-icon>
+          {{ isDispensing ? 'Dispensing...' : 'Dispense Medicines' }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

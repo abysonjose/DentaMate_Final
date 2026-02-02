@@ -1,0 +1,131 @@
+<h2 mat-dialog-title>Sample Collection</h2>
+<div class="dialog-subtitle">{{ data.testName }} - {{ data.patientName }}</div>
+
+<mat-dialog-content>
+  <form [formGroup]="collectionForm" class="collection-form">
+    <!-- Collection Details -->
+    <div class="form-section">
+      <h3>Collection Details</h3>
+      <div class="collection-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Collection Method</mat-label>
+          <mat-select formControlName="collectionMethod">
+            <mat-option *ngFor="let method of collectionMethods" [value]="method.value">
+              {{ method.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="collectionForm.get('collectionMethod')?.errors?.['required']">
+            Collection method is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Collection Time</mat-label>
+          <input matInput [matDatetimePicker]="picker" formControlName="collectionTime">
+          <mat-datetimepicker-toggle matSuffix [for]="picker"></mat-datetimepicker-toggle>
+          <mat-datetimepicker #picker></mat-datetimepicker>
+          <mat-error *ngIf="collectionForm.get('collectionTime')?.errors?.['required']">
+            Collection time is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Collected By</mat-label>
+        <input matInput formControlName="collectedBy" placeholder="Staff member name">
+        <mat-error *ngIf="collectionForm.get('collectedBy')?.errors?.['required']">
+          Collector name is required
+        </mat-error>
+      </mat-form-field>
+
+      <div class="collection-details-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Volume Collected</mat-label>
+          <input matInput formControlName="volumeCollected" placeholder="5 mL, 10 mL, etc.">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Container Type</mat-label>
+          <input matInput formControlName="containerType" placeholder="EDTA tube, Plain tube, etc.">
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Collection Site</mat-label>
+        <input matInput formControlName="collectionSite" placeholder="Left antecubital fossa, etc.">
+      </mat-form-field>
+    </div>
+
+    <!-- Storage and Handling -->
+    <div class="form-section">
+      <h3>Storage and Handling</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Storage Conditions</mat-label>
+        <mat-select formControlName="storageConditions">
+          <mat-option *ngFor="let condition of storageConditions" [value]="condition.value">
+            {{ condition.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="collectionForm.get('storageConditions')?.errors?.['required']">
+          Storage conditions are required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Preservatives Used</mat-label>
+        <input matInput formControlName="preservatives" placeholder="None, EDTA, Heparin, etc.">
+      </mat-form-field>
+    </div>
+
+    <!-- Patient Information -->
+    <div class="form-section">
+      <h3>Patient Information</h3>
+      <div class="patient-info-row">
+        <mat-checkbox formControlName="patientFasting">
+          Patient was fasting
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="form-section">
+      <h3>Additional Information</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Collection Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="3" 
+                  placeholder="Any observations or notes during sample collection"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Complications or Issues</mat-label>
+        <textarea matInput formControlName="complications" rows="2" 
+                  placeholder="Any complications encountered during collection"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Collection Guidelines -->
+    <div class="guidelines">
+      <mat-icon>info</mat-icon>
+      <div class="guidelines-text">
+        <p><strong>Collection Guidelines:</strong></p>
+        <ul>
+          <li>Verify patient identity before collection</li>
+          <li>Follow proper aseptic technique</li>
+          <li>Label samples immediately after collection</li>
+          <li>Store samples according to test requirements</li>
+          <li>Document any deviations from standard procedure</li>
+        </ul>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!collectionForm.valid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+    <span *ngIf="!isSubmitting">Record Collection</span>
+    <span *ngIf="isSubmitting">Recording...</span>
+  </button>
+</mat-dialog-actions>

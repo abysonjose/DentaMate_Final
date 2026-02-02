@@ -1,0 +1,347 @@
+<div class="payment-dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon>payment</mat-icon>
+      {{ getStepTitle() }}
+    </h2>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Progress Stepper -->
+  <div class="progress-stepper">
+    <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+      <div class="step-number">1</div>
+      <div class="step-label">Details</div>
+    </div>
+    <div class="step-connector" [class.active]="currentStep > 1"></div>
+    <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+      <div class="step-number">2</div>
+      <div class="step-label">Confirm</div>
+    </div>
+    <div class="step-connector" [class.active]="currentStep > 2"></div>
+    <div class="step" [class.active]="currentStep >= 3">
+      <div class="step-number">3</div>
+      <div class="step-label">Process</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <mat-dialog-content class="dialog-content">
+    
+    <!-- Invoice Information -->
+    <div class="invoice-info">
+      <h3>Invoice Information</h3>
+      <div class="invoice-details">
+        <div class="detail-item">
+          <label>Invoice:</label>
+          <span>{{ payment.invoiceNumber }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Patient:</label>
+          <span>{{ payment.patientName }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Total Amount:</label>
+          <span>₹{{ payment.totalAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Paid Amount:</label>
+          <span>₹{{ payment.paidAmount | number:'1.2-2' }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Balance Amount:</label>
+          <span class="balance-amount">₹{{ payment.balanceAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="paymentForm" class="payment-form">
+      
+      <!-- Step 1: Payment Details -->
+      <div *ngIf="currentStep === 1" class="step-content">
+        
+        <!-- Payment Amount -->
+        <div class="form-section">
+          <h4>Payment Amount</h4>
+          <mat-form-field appearance="outline" class="amount-field">
+            <mat-label>Amount to Pay</mat-label>
+            <input matInput type="number" formControlName="amount" 
+                   [max]="payment.balanceAmount" min="0.01" step="0.01">
+            <span matPrefix>₹</span>
+            <mat-error *ngIf="paymentForm.get('amount')?.hasError('required')">
+              Amount is required
+            </mat-error>
+            <mat-error *ngIf="paymentForm.get('amount')?.hasError('min')">
+              Amount must be greater than 0
+            </mat-error>
+            <mat-error *ngIf="paymentForm.get('amount')?.hasError('max')">
+              Amount cannot exceed balance amount
+            </mat-error>
+          </mat-form-field>
+          
+          <div class="amount-buttons">
+            <button type="button" mat-stroked-button 
+                    (click)="paymentForm.patchValue({amount: payment.balanceAmount})">
+              Full Payment
+            </button>
+            <button type="button" mat-stroked-button 
+                    (click)="paymentForm.patchValue({amount: payment.balanceAmount / 2})">
+              Half Payment
+            </button>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="form-section">
+          <h4>Payment Method</h4>
+          <mat-radio-group formControlName="paymentMethod" 
+                           (change)="onPaymentMethodChange()"
+                           class="payment-methods">
+            <mat-radio-button *ngFor="let method of paymentMethods" 
+                              [value]="method.value"
+                              class="payment-method-option">
+              <div class="method-content">
+                <div class="method-header">
+                  <mat-icon>{{ method.icon }}</mat-icon>
+                  <span class="method-label">{{ method.label }}</span>
+                </div>
+                <div class="method-description">{{ method.description }}</div>
+              </div>
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <!-- Method-specific fields -->
+        <div class="form-section" *ngIf="paymentForm.get('paymentMethod')?.value !== 'cash'">
+          <h4>Payment Details</h4>
+          
+          <!-- UPI Details -->
+          <div *ngIf="paymentForm.get('paymentMethod')?.value === 'upi'" class="method-fields">
+            <mat-form-field appearance="outline">
+              <mat-label>UPI ID</mat-label>
+              <input matInput formControlName="upiId" placeholder="user@paytm">
+              <mat-error *ngIf="paymentForm.get('upiId')?.hasError('required')">
+                UPI ID is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Card Details -->
+          <div *ngIf="paymentForm.get('paymentMethod')?.value === 'card'" class="method-fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Card Last 4 Digits</mat-label>
+              <input matInput formControlName="cardLast4" placeholder="1234" maxlength="4">
+              <mat-error *ngIf="paymentForm.get('cardLast4')?.hasError('required')">
+                Card last 4 digits are required
+              </mat-error>
+              <mat-error *ngIf="paymentForm.get('cardLast4')?.hasError('pattern')">
+                Please enter 4 digits
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Bank Transfer Details -->
+          <div *ngIf="paymentForm.get('paymentMethod')?.value === 'bank_transfer'" class="method-fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Bank Name</mat-label>
+              <input matInput formControlName="bankName">
+              <mat-error *ngIf="paymentForm.get('bankName')?.hasError('required')">
+                Bank name is required
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Transaction ID</mat-label>
+              <input matInput formControlName="transactionId">
+              <mat-error *ngIf="paymentForm.get('transactionId')?.hasError('required')">
+                Transaction ID is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Cheque Details -->
+          <div *ngIf="paymentForm.get('paymentMethod')?.value === 'cheque'" class="method-fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Cheque Number</mat-label>
+              <input matInput formControlName="chequeNumber">
+              <mat-error *ngIf="paymentForm.get('chequeNumber')?.hasError('required')">
+                Cheque number is required
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Bank Name</mat-label>
+              <input matInput formControlName="bankName">
+              <mat-error *ngIf="paymentForm.get('bankName')?.hasError('required')">
+                Bank name is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Reference -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reference (Optional)</mat-label>
+            <input matInput formControlName="reference">
+          </mat-form-field>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-section">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notes (Optional)</mat-label>
+            <textarea matInput formControlName="notes" rows="3"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Step 2: Confirmation -->
+      <div *ngIf="currentStep === 2" class="step-content">
+        <div class="confirmation-section">
+          <h4>Confirm Payment Details</h4>
+          
+          <div class="confirmation-details">
+            <div class="detail-row">
+              <label>Payment Amount:</label>
+              <span class="amount">₹{{ paymentForm.get('amount')?.value | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-row">
+              <label>Payment Method:</label>
+              <span>{{ getSelectedPaymentMethod()?.label }}</span>
+            </div>
+            <div class="detail-row" *ngIf="isPartialPayment()">
+              <label>Remaining Balance:</label>
+              <span class="remaining-balance">₹{{ getRemainingBalance() | number:'1.2-2' }}</span>
+            </div>
+            
+            <!-- Method-specific details -->
+            <div class="detail-row" *ngIf="paymentForm.get('upiId')?.value">
+              <label>UPI ID:</label>
+              <span>{{ paymentForm.get('upiId')?.value }}</span>
+            </div>
+            <div class="detail-row" *ngIf="paymentForm.get('cardLast4')?.value">
+              <label>Card:</label>
+              <span>****{{ paymentForm.get('cardLast4')?.value }}</span>
+            </div>
+            <div class="detail-row" *ngIf="paymentForm.get('bankName')?.value">
+              <label>Bank:</label>
+              <span>{{ paymentForm.get('bankName')?.value }}</span>
+            </div>
+            <div class="detail-row" *ngIf="paymentForm.get('chequeNumber')?.value">
+              <label>Cheque:</label>
+              <span>{{ paymentForm.get('chequeNumber')?.value }}</span>
+            </div>
+            <div class="detail-row" *ngIf="paymentForm.get('notes')?.value">
+              <label>Notes:</label>
+              <span>{{ paymentForm.get('notes')?.value }}</span>
+            </div>
+          </div>
+
+          <mat-card *ngIf="isPartialPayment()" class="partial-payment-warning">
+            <mat-card-content>
+              <div class="warning-content">
+                <mat-icon color="warn">warning</mat-icon>
+                <div>
+                  <strong>Partial Payment</strong>
+                  <p>This is a partial payment. Remaining balance of ₹{{ getRemainingBalance() | number:'1.2-2' }} will still be due.</p>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- Step 3: Processing -->
+      <div *ngIf="currentStep === 3" class="step-content">
+        <div class="processing-section">
+          <h4>Payment Processing</h4>
+          
+          <div *ngIf="simulationResult" class="simulation-result">
+            <div class="result-header" [class.success]="simulationResult.success" [class.failed]="!simulationResult.success">
+              <mat-icon>{{ simulationResult.success ? 'check_circle' : 'error' }}</mat-icon>
+              <span>{{ simulationResult.success ? 'Payment Authorized' : 'Payment Failed' }}</span>
+            </div>
+            
+            <div class="result-details" *ngIf="simulationResult.success">
+              <div class="detail-row">
+                <label>Transaction ID:</label>
+                <span>{{ simulationResult.transactionId }}</span>
+              </div>
+              <div class="detail-row">
+                <label>Processing Time:</label>
+                <span>{{ simulationResult.processingTime }}ms</span>
+              </div>
+            </div>
+            
+            <div class="result-message">
+              {{ simulationResult.message }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Display -->
+      <mat-card *ngIf="error" class="error-card">
+        <mat-card-content>
+          <div class="error-content">
+            <mat-icon color="warn">error</mat-icon>
+            <span>{{ error }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </form>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <div class="actions-left">
+      <button mat-stroked-button 
+              *ngIf="currentStep > 1"
+              (click)="backToDetails()">
+        <mat-icon>arrow_back</mat-icon>
+        Back
+      </button>
+    </div>
+    
+    <div class="actions-right">
+      <button mat-stroked-button (click)="close()">
+        Cancel
+      </button>
+      
+      <button mat-raised-button 
+              color="primary"
+              *ngIf="canProceedToConfirmation()"
+              (click)="proceedToConfirmation()">
+        <mat-icon>arrow_forward</mat-icon>
+        Proceed
+      </button>
+      
+      <button mat-raised-button 
+              color="accent"
+              *ngIf="canSimulatePayment()"
+              (click)="simulatePayment()"
+              [disabled]="isSimulating">
+        <mat-icon *ngIf="!isSimulating">security</mat-icon>
+        <mat-progress-spinner *ngIf="isSimulating" 
+                              diameter="20" 
+                              mode="indeterminate">
+        </mat-progress-spinner>
+        {{ isSimulating ? 'Authorizing...' : 'Authorize Payment' }}
+      </button>
+      
+      <button mat-raised-button 
+              color="primary"
+              *ngIf="canProcessPayment()"
+              (click)="processPayment()"
+              [disabled]="isProcessing">
+        <mat-icon *ngIf="!isProcessing">payment</mat-icon>
+        <mat-progress-spinner *ngIf="isProcessing" 
+                              diameter="20" 
+                              mode="indeterminate">
+        </mat-progress-spinner>
+        {{ isProcessing ? 'Processing...' : 'Process Payment' }}
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>

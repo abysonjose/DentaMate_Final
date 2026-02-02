@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
@@ -21,12 +22,36 @@ const generateTokens = (payload) => {
   };
 };
 
-const verifyAccessToken = (token) => {
-  return jwt.verify(token, JWT_SECRET);
+const verifyAccessToken = async (token) => {
+  const decoded = jwt.verify(token, JWT_SECRET);
+  
+  // Check user status and token version
+  const user = await User.findById(decoded.userId);
+  if (!user || !user.isActive) {
+    throw new Error('User account deactivated');
+  }
+  
+  if (decoded.tokenVersion !== user.tokenVersion) {
+    throw new Error('Token invalidated');
+  }
+  
+  return decoded;
 };
 
-const verifyRefreshToken = (token) => {
-  return jwt.verify(token, REFRESH_TOKEN_SECRET);
+const verifyRefreshToken = async (token) => {
+  const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET);
+  
+  // Check user status and token version for refresh tokens too
+  const user = await User.findById(decoded.userId);
+  if (!user || !user.isActive) {
+    throw new Error('User account deactivated');
+  }
+  
+  if (decoded.tokenVersion !== user.tokenVersion) {
+    throw new Error('Token invalidated');
+  }
+  
+  return decoded;
 };
 
 module.exports = {

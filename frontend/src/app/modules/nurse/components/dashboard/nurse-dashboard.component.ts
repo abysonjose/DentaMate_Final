@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
-import { NurseService, ShiftDetails, Patient, QueueStatus, Task } from '../../services/nurse.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { NurseService } from '../../services/nurse.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-nurse-dashboard',
@@ -11,36 +12,26 @@ import { NurseService, ShiftDetails, Patient, QueueStatus, Task } from '../../se
 export class NurseDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
-  currentShift: ShiftDetails | null = null;
-  assignedPatients: Patient[] = [];
-  queueStatus: QueueStatus[] = [];
-  pendingTasks: Task[] = [];
-  notifications: any[] = [];
-  
-  isLoading = true;
-  selectedTabIndex = 0;
-  
-  navigationItems = [
-    { label: 'Shift Overview', route: 'shift-overview', icon: 'schedule' },
-    { label: 'Patient Preparation', route: 'patient-preparation', icon: 'person_add' },
-    { label: 'Queue Status', route: 'queue-awareness', icon: 'queue' },
-    { label: 'Chairside Assistance', route: 'chairmate-assistance', icon: 'medical_services' },
-    { label: 'Nursing Notes', route: 'nursing-notes', icon: 'note_add' },
-    { label: 'Medical Records', route: 'medical-records', icon: 'folder_shared' },
-    { label: 'Supply Usage', route: 'supply-usage', icon: 'inventory' },
-    { label: 'Sterilization', route: 'sterilization', icon: 'cleaning_services' },
-    { label: 'Communication', route: 'communication', icon: 'chat' },
-    { label: 'Tasks', route: 'tasks', icon: 'task_alt' }
-  ];
+  currentUser: any;
+  assignedPatients: any[] = [];
+  pendingTasks: any[] = [];
+  vitalsToRecord: any[] = [];
+  isLoading = false;
 
   constructor(
     private nurseService: NurseService,
-    private router: Router
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.loadDashboardData();
-    this.subscribeToRealTimeUpdates();
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser = user;
+        if (user) {
+          this.loadDashboardData();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -49,139 +40,90 @@ export class NurseDashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadDashboardData(): void {
-    // Load current shift
-    this.nurseService.getCurrentShift()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (shift) => {
-          this.currentShift = shift;
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Error loading shift data:', error);
-          this.isLoading = false;
-        }
-      });
-
+    this.isLoading = true;
+    
     // Load assigned patients
     this.nurseService.getAssignedPatients()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (patients) => {
-          this.assignedPatients = patients;
+        next: (response) => {
+          this.assignedPatients = response.data || [];
         },
         error: (error) => {
-          console.error('Error loading patients:', error);
-        }
-      });
-
-    // Load queue status
-    this.nurseService.getQueueStatus()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (status) => {
-          this.queueStatus = status;
-        },
-        error: (error) => {
-          console.error('Error loading queue status:', error);
+          console.error('Error loading assigned patients:', error);
         }
       });
 
     // Load pending tasks
-    this.nurseService.getAssignedTasks()
+    this.nurseService.getPendingTasks()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (tasks) => {
-          this.pendingTasks = tasks.filter(task => task.status !== 'completed');
+        next: (response) => {
+          this.pendingTasks = response.data || [];
         },
         error: (error) => {
-          console.error('Error loading tasks:', error);
+          console.error('Error loading pending tasks:', error);
         }
       });
 
-    // Load notifications
-    this.nurseService.getNotifications()
+    // Load vitals to record
+    this.nurseService.getVitalsToRecord()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (notifications) => {
-          this.notifications = notifications.filter(n => !n.read);
+        next: (response) => {
+          this.vitalsToRecord = response.data || [];
+          this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading notifications:', error);
+          console.error('Error loading vitals to record:', error);
+          this.isLoading = false;
         }
       });
-  }
-
-  private subscribeToRealTimeUpdates(): void {
-    // Subscribe to real-time updates from WebSocket
-    this.nurseService.currentShift$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(shift => {
-        if (shift) {
-          this.currentShift = shift;
-        }
-      });
-
-    this.nurseService.patients$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(patients => {
-        this.assignedPatients = patients;
-      });
-
-    this.nurseService.queueStatus$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(status => {
-        this.queueStatus = status;
-      });
-
-    this.nurseService.tasks$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(tasks => {
-        this.pendingTasks = tasks.filter(task => task.status !== 'completed');
-      });
-  }
-
-  navigateToSection(route: string): void {
-    this.router.navigate(['/nurse', route]);
-  }
-
-  getUrgentTasksCount(): number {
-    return this.pendingTasks.filter(task => task.priority === 'urgent').length;
-  }
-
-  getPatientsAwaitingPreparation(): number {
-    return this.assignedPatients.filter(patient => 
-      patient.status === 'waiting' && !patient.preparationStatus.patientReady
-    ).length;
-  }
-
-  getUnreadNotificationsCount(): number {
-    return this.notifications.length;
-  }
-
-  getCurrentTime(): string {
-    return new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  }
-
-  getShiftProgress(): number {
-    if (!this.currentShift) return 0;
-    
-    const now = new Date();
-    const shiftStart = new Date(`${this.currentShift.date} ${this.currentShift.startTime}`);
-    const shiftEnd = new Date(`${this.currentShift.date} ${this.currentShift.endTime}`);
-    
-    const totalDuration = shiftEnd.getTime() - shiftStart.getTime();
-    const elapsed = now.getTime() - shiftStart.getTime();
-    
-    return Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
   }
 
   refreshData(): void {
-    this.isLoading = true;
     this.loadDashboardData();
+  }
+
+  getConditionColor(condition: string): string {
+    switch (condition?.toLowerCase()) {
+      case 'critical': return 'warn';
+      case 'serious': return 'accent';
+      case 'stable': return 'primary';
+      default: return '';
+    }
+  }
+
+  getTaskPriorityColor(priority: string): string {
+    switch (priority?.toLowerCase()) {
+      case 'urgent': return 'warn';
+      case 'high': return 'accent';
+      default: return 'primary';
+    }
+  }
+
+  getTaskIcon(type: string): string {
+    switch (type?.toLowerCase()) {
+      case 'medication': return 'medication';
+      case 'vitals': return 'favorite';
+      case 'assessment': return 'assignment';
+      case 'procedure': return 'healing';
+      default: return 'task_alt';
+    }
+  }
+
+  completeTask(taskId: string): void {
+    this.nurseService.completeTask(taskId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.loadDashboardData(); // Refresh data
+          }
+        },
+        error: (error) => {
+          console.error('Error completing task:', error);
+        }
+      });
   }
 }

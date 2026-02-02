@@ -1,0 +1,291 @@
+.ai-diagnosis {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .diagnosis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+
+  .diagnosis-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+
+    .analysis-section {
+      .upload-card {
+        margin-bottom: 24px;
+
+        .upload-form {
+          .full-width {
+            width: 100%;
+            margin-bottom: 16px;
+          }
+
+          .file-upload-section {
+            margin-bottom: 16px;
+
+            .upload-button {
+              width: 100%;
+              height: 60px;
+              border: 2px dashed #ccc;
+              background: #fafafa;
+              
+              &:hover {
+                border-color: #2196F3;
+                background: #f0f8ff;
+              }
+            }
+
+            .file-info {
+              margin-top: 8px;
+              color: #666;
+              text-align: center;
+            }
+          }
+
+          .submit-section {
+            text-align: center;
+            margin-top: 24px;
+
+            .analyze-button {
+              min-width: 200px;
+              height: 48px;
+              font-size: 16px;
+
+              mat-spinner {
+                margin-right: 8px;
+              }
+            }
+          }
+        }
+      }
+
+      .result-card {
+        .confidence-chip {
+          margin-left: 8px;
+          font-size: 12px;
+        }
+
+        .assessment-section {
+          margin-bottom: 24px;
+
+          h3 {
+            margin: 0 0 12px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+          }
+
+          .assessment-text {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 0;
+            line-height: 1.6;
+          }
+        }
+
+        .findings-section {
+          margin-bottom: 24px;
+
+          h3 {
+            margin: 0 0 16px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+          }
+
+          .findings-list {
+            .finding-item {
+              border: 1px solid #e0e0e0;
+              border-radius: 8px;
+              padding: 16px;
+              margin-bottom: 16px;
+              background: #fafafa;
+
+              .finding-header {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 12px;
+
+                .finding-info {
+                  flex: 1;
+
+                  h4 {
+                    margin: 0 0 8px 0;
+                    color: #333;
+                  }
+
+                  .finding-meta {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+
+                    .urgency-chip {
+                      font-size: 12px;
+                      height: 24px;
+                    }
+
+                    .confidence {
+                      color: #666;
+                      font-size: 14px;
+                    }
+                  }
+                }
+              }
+
+              .finding-details {
+                p {
+                  margin: 8px 0;
+                  color: #666;
+                  line-height: 1.5;
+                }
+
+                .location {
+                  margin: 8px 0;
+                  color: #666;
+
+                  span {
+                    margin-left: 4px;
+                  }
+                }
+
+                .recommendations {
+                  margin: 12px 0;
+
+                  ul {
+                    margin: 8px 0 0 0;
+                    padding-left: 20px;
+
+                    li {
+                      margin: 4px 0;
+                      color: #666;
+                      line-height: 1.4;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        .metadata-section {
+          border-top: 1px solid #e0e0e0;
+          padding-top: 16px;
+
+          .metadata-item {
+            margin: 8px 0;
+            color: #666;
+            font-size: 14px;
+
+            strong {
+              color: #333;
+            }
+          }
+        }
+      }
+    }
+
+    .recent-section {
+      .recent-list {
+        .recent-item {
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 12px;
+
+          .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+
+            .recent-info {
+              strong {
+                color: #333;
+                display: block;
+              }
+
+              small {
+                color: #666;
+                font-size: 12px;
+              }
+            }
+          }
+
+          .recent-summary {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+          }
+
+          .recent-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 8px;
+
+            small {
+              color: #888;
+              font-size: 12px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+      font-size: 16px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-diagnosis {
+    padding: 16px;
+
+    .diagnosis-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .diagnosis-content {
+      grid-template-columns: 1fr;
+    }
+
+    .recent-item .recent-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
+}

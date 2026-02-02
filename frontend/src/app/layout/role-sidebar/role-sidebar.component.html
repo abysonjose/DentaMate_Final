@@ -1,0 +1,33 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <!-- Sidebar Header -->
+  <div class="sidebar-header">
+    <button mat-icon-button (click)="toggleSidebar()" class="toggle-btn">
+      <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav" *ngIf="menuItems.length > 0">
+    <ul class="nav-list">
+      <li *ngFor="let item of menuItems" class="nav-item">
+        <button 
+          mat-button 
+          class="nav-link"
+          [class.active]="item.active"
+          (click)="navigateTo(item.route)"
+          [title]="item.label">
+          <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+          <span class="nav-label" [class.hidden]="isCollapsed">{{ item.label }}</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Role Badge -->
+  <div class="sidebar-footer" *ngIf="user && !isCollapsed">
+    <div class="role-badge">
+      <mat-icon>badge</mat-icon>
+      <span>{{ getRoleDisplayName() }}</span>
+    </div>
+  </div>
+</aside>

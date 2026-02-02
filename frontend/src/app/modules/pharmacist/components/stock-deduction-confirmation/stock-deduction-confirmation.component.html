@@ -1,0 +1,347 @@
+<div class="stock-deduction-confirmation">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>
+        <mat-icon>inventory_2</mat-icon>
+        Stock Deduction & Alerts
+      </h2>
+      <div class="header-actions">
+        <button mat-icon-button (click)="refreshData()" [disabled]="isLoadingDeductions || isLoadingAlerts">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-content">
+          <div class="summary-icon">
+            <mat-icon>trending_down</mat-icon>
+          </div>
+          <div class="summary-info">
+            <h3>{{ getTotalQuantityDeducted() }}</h3>
+            <p>Total Items Deducted</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-content">
+          <div class="summary-icon">
+            <mat-icon>attach_money</mat-icon>
+          </div>
+          <div class="summary-info">
+            <h3>${{ getTotalDeductionValue() | number:'1.2-2' }}</h3>
+            <p>Total Value Deducted</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card alert-card">
+      <mat-card-content>
+        <div class="summary-content">
+          <div class="summary-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="summary-info">
+            <h3>{{ getUnacknowledgedAlertsCount() }}</h3>
+            <p>Unacknowledged Alerts</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card critical-card">
+      <mat-card-content>
+        <div class="summary-content">
+          <div class="summary-icon">
+            <mat-icon>error</mat-icon>
+          </div>
+          <div class="summary-info">
+            <h3>{{ getCriticalAlertsCount() }}</h3>
+            <p>Critical Alerts</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon color="warn">error</mat-icon>
+          <p>{{ error }}</p>
+          <button mat-raised-button color="primary" (click)="refreshData()">
+            Try Again
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group class="main-tabs">
+    
+    <!-- Stock Deductions Tab -->
+    <mat-tab label="Stock Deductions">
+      <div class="tab-content">
+        
+        <!-- Filters -->
+        <mat-card class="filters-card">
+          <mat-card-content>
+            <div class="filters-container">
+              <mat-form-field appearance="outline">
+                <mat-label>From Date</mat-label>
+                <input matInput 
+                       [matDatepicker]="fromPicker"
+                       [formControl]="dateFromControl">
+                <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+                <mat-datepicker #fromPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>To Date</mat-label>
+                <input matInput 
+                       [matDatepicker]="toPicker"
+                       [formControl]="dateToControl">
+                <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+                <mat-datepicker #toPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Reason</mat-label>
+                <mat-select [formControl]="reasonFilter">
+                  <mat-option *ngFor="let reason of reasonOptions" [value]="reason.value">
+                    {{ reason.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-button (click)="clearFilters()">
+                <mat-icon>clear</mat-icon>
+                Clear Filters
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoadingDeductions" class="loading-container">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <p>Loading stock deductions...</p>
+        </div>
+
+        <!-- Deductions Table -->
+        <mat-card *ngIf="!isLoadingDeductions" class="table-card">
+          <mat-card-content>
+            <div class="table-container">
+              <table mat-table [dataSource]="deductionsDataSource" matSort #deductionsSort class="deductions-table">
+                
+                <!-- Medication Name Column -->
+                <ng-container matColumnDef="medicationName">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Medication</th>
+                  <td mat-cell *matCellDef="let record">
+                    <div class="medication-info">
+                      <strong>{{ record.medicationName }}</strong>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Prescription ID Column -->
+                <ng-container matColumnDef="prescriptionId">
+                  <th mat-header-cell *matHeaderCellDef>Prescription</th>
+                  <td mat-cell *matCellDef="let record">
+                    <span class="prescription-id">{{ record.prescriptionId }}</span>
+                  </td>
+                </ng-container>
+
+                <!-- Patient Name Column -->
+                <ng-container matColumnDef="patientName">
+                  <th mat-header-cell *matHeaderCellDef>Patient</th>
+                  <td mat-cell *matCellDef="let record">
+                    {{ record.patientName }}
+                  </td>
+                </ng-container>
+
+                <!-- Quantity Deducted Column -->
+                <ng-container matColumnDef="quantityDeducted">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Quantity</th>
+                  <td mat-cell *matCellDef="let record">
+                    <mat-chip color="primary" selected>
+                      {{ record.quantityDeducted }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <!-- Batch Number Column -->
+                <ng-container matColumnDef="batchNumber">
+                  <th mat-header-cell *matHeaderCellDef>Batch</th>
+                  <td mat-cell *matCellDef="let record">
+                    <span class="batch-number">{{ record.batchNumber || 'N/A' }}</span>
+                  </td>
+                </ng-container>
+
+                <!-- Total Value Column -->
+                <ng-container matColumnDef="totalValue">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Value</th>
+                  <td mat-cell *matCellDef="let record">
+                    <span class="value">${{ record.totalValue | number:'1.2-2' }}</span>
+                  </td>
+                </ng-container>
+
+                <!-- Deducted At Column -->
+                <ng-container matColumnDef="deductedAt">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+                  <td mat-cell *matCellDef="let record">
+                    {{ record.deductedAt | date:'short' }}
+                  </td>
+                </ng-container>
+
+                <!-- Deducted By Column -->
+                <ng-container matColumnDef="deductedBy">
+                  <th mat-header-cell *matHeaderCellDef>Deducted By</th>
+                  <td mat-cell *matCellDef="let record">
+                    {{ record.deductedBy }}
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="deductionsDisplayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: deductionsDisplayedColumns;"></tr>
+              </table>
+
+              <!-- No Data -->
+              <div *ngIf="deductionsDataSource.data.length === 0" class="no-data">
+                <mat-icon>inventory_2</mat-icon>
+                <p>No stock deductions found</p>
+                <p class="no-data-subtitle">No stock deductions match the current filters.</p>
+              </div>
+            </div>
+
+            <!-- Paginator -->
+            <mat-paginator #deductionsPaginator
+              [pageSizeOptions]="[10, 25, 50, 100]"
+              [pageSize]="25"
+              showFirstLastButtons>
+            </mat-paginator>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Low Stock Alerts Tab -->
+    <mat-tab label="Low Stock Alerts">
+      <div class="tab-content">
+        
+        <!-- Loading State -->
+        <div *ngIf="isLoadingAlerts" class="loading-container">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <p>Loading low stock alerts...</p>
+        </div>
+
+        <!-- Alerts Table -->
+        <mat-card *ngIf="!isLoadingAlerts" class="table-card">
+          <mat-card-content>
+            <div class="table-container">
+              <table mat-table [dataSource]="alertsDataSource" matSort #alertsSort class="alerts-table">
+                
+                <!-- Medication Name Column -->
+                <ng-container matColumnDef="medicationName">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Medication</th>
+                  <td mat-cell *matCellDef="let alert">
+                    <div class="medication-info">
+                      <strong>{{ alert.medicationName }}</strong>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Current Stock Column -->
+                <ng-container matColumnDef="currentStock">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Current Stock</th>
+                  <td mat-cell *matCellDef="let alert">
+                    <mat-chip [color]="getSeverityColor(alert.severity)" selected>
+                      {{ alert.currentStock }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <!-- Minimum Stock Column -->
+                <ng-container matColumnDef="minimumStock">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Minimum Stock</th>
+                  <td mat-cell *matCellDef="let alert">
+                    {{ alert.minimumStock }}
+                  </td>
+                </ng-container>
+
+                <!-- Severity Column -->
+                <ng-container matColumnDef="severity">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
+                  <td mat-cell *matCellDef="let alert">
+                    <mat-chip [color]="getSeverityColor(alert.severity)" selected>
+                      {{ getSeverityLabel(alert.severity) }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <!-- Alert Date Column -->
+                <ng-container matColumnDef="alertDate">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Alert Date</th>
+                  <td mat-cell *matCellDef="let alert">
+                    {{ alert.alertDate | date:'short' }}
+                  </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let alert">
+                    <div class="actions-container">
+                      <button mat-button 
+                              *ngIf="!alert.acknowledged"
+                              (click)="acknowledgeAlert(alert)"
+                              color="primary">
+                        <mat-icon>check</mat-icon>
+                        Acknowledge
+                      </button>
+                      <span *ngIf="alert.acknowledged" class="acknowledged-text">
+                        <mat-icon>check_circle</mat-icon>
+                        Acknowledged
+                      </span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="alertsDisplayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: alertsDisplayedColumns;"
+                    [class.critical-alert]="row.severity === 'critical' || row.severity === 'out_of_stock'"
+                    [class.acknowledged-alert]="row.acknowledged"></tr>
+              </table>
+
+              <!-- No Data -->
+              <div *ngIf="alertsDataSource.data.length === 0" class="no-data">
+                <mat-icon>check_circle</mat-icon>
+                <p>No low stock alerts</p>
+                <p class="no-data-subtitle">All medications are adequately stocked.</p>
+              </div>
+            </div>
+
+            <!-- Paginator -->
+            <mat-paginator #alertsPaginator
+              [pageSizeOptions]="[10, 25, 50, 100]"
+              [pageSize]="25"
+              showFirstLastButtons>
+            </mat-paginator>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

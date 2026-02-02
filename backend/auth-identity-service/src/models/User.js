@@ -23,17 +23,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  role: {
-    type: String,
-    enum: [
-      'patient', 'doctor', 'nurse', 'head-nurse', 'orthotist',
-      'lab-assistant', 'pharmacist', 'receptionist', 'support-staff',
-      'billing-officer', 'cashier', 'accountant', 'accounts-manager',
-      'payroll-officer', 'insurance', 'hr', 'branch-admin',
-      'central-admin', 'saas-admin'
-    ],
-    required: true
-  },
+
   tenantId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
@@ -48,10 +38,10 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   twoFactorSecret: String,
-  permissions: [{
-    resource: String,
-    actions: [String]
-  }]
+  tokenVersion: {
+    type: Number,
+    default: 0
+  },
 }, {
   timestamps: true
 });
@@ -75,3 +65,8 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 module.exports = mongoose.model('User', userSchema);
+// Method to invalidate all tokens
+userSchema.methods.invalidateTokens = function() {
+  this.tokenVersion += 1;
+  return this.save();
+};

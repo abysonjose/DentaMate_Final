@@ -1,0 +1,173 @@
+<h2 mat-dialog-title>Register New Patient</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="registrationForm" class="registration-form">
+    <!-- Personal Information -->
+    <div class="form-section">
+      <h3>Personal Information</h3>
+      <div class="name-row">
+        <mat-form-field appearance="outline">
+          <mat-label>First Name</mat-label>
+          <input matInput formControlName="firstName" placeholder="John">
+          <mat-error *ngIf="registrationForm.get('firstName')?.errors?.['required']">
+            First name is required
+          </mat-error>
+          <mat-error *ngIf="registrationForm.get('firstName')?.errors?.['maxlength']">
+            First name cannot exceed 50 characters
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Last Name</mat-label>
+          <input matInput formControlName="lastName" placeholder="Doe">
+          <mat-error *ngIf="registrationForm.get('lastName')?.errors?.['required']">
+            Last name is required
+          </mat-error>
+          <mat-error *ngIf="registrationForm.get('lastName')?.errors?.['maxlength']">
+            Last name cannot exceed 50 characters
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="contact-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="john.doe@example.com">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error>{{ getEmailError() }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Phone Number</mat-label>
+          <input matInput formControlName="phone" placeholder="+1 (555) 123-4567">
+          <mat-icon matSuffix>phone</mat-icon>
+          <mat-error>{{ getPhoneError() }}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="personal-details-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Date of Birth</mat-label>
+          <input matInput [matDatepicker]="dobPicker" formControlName="dateOfBirth">
+          <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+          <mat-datepicker #dobPicker></mat-datepicker>
+          <mat-error *ngIf="registrationForm.get('dateOfBirth')?.errors?.['required']">
+            Date of birth is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Gender</mat-label>
+          <mat-select formControlName="gender">
+            <mat-option *ngFor="let gender of genders" [value]="gender.value">
+              {{ gender.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="registrationForm.get('gender')?.errors?.['required']">
+            Gender is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Address Information -->
+    <div class="form-section">
+      <h3>Address Information</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Street Address</mat-label>
+        <input matInput formControlName="street" placeholder="123 Main Street">
+        <mat-error *ngIf="registrationForm.get('street')?.errors?.['required']">
+          Street address is required
+        </mat-error>
+        <mat-error *ngIf="registrationForm.get('street')?.errors?.['maxlength']">
+          Street address cannot exceed 100 characters
+        </mat-error>
+      </mat-form-field>
+
+      <div class="address-row">
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input matInput formControlName="city" placeholder="New York">
+          <mat-error *ngIf="registrationForm.get('city')?.errors?.['required']">
+            City is required
+          </mat-error>
+          <mat-error *ngIf="registrationForm.get('city')?.errors?.['maxlength']">
+            City cannot exceed 50 characters
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>State</mat-label>
+          <input matInput formControlName="state" placeholder="NY">
+          <mat-error *ngIf="registrationForm.get('state')?.errors?.['required']">
+            State is required
+          </mat-error>
+          <mat-error *ngIf="registrationForm.get('state')?.errors?.['maxlength']">
+            State cannot exceed 50 characters
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>ZIP Code</mat-label>
+          <input matInput formControlName="zipCode" placeholder="10001">
+          <mat-error>{{ getZipCodeError() }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div class="form-section">
+      <h3>Emergency Contact</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Emergency Contact Name</mat-label>
+        <input matInput formControlName="emergencyName" placeholder="Jane Doe">
+        <mat-error *ngIf="registrationForm.get('emergencyName')?.errors?.['required']">
+          Emergency contact name is required
+        </mat-error>
+        <mat-error *ngIf="registrationForm.get('emergencyName')?.errors?.['maxlength']">
+          Name cannot exceed 100 characters
+        </mat-error>
+      </mat-form-field>
+
+      <div class="emergency-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Emergency Phone</mat-label>
+          <input matInput formControlName="emergencyPhone" placeholder="+1 (555) 987-6543">
+          <mat-icon matSuffix>phone</mat-icon>
+          <mat-error>{{ getEmergencyPhoneError() }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Relationship</mat-label>
+          <mat-select formControlName="emergencyRelationship">
+            <mat-option *ngFor="let relationship of relationships" [value]="relationship.value">
+              {{ relationship.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="registrationForm.get('emergencyRelationship')?.errors?.['required']">
+            Relationship is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Registration Notice -->
+    <div class="registration-notice">
+      <mat-icon>info</mat-icon>
+      <div class="notice-text">
+        <p><strong>Registration Notice:</strong></p>
+        <p>By registering this patient, you confirm that all information provided is accurate and that you have the patient's consent to create their medical record in our system.</p>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!registrationForm.valid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+    <span *ngIf="!isSubmitting">Register Patient</span>
+    <span *ngIf="isSubmitting">Registering...</span>
+  </button>
+</mat-dialog-actions>

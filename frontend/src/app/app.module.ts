@@ -8,10 +8,13 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
+import { LayoutModule } from './layout/layout.module';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { TenantInterceptor } from './core/interceptors/tenant.interceptor';
 
@@ -25,12 +28,15 @@ import { TenantInterceptor } from './core/interceptors/tenant.interceptor';
     HttpClientModule,
     AppRoutingModule,
     CoreModule,
+    LayoutModule,
     
     // Material Design
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatMenuModule
   ],
   providers: [
     {

@@ -25,7 +25,8 @@
     "passport-google-oauth20": "^2.0.0",
     "dotenv": "^16.4.7",
     "cors": "^2.8.5",
-    "helmet": "^8.0.0"
+    "helmet": "^8.0.0",
+    "axios": "^1.6.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",

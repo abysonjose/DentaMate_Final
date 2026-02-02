@@ -1,16 +1,4 @@
 <div class="dashboard-container">
-  <mat-toolbar color="primary" class="dashboard-header">
-    <mat-icon class="logo-icon">local_hospital</mat-icon>
-    <span class="app-title">DentaMate</span>
-    <span class="spacer"></span>
-    <span class="user-info" *ngIf="user">
-      Welcome, {{user.firstName}} {{user.lastName}} ({{getRoleDisplayName(user.role)}})
-    </span>
-    <button mat-icon-button (click)="onLogout()" title="Logout">
-      <mat-icon>logout</mat-icon>
-    </button>
-  </mat-toolbar>
-
   <div class="dashboard-content">
     <div class="welcome-section">
       <mat-card class="welcome-card">

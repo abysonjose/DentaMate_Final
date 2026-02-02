@@ -1,0 +1,245 @@
+<div class="patient-profile">
+  <div class="profile-header" *ngIf="patient">
+    <div class="patient-info">
+      <h1>{{ patient.firstName }} {{ patient.lastName }}</h1>
+      <div class="patient-details">
+        <span class="detail-item">
+          <mat-icon>badge</mat-icon>
+          ID: {{ patient.patientId }}
+        </span>
+        <span class="detail-item">
+          <mat-icon>cake</mat-icon>
+          Age: {{ patient.age }}
+        </span>
+        <span class="detail-item">
+          <mat-icon>person</mat-icon>
+          {{ patient.gender }}
+        </span>
+        <span class="detail-item">
+          <mat-icon>phone</mat-icon>
+          {{ patient.phone }}
+        </span>
+        <span class="detail-item">
+          <mat-icon>email</mat-icon>
+          {{ patient.email }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-content" *ngIf="!isLoading; else loadingTemplate">
+    <mat-tab-group class="profile-tabs">
+      <mat-tab label="Medical History">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Medical History</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="history-list" *ngIf="medicalHistory.length > 0; else noHistory">
+                <mat-expansion-panel *ngFor="let record of medicalHistory" class="history-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon [color]="getSeverityColor(getConditionSeverity(record.condition))">
+                        medical_services
+                      </mat-icon>
+                      {{ record.condition }}
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      {{ record.diagnosisDate | date:'mediumDate' }} - Dr. {{ record.doctorName }}
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <div class="history-details">
+                    <div class="detail-row">
+                      <strong>Diagnosis:</strong> {{ record.diagnosis }}
+                    </div>
+                    <div class="detail-row" *ngIf="record.symptoms">
+                      <strong>Symptoms:</strong> {{ record.symptoms }}
+                    </div>
+                    <div class="detail-row" *ngIf="record.treatment">
+                      <strong>Treatment:</strong> {{ record.treatment }}
+                    </div>
+                    <div class="detail-row" *ngIf="record.notes">
+                      <strong>Notes:</strong> {{ record.notes }}
+                    </div>
+                    <div class="detail-row">
+                      <strong>Status:</strong>
+                      <mat-chip [color]="getSeverityColor(getConditionSeverity(record.status))">
+                        {{ record.status }}
+                      </mat-chip>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </div>
+              <ng-template #noHistory>
+                <div class="no-data">
+                  <mat-icon>history</mat-icon>
+                  <p>No medical history available</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Prescriptions">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Past Prescriptions</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="prescriptions-list" *ngIf="prescriptions.length > 0; else noPrescriptions">
+                <div class="prescription-item" *ngFor="let prescription of prescriptions">
+                  <div class="prescription-header">
+                    <h4>{{ prescription.prescriptionDate | date:'mediumDate' }}</h4>
+                    <mat-chip [color]="prescription.status === 'active' ? 'primary' : ''">
+                      {{ prescription.status }}
+                    </mat-chip>
+                  </div>
+                  <div class="prescription-details">
+                    <p><strong>Prescribed by:</strong> Dr. {{ prescription.doctorName }}</p>
+                    <div class="medications">
+                      <div class="medication" *ngFor="let med of prescription.medications">
+                        <div class="med-info">
+                          <strong>{{ med.name }}</strong> - {{ med.dosage }}
+                        </div>
+                        <div class="med-instructions">
+                          {{ med.instructions }}
+                        </div>
+                        <div class="med-duration">
+                          Duration: {{ med.duration }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="prescription-notes" *ngIf="prescription.notes">
+                      <strong>Notes:</strong> {{ prescription.notes }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noPrescriptions>
+                <div class="no-data">
+                  <mat-icon>medication</mat-icon>
+                  <p>No prescriptions available</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Reports">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Medical Reports</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="reports-list" *ngIf="reports.length > 0; else noReports">
+                <div class="report-item" *ngFor="let report of reports">
+                  <div class="report-header">
+                    <mat-icon [color]="getReportTypeColor(report.type)">{{ getReportIcon(report.type) }}</mat-icon>
+                    <div class="report-info">
+                      <h4>{{ report.title }}</h4>
+                      <p>{{ report.reportDate | date:'mediumDate' }} - {{ report.type }}</p>
+                    </div>
+                  </div>
+                  <div class="report-summary" *ngIf="report.summary">
+                    <strong>Summary:</strong> {{ report.summary }}
+                  </div>
+                  <div class="report-findings" *ngIf="report.findings">
+                    <strong>Findings:</strong> {{ report.findings }}
+                  </div>
+                  <div class="report-actions">
+                    <button mat-button color="primary" (click)="viewReport(report.id)">
+                      <mat-icon>visibility</mat-icon>
+                      View Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noReports>
+                <div class="no-data">
+                  <mat-icon>description</mat-icon>
+                  <p>No reports available</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Patient Info">
+        <div class="tab-content">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Patient Information</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="patient-details-grid" *ngIf="patient">
+                <div class="detail-section">
+                  <h3>Personal Information</h3>
+                  <div class="detail-item">
+                    <strong>Full Name:</strong> {{ patient.firstName }} {{ patient.lastName }}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Date of Birth:</strong> {{ patient.dateOfBirth | date:'mediumDate' }}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Gender:</strong> {{ patient.gender }}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Blood Type:</strong> {{ patient.bloodType || 'Not specified' }}
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <h3>Contact Information</h3>
+                  <div class="detail-item">
+                    <strong>Phone:</strong> {{ patient.phone }}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Email:</strong> {{ patient.email }}
+                  </div>
+                  <div class="detail-item" *ngIf="patient.address">
+                    <strong>Address:</strong> {{ patient.address }}
+                  </div>
+                </div>
+
+                <div class="detail-section" *ngIf="patient.emergencyContact">
+                  <h3>Emergency Contact</h3>
+                  <div class="detail-item">
+                    <strong>Name:</strong> {{ patient.emergencyContact.name }}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Phone:</strong> {{ patient.emergencyContact.phone }}
+                  </div>
+                  <div class="detail-item">
+                    <strong>Relationship:</strong> {{ patient.emergencyContact.relationship }}
+                  </div>
+                </div>
+
+                <div class="detail-section" *ngIf="patient.allergies && patient.allergies.length > 0">
+                  <h3>Allergies</h3>
+                  <div class="allergies-list">
+                    <mat-chip *ngFor="let allergy of patient.allergies" color="warn">
+                      {{ allergy }}
+                    </mat-chip>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading patient profile...</p>
+    </div>
+  </ng-template>
+</div>

@@ -1,24 +1,20 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { PharmacistDashboardComponent } from './components/dashboard/pharmacist-dashboard.component';
-import { PrescriptionVerificationComponent } from './components/prescription-verification/prescription-verification.component';
-import { MedicineDispensingComponent } from './components/medicine-dispensing/medicine-dispensing.component';
-import { InventoryManagementComponent } from './components/inventory-management/inventory-management.component';
-import { DispensingHistoryComponent } from './components/dispensing-history/dispensing-history.component';
-import { StockAlertsComponent } from './components/stock-alerts/stock-alerts.component';
+import { PendingPrescriptionsComponent } from './components/pending-prescriptions/pending-prescriptions.component';
+import { DispenseMedicinesComponent } from './components/dispense-medicines/dispense-medicines.component';
+import { StockDeductionConfirmationComponent } from './components/stock-deduction-confirmation/stock-deduction-confirmation.component';
 
 const routes: Routes = [
   {
     path: '',
     component: PharmacistDashboardComponent,
     children: [
-      { path: '', redirectTo: 'overview', pathMatch: 'full' },
-      { path: 'overview', component: PharmacistDashboardComponent },
-      { path: 'prescriptions', component: PrescriptionVerificationComponent },
-      { path: 'dispensing', component: MedicineDispensingComponent },
-      { path: 'inventory', component: InventoryManagementComponent },
-      { path: 'history', component: DispensingHistoryComponent },
-      { path: 'alerts', component: StockAlertsComponent }
+      { path: '', redirectTo: 'pending-prescriptions', pathMatch: 'full' },
+      { path: 'pending-prescriptions', component: PendingPrescriptionsComponent },
+      { path: 'dispense-medicines', component: DispenseMedicinesComponent },
+      { path: 'stock-deduction-confirmation', component: StockDeductionConfirmationComponent }
     ]
   }
 ];

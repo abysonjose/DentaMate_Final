@@ -1,0 +1,457 @@
+.payment-dialog-container {
+  max-width: 700px;
+  width: 100%;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid #e0e0e0;
+  
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+    color: #1976d2;
+    
+    mat-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+}
+
+.progress-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: #f8f9fa;
+  
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      background-color: #e0e0e0;
+      color: #666;
+      transition: all 0.3s ease;
+      
+      &.active,
+      &.completed {
+        background-color: #1976d2;
+        color: white;
+      }
+    }
+    
+    .step-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 500;
+      
+      &.active {
+        color: #1976d2;
+      }
+    }
+    
+    &.active {
+      .step-number {
+        background-color: #1976d2;
+        color: white;
+      }
+      
+      .step-label {
+        color: #1976d2;
+      }
+    }
+    
+    &.completed {
+      .step-number {
+        background-color: #4caf50;
+      }
+    }
+  }
+  
+  .step-connector {
+    width: 60px;
+    height: 2px;
+    background-color: #e0e0e0;
+    margin: 0 16px;
+    transition: background-color 0.3s ease;
+    
+    &.active {
+      background-color: #1976d2;
+    }
+  }
+}
+
+.dialog-content {
+  padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.invoice-info {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  
+  h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .invoice-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+    
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      
+      label {
+        font-size: 14px;
+        color: #666;
+      }
+      
+      span {
+        font-size: 14px;
+        font-weight: 500;
+        
+        &.balance-amount {
+          color: #f57c00;
+        }
+      }
+    }
+  }
+}
+
+.payment-form {
+  .step-content {
+    .form-section {
+      margin-bottom: 24px;
+      
+      h4 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 8px;
+      }
+      
+      .amount-field {
+        width: 100%;
+        max-width: 300px;
+      }
+      
+      .amount-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 12px;
+        
+        button {
+          flex: 1;
+          max-width: 150px;
+        }
+      }
+      
+      .payment-methods {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        
+        .payment-method-option {
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 16px;
+          transition: all 0.3s ease;
+          
+          &:hover {
+            border-color: #1976d2;
+            background-color: #f8f9fa;
+          }
+          
+          &.mat-mdc-radio-checked {
+            border-color: #1976d2;
+            background-color: #e3f2fd;
+          }
+          
+          .method-content {
+            margin-left: 32px;
+            
+            .method-header {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 4px;
+              
+              mat-icon {
+                color: #1976d2;
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+              }
+              
+              .method-label {
+                font-weight: 500;
+                font-size: 16px;
+              }
+            }
+            
+            .method-description {
+              font-size: 14px;
+              color: #666;
+            }
+          }
+        }
+      }
+      
+      .method-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        
+        @media (max-width: 600px) {
+          grid-template-columns: 1fr;
+        }
+        
+        mat-form-field {
+          &.full-width {
+            grid-column: 1 / -1;
+          }
+        }
+      }
+      
+      .full-width {
+        width: 100%;
+      }
+    }
+    
+    .confirmation-section {
+      .confirmation-details {
+        background-color: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          border-bottom: 1px solid #e0e0e0;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          label {
+            font-size: 14px;
+            color: #666;
+          }
+          
+          span {
+            font-size: 14px;
+            font-weight: 500;
+            
+            &.amount {
+              color: #1976d2;
+              font-size: 16px;
+            }
+            
+            &.remaining-balance {
+              color: #f57c00;
+            }
+          }
+        }
+      }
+      
+      .partial-payment-warning {
+        margin-top: 16px;
+        
+        .warning-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+          }
+          
+          strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #f57c00;
+          }
+          
+          p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+          }
+        }
+      }
+    }
+    
+    .processing-section {
+      .simulation-result {
+        background-color: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        
+        .result-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+          font-size: 16px;
+          font-weight: 500;
+          
+          &.success {
+            color: #4caf50;
+            
+            mat-icon {
+              color: #4caf50;
+            }
+          }
+          
+          &.failed {
+            color: #d32f2f;
+            
+            mat-icon {
+              color: #d32f2f;
+            }
+          }
+          
+          mat-icon {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+          }
+        }
+        
+        .result-details {
+          margin-bottom: 12px;
+          
+          .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            
+            label {
+              font-size: 14px;
+              color: #666;
+            }
+            
+            span {
+              font-size: 14px;
+              font-weight: 500;
+            }
+          }
+        }
+        
+        .result-message {
+          font-size: 14px;
+          color: #666;
+          font-style: italic;
+        }
+      }
+    }
+  }
+}
+
+.error-card {
+  margin-top: 16px;
+  
+  .error-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #d32f2f;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  
+  .actions-left,
+  .actions-right {
+    display: flex;
+    gap: 12px;
+  }
+  
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    mat-progress-spinner {
+      margin-right: 4px;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 600px) {
+  .dialog-content {
+    padding: 16px;
+  }
+  
+  .progress-stepper {
+    padding: 16px;
+    
+    .step-connector {
+      width: 40px;
+      margin: 0 8px;
+    }
+  }
+  
+  .dialog-actions {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    
+    .actions-left,
+    .actions-right {
+      justify-content: center;
+    }
+  }
+}

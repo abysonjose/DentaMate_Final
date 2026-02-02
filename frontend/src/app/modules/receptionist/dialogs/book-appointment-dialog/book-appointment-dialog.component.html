@@ -1,0 +1,143 @@
+<h2 mat-dialog-title>Book New Appointment</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="appointmentForm" class="appointment-form">
+    <!-- Patient Selection -->
+    <div class="form-section">
+      <h3>Patient Information</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Search Patient</mat-label>
+        <input matInput formControlName="patientSearch" placeholder="Type patient name or phone number">
+        <mat-icon matSuffix>search</mat-icon>
+        <mat-error *ngIf="appointmentForm.get('patientId')?.errors?.['required']">
+          Please select a patient
+        </mat-error>
+      </mat-form-field>
+      
+      <div class="patient-results" *ngIf="patients.length > 0">
+        <div class="patient-item" 
+             *ngFor="let patient of patients" 
+             (click)="onPatientSelected(patient)">
+          <div class="patient-info">
+            <strong>{{ patient.firstName }} {{ patient.lastName }}</strong>
+            <small>{{ patient.phone }} • {{ patient.email }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctor Selection -->
+    <div class="form-section">
+      <h3>Doctor & Schedule</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Select Doctor</mat-label>
+        <mat-select formControlName="doctorId">
+          <mat-option *ngFor="let doctor of doctors" [value]="doctor.id">
+            Dr. {{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialization }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="appointmentForm.get('doctorId')?.errors?.['required']">
+          Doctor selection is required
+        </mat-error>
+      </mat-form-field>
+
+      <div class="date-time-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Appointment Date</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="appointmentDate">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+          <mat-error *ngIf="appointmentForm.get('appointmentDate')?.errors?.['required']">
+            Date is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Time Slot</mat-label>
+          <mat-select formControlName="appointmentTime">
+            <mat-option *ngFor="let slot of availableSlots" [value]="slot.time">
+              {{ slot.time }} ({{ slot.duration }} min available)
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="appointmentForm.get('appointmentTime')?.errors?.['required']">
+            Time slot is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Appointment Details -->
+    <div class="form-section">
+      <h3>Appointment Details</h3>
+      <div class="details-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Appointment Type</mat-label>
+          <mat-select formControlName="appointmentType">
+            <mat-option *ngFor="let type of appointmentTypes" [value]="type.value">
+              {{ type.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="appointmentForm.get('appointmentType')?.errors?.['required']">
+            Appointment type is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select formControlName="priority">
+            <mat-option *ngFor="let priority of priorities" [value]="priority.value">
+              {{ priority.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Duration (minutes)</mat-label>
+          <input matInput type="number" formControlName="durationMinutes" min="15" max="180">
+          <mat-error *ngIf="appointmentForm.get('durationMinutes')?.errors?.['required']">
+            Duration is required
+          </mat-error>
+          <mat-error *ngIf="appointmentForm.get('durationMinutes')?.errors?.['min']">
+            Minimum duration is 15 minutes
+          </mat-error>
+          <mat-error *ngIf="appointmentForm.get('durationMinutes')?.errors?.['max']">
+            Maximum duration is 180 minutes
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Reason for Visit</mat-label>
+        <textarea matInput formControlName="reason" rows="2" 
+                  placeholder="Brief description of the reason for this appointment"></textarea>
+        <mat-hint align="end">{{ getReasonCharacterCount() }}/200</mat-hint>
+        <mat-error *ngIf="appointmentForm.get('reason')?.errors?.['required']">
+          Reason is required
+        </mat-error>
+        <mat-error *ngIf="appointmentForm.get('reason')?.errors?.['maxlength']">
+          Reason cannot exceed 200 characters
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Additional Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="3" 
+                  placeholder="Any additional notes or special instructions"></textarea>
+        <mat-hint align="end">{{ getNotesCharacterCount() }}/500</mat-hint>
+        <mat-error *ngIf="appointmentForm.get('notes')?.errors?.['maxlength']">
+          Notes cannot exceed 500 characters
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!appointmentForm.valid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+    <span *ngIf="!isSubmitting">Book Appointment</span>
+    <span *ngIf="isSubmitting">Booking...</span>
+  </button>
+</mat-dialog-actions>

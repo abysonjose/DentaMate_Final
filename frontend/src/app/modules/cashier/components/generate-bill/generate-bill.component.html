@@ -1,0 +1,208 @@
+<div class="generate-bill-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="title-section">
+      <h2>
+        <mat-icon>receipt</mat-icon>
+        Generate Bill
+      </h2>
+      <p class="subtitle">Generate invoices for completed treatments</p>
+    </div>
+    
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="refreshTreatments()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button mat-stroked-button (click)="exportTreatments()">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters-grid">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search treatments</mat-label>
+          <input matInput [formControl]="searchControl" 
+                 placeholder="Patient name, doctor, service...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Status Filter -->
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [formControl]="statusFilter">
+            <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Date From -->
+        <mat-form-field appearance="outline">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="fromPicker" [formControl]="dateFromControl">
+          <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Date To -->
+        <mat-form-field appearance="outline">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="toPicker" [formControl]="dateToControl">
+          <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Clear Filters -->
+        <button mat-stroked-button (click)="clearFilters()" class="clear-filters-btn">
+          <mat-icon>clear</mat-icon>
+          Clear Filters
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading completed treatments...</p>
+  </div>
+
+  <!-- Error State -->
+  <mat-card *ngIf="error && !isLoading" class="error-card">
+    <mat-card-content>
+      <div class="error-content">
+        <mat-icon color="warn">error</mat-icon>
+        <div>
+          <h3>Error Loading Treatments</h3>
+          <p>{{ error }}</p>
+          <button mat-raised-button color="primary" (click)="refreshTreatments()">
+            Try Again
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Treatments Table -->
+  <mat-card *ngIf="!isLoading && !error" class="table-card">
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="treatments-table">
+          
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Patient</th>
+            <td mat-cell *matCellDef="let treatment">
+              <div class="patient-info">
+                <div class="patient-name">{{ treatment.patientName }}</div>
+                <div class="patient-phone">{{ treatment.patientPhone }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Doctor Name Column -->
+          <ng-container matColumnDef="doctorName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Doctor</th>
+            <td mat-cell *matCellDef="let treatment">
+              {{ treatment.doctorName }}
+            </td>
+          </ng-container>
+
+          <!-- Treatment Date Column -->
+          <ng-container matColumnDef="treatmentDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Treatment Date</th>
+            <td mat-cell *matCellDef="let treatment">
+              {{ treatment.treatmentDate | date:'MMM dd, yyyy' }}
+            </td>
+          </ng-container>
+
+          <!-- Services Column -->
+          <ng-container matColumnDef="services">
+            <th mat-header-cell *matHeaderCellDef>Services</th>
+            <td mat-cell *matCellDef="let treatment">
+              <div class="services-info">
+                <div class="services-count">
+                  <mat-chip color="primary" selected>
+                    {{ getServicesCount(treatment) }} services
+                  </mat-chip>
+                </div>
+                <div class="services-preview">
+                  {{ getServicesPreview(treatment) }}
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Total Amount Column -->
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Total Amount</th>
+            <td mat-cell *matCellDef="let treatment">
+              <div class="amount">₹{{ treatment.totalAmount | number:'1.2-2' }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let treatment">
+              <mat-chip [color]="getStatusColor(treatment.status)" selected>
+                {{ getStatusLabel(treatment.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let treatment">
+              <div class="actions-cell">
+                <button mat-icon-button 
+                        (click)="viewTreatmentDetails(treatment)"
+                        matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                
+                <button mat-raised-button 
+                        color="primary"
+                        *ngIf="canGenerateBill(treatment)"
+                        (click)="generateBill(treatment)"
+                        matTooltip="Generate Bill">
+                  <mat-icon>receipt</mat-icon>
+                  Generate Bill
+                </button>
+                
+                <mat-chip *ngIf="!canGenerateBill(treatment)" 
+                          color="accent" selected>
+                  Already Billed
+                </mat-chip>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- No Data -->
+        <div *ngIf="dataSource.data.length === 0" class="no-data">
+          <mat-icon>receipt</mat-icon>
+          <h3>No Treatments Found</h3>
+          <p>No completed treatments match your current filters.</p>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                     showFirstLastButtons
+                     aria-label="Select page of treatments">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

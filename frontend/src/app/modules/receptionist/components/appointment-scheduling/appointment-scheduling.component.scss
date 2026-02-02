@@ -1,0 +1,219 @@
+.appointment-scheduling {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .scheduling-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0;
+      color: #333;
+      font-weight: 500;
+    }
+  }
+
+  .filters-card {
+    margin-bottom: 24px;
+
+    .filters-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+
+      mat-form-field {
+        min-width: 200px;
+      }
+
+      .filter-actions {
+        margin-left: auto;
+      }
+    }
+  }
+
+  .appointments-card {
+    .appointments-container {
+      .appointments-timeline {
+        .appointment-slot {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 16px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #f0f0f0;
+
+          &:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+          }
+
+          .time-slot {
+            min-width: 80px;
+            text-align: center;
+            padding-top: 8px;
+
+            .time {
+              font-size: 16px;
+              font-weight: 600;
+              color: #333;
+            }
+
+            .duration {
+              font-size: 12px;
+              color: #666;
+              margin-top: 4px;
+            }
+          }
+
+          .appointment-card {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fafafa;
+
+            .appointment-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 12px;
+
+              .patient-info {
+                h3 {
+                  margin: 0 0 4px 0;
+                  color: #333;
+                  font-size: 16px;
+                }
+
+                p {
+                  margin: 0;
+                  color: #666;
+                  font-size: 14px;
+                }
+              }
+            }
+
+            .appointment-details {
+              margin-bottom: 16px;
+
+              .detail-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+                color: #666;
+                font-size: 14px;
+
+                &:last-child {
+                  margin-bottom: 0;
+                }
+
+                mat-icon {
+                  font-size: 16px;
+                  width: 16px;
+                  height: 16px;
+                }
+              }
+            }
+
+            .appointment-actions {
+              display: flex;
+              gap: 4px;
+              justify-content: flex-end;
+              border-top: 1px solid #e0e0e0;
+              padding-top: 12px;
+              margin-top: 12px;
+            }
+          }
+        }
+      }
+
+      .no-appointments {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+
+        mat-icon {
+          font-size: 64px;
+          width: 64px;
+          height: 64px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+        }
+
+        h3 {
+          margin: 0 0 8px 0;
+          color: #333;
+        }
+
+        p {
+          margin: 0 0 24px 0;
+          font-size: 14px;
+        }
+      }
+
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+
+        mat-spinner {
+          margin-bottom: 20px;
+        }
+
+        p {
+          color: #666;
+          margin: 0;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .appointment-scheduling {
+    padding: 16px;
+
+    .scheduling-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .filters-card .filters-row {
+      flex-direction: column;
+      align-items: stretch;
+
+      mat-form-field {
+        min-width: auto;
+        width: 100%;
+      }
+
+      .filter-actions {
+        margin-left: 0;
+        align-self: flex-end;
+      }
+    }
+
+    .appointments-timeline .appointment-slot {
+      flex-direction: column;
+      gap: 8px;
+
+      .time-slot {
+        min-width: auto;
+        text-align: left;
+        padding-top: 0;
+      }
+
+      .appointment-card .appointment-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  }
+}

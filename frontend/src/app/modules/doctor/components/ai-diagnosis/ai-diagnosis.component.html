@@ -1,0 +1,192 @@
+<div class="ai-diagnosis">
+  <div class="diagnosis-header">
+    <h1>AI Diagnosis</h1>
+    <button mat-raised-button color="accent" (click)="resetForm()" [disabled]="isAnalyzing">
+      <mat-icon>refresh</mat-icon>
+      New Analysis
+    </button>
+  </div>
+
+  <div class="diagnosis-content">
+    <div class="analysis-section">
+      <mat-card class="upload-card">
+        <mat-card-header>
+          <mat-card-title>Upload Image for Analysis</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="upload-form">
+            <!-- Patient ID -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Patient ID</mat-label>
+              <input matInput [(ngModel)]="selectedPatientId" placeholder="Enter patient ID" [disabled]="isAnalyzing">
+            </mat-form-field>
+
+            <!-- Analysis Type -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Analysis Type</mat-label>
+              <mat-select [(ngModel)]="analysisType" [disabled]="isAnalyzing">
+                <mat-option *ngFor="let type of analysisTypes" [value]="type.value">
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- File Upload -->
+            <div class="file-upload-section">
+              <input type="file" 
+                     id="fileInput" 
+                     (change)="onFileSelected($event)" 
+                     accept="image/*" 
+                     [disabled]="isAnalyzing"
+                     style="display: none;">
+              <button mat-raised-button 
+                      (click)="document.getElementById('fileInput')?.click()" 
+                      [disabled]="isAnalyzing"
+                      class="upload-button">
+                <mat-icon>cloud_upload</mat-icon>
+                {{ selectedFile ? selectedFile.name : 'Select Image File' }}
+              </button>
+              <div class="file-info" *ngIf="selectedFile">
+                <small>Size: {{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</small>
+              </div>
+            </div>
+
+            <!-- Clinical Notes -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Clinical Notes (Optional)</mat-label>
+              <textarea matInput 
+                        [(ngModel)]="clinicalNotes" 
+                        rows="3" 
+                        placeholder="Any relevant clinical observations or symptoms"
+                        [disabled]="isAnalyzing"></textarea>
+            </mat-form-field>
+
+            <!-- Submit Button -->
+            <div class="submit-section">
+              <button mat-raised-button 
+                      color="primary" 
+                      (click)="startAnalysis()" 
+                      [disabled]="!selectedFile || !selectedPatientId || isAnalyzing"
+                      class="analyze-button">
+                <mat-spinner diameter="20" *ngIf="isAnalyzing"></mat-spinner>
+                <mat-icon *ngIf="!isAnalyzing">psychology</mat-icon>
+                <span *ngIf="!isAnalyzing">Start AI Analysis</span>
+                <span *ngIf="isAnalyzing">Analyzing...</span>
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Analysis Result -->
+      <mat-card class="result-card" *ngIf="analysisResult">
+        <mat-card-header>
+          <mat-card-title>Analysis Result</mat-card-title>
+          <mat-card-subtitle>
+            Confidence: {{ (analysisResult.confidence * 100).toFixed(1) }}%
+            <mat-chip [color]="getConfidenceColor(analysisResult.confidence)" class="confidence-chip">
+              {{ analysisResult.confidence >= 0.8 ? 'High' : analysisResult.confidence >= 0.6 ? 'Medium' : 'Low' }}
+            </mat-chip>
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <!-- Overall Assessment -->
+          <div class="assessment-section">
+            <h3>Overall Assessment</h3>
+            <p class="assessment-text">{{ analysisResult.overallAssessment }}</p>
+          </div>
+
+          <!-- Findings -->
+          <div class="findings-section" *ngIf="analysisResult.findings && analysisResult.findings.length > 0">
+            <h3>Findings</h3>
+            <div class="findings-list">
+              <div class="finding-item" *ngFor="let finding of analysisResult.findings">
+                <div class="finding-header">
+                  <mat-icon [color]="getUrgencyColor(finding.urgency)">{{ getFindingIcon(finding.type) }}</mat-icon>
+                  <div class="finding-info">
+                    <h4>{{ finding.type | titlecase }}</h4>
+                    <div class="finding-meta">
+                      <mat-chip [color]="getUrgencyColor(finding.urgency)" class="urgency-chip">
+                        {{ finding.urgency }}
+                      </mat-chip>
+                      <span class="confidence">{{ (finding.confidence * 100).toFixed(1) }}% confidence</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="finding-details">
+                  <p><strong>Description:</strong> {{ finding.description }}</p>
+                  <div class="location" *ngIf="finding.location">
+                    <strong>Location:</strong>
+                    <span *ngIf="finding.location.tooth">Tooth {{ finding.location.tooth }}</span>
+                    <span *ngIf="finding.location.quadrant">{{ finding.location.quadrant }} quadrant</span>
+                    <span *ngIf="finding.location.region">{{ finding.location.region }}</span>
+                  </div>
+                  <div class="recommendations" *ngIf="finding.recommendations && finding.recommendations.length > 0">
+                    <strong>Recommendations:</strong>
+                    <ul>
+                      <li *ngFor="let rec of finding.recommendations">{{ rec }}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analysis Metadata -->
+          <div class="metadata-section">
+            <div class="metadata-item">
+              <strong>Analysis Type:</strong> {{ analysisResult.analysisType | titlecase }}
+            </div>
+            <div class="metadata-item">
+              <strong>Processing Time:</strong> {{ analysisResult.processingTime }}s
+            </div>
+            <div class="metadata-item">
+              <strong>Analyzed:</strong> {{ analysisResult.createdAt | date:'medium' }}
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Analyses -->
+    <div class="recent-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Recent AI Analyses</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="recent-list" *ngIf="recentAnalyses.length > 0; else noRecentAnalyses">
+            <div class="recent-item" *ngFor="let analysis of recentAnalyses">
+              <div class="recent-header">
+                <div class="recent-info">
+                  <strong>{{ analysis.analysisType | titlecase }}</strong>
+                  <small>Patient: {{ analysis.patientId }}</small>
+                </div>
+                <div class="recent-meta">
+                  <mat-chip [color]="getConfidenceColor(analysis.confidence)">
+                    {{ (analysis.confidence * 100).toFixed(0) }}%
+                  </mat-chip>
+                </div>
+              </div>
+              <div class="recent-summary">
+                {{ analysis.overallAssessment | slice:0:100 }}{{ analysis.overallAssessment.length > 100 ? '...' : '' }}
+              </div>
+              <div class="recent-actions">
+                <button mat-button color="primary" (click)="viewAnalysis(analysis)">
+                  View Details
+                </button>
+                <small>{{ analysis.createdAt | date:'short' }}</small>
+              </div>
+            </div>
+          </div>
+          <ng-template #noRecentAnalyses>
+            <div class="no-data">
+              <mat-icon>psychology</mat-icon>
+              <p>No recent AI analyses</p>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

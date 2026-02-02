@@ -183,6 +183,34 @@ class TenantController {
     }
   }
 
+  // Validate tenant for API Gateway (internal service call)
+  async validateTenantForGateway(tenantId) {
+    try {
+      const tenant = await this.tenantService.getTenant(tenantId);
+      
+      if (!tenant) {
+        return { valid: false, tenant: null };
+      }
+
+      // Check if tenant is active and subscription is valid
+      const isValid = tenant.status === 'active' && 
+                     tenant.subscription_status === 'active';
+
+      return {
+        valid: isValid,
+        tenant: isValid ? {
+          id: tenant._id,
+          name: tenant.name,
+          status: tenant.status,
+          subscription_status: tenant.subscription_status
+        } : null
+      };
+    } catch (error) {
+      logger.error('Error validating tenant for gateway:', error);
+      throw error;
+    }
+  }
+
   async validateTenant(req, res) {
     try {
       const { tenantId } = req.params;

@@ -13,6 +13,24 @@ router.post('/create',
   tenantController.createTenant.bind(tenantController)
 );
 
+// Public validation endpoint for API Gateway (BEFORE authentication)
+router.get('/validate/:tenantId', 
+  async (req, res) => {
+    try {
+      // Internal service authentication
+      const serviceAuth = req.headers['x-service-auth'];
+      if (serviceAuth !== process.env.INTERNAL_SERVICE_SECRET) {
+        return res.status(401).json({ error: 'Unauthorized service call' });
+      }
+
+      const result = await tenantController.validateTenantForGateway(req.params.tenantId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Tenant validation failed' });
+    }
+  }
+);
+
 router.get('/validate/:tenantId', 
   rateLimiter.standard,
   tenantController.validateTenant.bind(tenantController)

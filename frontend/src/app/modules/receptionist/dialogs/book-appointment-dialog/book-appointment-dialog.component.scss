@@ -1,0 +1,111 @@
+.appointment-form {
+  .form-section {
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .full-width {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .date-time-row {
+      display: flex;
+      gap: 16px;
+
+      mat-form-field {
+        flex: 1;
+      }
+    }
+
+    .details-row {
+      display: flex;
+      gap: 16px;
+
+      mat-form-field {
+        flex: 1;
+      }
+    }
+
+    .patient-results {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-top: 8px;
+
+      .patient-item {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+          background-color: #f5f5f5;
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .patient-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          strong {
+            color: #333;
+          }
+
+          small {
+            color: #666;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  min-width: 600px;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  
+  button {
+    margin-left: 8px;
+  }
+
+  mat-spinner {
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  mat-dialog-content {
+    min-width: auto;
+  }
+
+  .appointment-form {
+    .form-section {
+      .date-time-row {
+        flex-direction: column;
+      }
+
+      .details-row {
+        flex-direction: column;
+      }
+    }
+  }
+}

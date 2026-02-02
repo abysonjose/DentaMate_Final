@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-diagnosis-service
+  labels:
+    app: ai-diagnosis-service
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-diagnosis-service
+  template:
+    metadata:
+      labels:
+        app: ai-diagnosis-service
+    spec:
+      containers:
+      - name: ai-diagnosis-service
+        image: dentamate-ai-service:latest
+        ports:
+        - containerPort: 8003
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: MONGODB_URI
+          value: "mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/?appName=Cluster0"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: PORT
+          value: "8003"
+        resources:
+          limits:
+            memory: "1536Mi"
+            cpu: "1000m"
+          requests:
+            memory: "768Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - name: ai-models
+          mountPath: /app/models
+        - name: ai-storage
+          mountPath: /app/storage
+      volumes:
+      - name: ai-models
+        emptyDir: {}
+      - name: ai-storage
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-diagnosis-service
+  labels:
+    app: ai-diagnosis-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8003
+    targetPort: 8003
+    protocol: TCP
+  selector:
+    app: ai-diagnosis-service

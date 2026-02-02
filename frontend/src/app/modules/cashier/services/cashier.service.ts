@@ -1,50 +1,40 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { OrthotistCashierIntegrationService } from '../../../shared/services/orthotist-cashier-integration.service';
 
-export interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  patientId: string;
-  patientName: string;
-  appointmentId?: string;
-  totalAmount: number;
-  paidAmount: number;
-  pendingAmount: number;
-  status: 'PENDING' | 'PAID' | 'PARTIALLY_PAID' | 'OVERDUE';
-  items: InvoiceItem[];
-  createdAt: Date;
-  dueDate: Date;
-  branchId: string;
+export interface CashierDashboardData {
+  summary: {
+    totalInvoicesGenerated: number;
+    totalPaymentsReceived: number;
+    totalAmountCollected: number;
+    pendingPayments: number;
+    overduePayments: number;
+  };
+  recentActivities: CashierActivity[];
+  paymentMethodBreakdown: {
+    method: string;
+    count: number;
+    amount: number;
+    percentage: number;
+  }[];
+  dailyCollections: {
+    date: string;
+    amount: number;
+    count: number;
+  }[];
 }
 
-export interface InvoiceItem {
+export interface CashierActivity {
   id: string;
+  type: 'bill_generated' | 'payment_received' | 'invoice_paid';
   description: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  category: 'CONSULTATION' | 'PROCEDURE' | 'MEDICINE' | 'LAB_TEST' | 'OTHER';
-}
-
-export interface PaymentSummary {
-  totalCollected: number;
-  cashCollected: number;
-  digitalCollected: number;
-  pendingPayments: number;
-  transactionCount: number;
-  failedTransactions: number;
-}
-
-export interface CashierAlert {
-  id: string;
-  type: 'PENDING_PAYMENT' | 'FAILED_TRANSACTION' | 'OVERDUE_INVOICE' | 'SYSTEM_ERROR';
-  message: string;
-  priority: 'HIGH' | 'MEDIUM' | 'LOW';
-  invoiceId?: string;
-  createdAt: Date;
+  amount?: number;
+  patientName: string;
+  timestamp: Date;
+  invoiceNumber?: string;
+  paymentMethod?: string;
 }
 
 @Injectable({
@@ -52,220 +42,169 @@ export interface CashierAlert {
 })
 export class CashierService {
   private apiUrl = `${environment.apiUrl}/cashier`;
-  private currentShiftSubject = new BehaviorSubject<any>(null);
-  public currentShift$ = this.currentShiftSubject.asObservable();
 
-  constructor(
-    private http: HttpClient,
-    private orthotistIntegration: OrthotistCashierIntegrationService
-  ) {
-    this.loadCurrentShift();
-    this.subscribeToOrthotistUpdates();
-  }
+  constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const tenantId = localStorage.getItem('tenantId');
+    const userId = localStorage.getItem('userId');
+    
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'X-Tenant-ID': tenantId || '',
+      'X-User-ID': userId || '',
       'Content-Type': 'application/json'
     });
   }
 
-  // Dashboard Data
-  getDashboardData(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/dashboard`, { headers: this.getHeaders() });
+  getDashboardData(): Observable<CashierDashboardData> {
+    return this.http.get<any>(`${this.apiUrl}/dashboard`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => this.mapToDashboardData(response.data || response))
+    );
   }
 
-  getPaymentSummary(): Observable<PaymentSummary> {
-    return this.http.get<PaymentSummary>(`${this.apiUrl}/payment-summary`, { headers: this.getHeaders() });
-  }
-
-  getAlerts(): Observable<CashierAlert[]> {
-    return this.http.get<CashierAlert[]>(`${this.apiUrl}/alerts`, { headers: this.getHeaders() });
-  }
-
-  // Invoice Management
-  searchInvoices(searchTerm: string, searchType: 'PATIENT_ID' | 'INVOICE_NUMBER' | 'APPOINTMENT_ID'): Observable<Invoice[]> {
-    const params = { searchTerm, searchType };
-    return this.http.get<Invoice[]>(`${this.apiUrl}/invoices/search`, { 
-      headers: this.getHeaders(),
-      params 
-    });
-  }
-
-  getInvoiceById(invoiceId: string): Observable<Invoice> {
-    return this.http.get<Invoice>(`${this.apiUrl}/invoices/${invoiceId}`, { headers: this.getHeaders() });
-  }
-
-  getPendingInvoices(): Observable<Invoice[]> {
-    return this.http.get<Invoice[]>(`${this.apiUrl}/invoices/pending`, { headers: this.getHeaders() });
-  }
-
-  // Shift Management
-  loadCurrentShift(): void {
-    this.http.get(`${this.apiUrl}/shift/current`, { headers: this.getHeaders() })
-      .subscribe(shift => this.currentShiftSubject.next(shift));
-  }
-
-  startShift(openingBalance: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/shift/start`, { openingBalance }, { headers: this.getHeaders() });
-  }
-
-  getCurrentShift(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/shift/current`, { headers: this.getHeaders() });
-  }
-
-  // Quick Actions
-  getQuickStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/quick-stats`, { headers: this.getHeaders() });
-  }
-
-  markInvoiceAsPaid(invoiceId: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/invoices/${invoiceId}/mark-paid`, {}, { headers: this.getHeaders() });
-  }
-
-  // Audit and Logs
-  logActivity(activity: string, details: any): Observable<any> {
-    const logData = {
-      activity,
-      details,
-      timestamp: new Date(),
-      cashierId: localStorage.getItem('userId')
+  private mapToDashboardData(data: any): CashierDashboardData {
+    return {
+      summary: {
+        totalInvoicesGenerated: data.summary?.totalInvoicesGenerated || 0,
+        totalPaymentsReceived: data.summary?.totalPaymentsReceived || 0,
+        totalAmountCollected: data.summary?.totalAmountCollected || 0,
+        pendingPayments: data.summary?.pendingPayments || 0,
+        overduePayments: data.summary?.overduePayments || 0
+      },
+      recentActivities: (data.recentActivities || []).map((activity: any) => this.mapToActivity(activity)),
+      paymentMethodBreakdown: data.paymentMethodBreakdown || [],
+      dailyCollections: data.dailyCollections || []
     };
-    return this.http.post(`${this.apiUrl}/audit-log`, logData, { headers: this.getHeaders() });
   }
 
-  // Error Handling
-  reportPaymentDispute(disputeData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/disputes`, disputeData, { headers: this.getHeaders() });
+  private mapToActivity(data: any): CashierActivity {
+    return {
+      id: data.id,
+      type: data.type,
+      description: data.description,
+      amount: data.amount,
+      patientName: data.patientName,
+      timestamp: new Date(data.timestamp || data.createdAt),
+      invoiceNumber: data.invoiceNumber,
+      paymentMethod: data.paymentMethod
+    };
   }
 
-  requestCorrection(correctionData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/corrections`, correctionData, { headers: this.getHeaders() });
+  // Quick Stats
+  getQuickStats(): Observable<{
+    todayCollections: number;
+    pendingAmount: number;
+    overdueAmount: number;
+    totalInvoices: number;
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/quick-stats`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => response.data || response)
+    );
   }
 
-  // Orthotist Integration Methods
-  
-  // Get orthodontic payment requests
-  getOrthodonticPaymentRequests(): Observable<any[]> {
-    return this.orthotistIntegration.getPaymentRequests();
+  // Recent Activities
+  getRecentActivities(limit: number = 10): Observable<CashierActivity[]> {
+    return this.http.get<any>(`${this.apiUrl}/activities?limit=${limit}`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => {
+        const activities = response.data || response;
+        return activities.map((activity: any) => this.mapToActivity(activity));
+      })
+    );
   }
 
-  // Get orthodontic payment status
-  getOrthodonticPaymentStatus(caseId: string): Observable<any> {
-    return this.orthotistIntegration.getPaymentStatus(caseId);
+  // Payment Method Statistics
+  getPaymentMethodStats(dateFrom?: string, dateTo?: string): Observable<{
+    method: string;
+    count: number;
+    amount: number;
+    percentage: number;
+  }[]> {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('dateFrom', dateFrom);
+    if (dateTo) params.append('dateTo', dateTo);
+    
+    return this.http.get<any>(`${this.apiUrl}/payment-method-stats?${params.toString()}`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => response.data || response)
+    );
   }
 
-  // Process orthodontic payment
-  processOrthodonticPayment(caseId: string, paymentDetails: any): Observable<any> {
-    return this.orthotistIntegration.confirmDeliveryPayment({
-      caseId,
-      patientId: paymentDetails.patientId,
-      paymentConfirmed: true,
-      paymentAmount: paymentDetails.amount,
-      paymentMethod: paymentDetails.method,
-      transactionId: paymentDetails.transactionId,
-      receiptNumber: this.generateReceiptNumber(),
-      cashierName: this.getCurrentCashierName(),
-      paymentDate: new Date(),
-      notes: paymentDetails.notes
+  // Daily Collections
+  getDailyCollections(dateFrom?: string, dateTo?: string): Observable<{
+    date: string;
+    amount: number;
+    count: number;
+  }[]> {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('dateFrom', dateFrom);
+    if (dateTo) params.append('dateTo', dateTo);
+    
+    return this.http.get<any>(`${this.apiUrl}/daily-collections?${params.toString()}`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => response.data || response)
+    );
+  }
+
+  // Export Data
+  exportDashboardData(format: 'pdf' | 'excel' = 'pdf'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export/dashboard?format=${format}`, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
     });
   }
 
-  // Verify payment before orthodontic delivery
-  verifyOrthodonticPaymentBeforeDelivery(caseId: string): Observable<any> {
-    return this.orthotistIntegration.verifyPaymentBeforeDelivery(caseId);
+  // Notifications
+  getCashierNotifications(): Observable<{
+    id: string;
+    type: 'overdue_payment' | 'large_payment' | 'payment_failed';
+    title: string;
+    message: string;
+    priority: 'low' | 'medium' | 'high';
+    timestamp: Date;
+    read: boolean;
+  }[]> {
+    return this.http.get<any>(`${this.apiUrl}/notifications`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => {
+        const notifications = response.data || response;
+        return notifications.map((notification: any) => ({
+          ...notification,
+          timestamp: new Date(notification.timestamp || notification.createdAt)
+        }));
+      })
+    );
   }
 
-  // Get orthodontic cashier notifications
-  getOrthodonticNotifications(): Observable<any[]> {
-    return this.orthotistIntegration.getCashierNotifications();
-  }
-
-  // Mark orthodontic notification as read
-  markOrthodonticNotificationAsRead(notificationId: string): Observable<any> {
-    return this.orthotistIntegration.markNotificationAsRead(notificationId);
-  }
-
-  // Generate orthodontic invoice
-  generateOrthodonticInvoice(caseId: string): Observable<any> {
-    return this.orthotistIntegration.generateInvoice(caseId);
-  }
-
-  // Generate orthodontic receipt
-  generateOrthodonticReceipt(caseId: string, paymentDetails: any): Observable<any> {
-    return this.orthotistIntegration.generateReceipt(caseId, paymentDetails);
-  }
-
-  // Process orthodontic refund
-  processOrthodonticRefund(refundData: any): Observable<any> {
-    return this.orthotistIntegration.createRefundRequest({
-      caseId: refundData.caseId,
-      patientId: refundData.patientId,
-      refundAmount: refundData.amount,
-      refundReason: refundData.reason,
-      description: refundData.description,
-      requestedBy: this.getCurrentCashierId(),
-      requestDate: new Date(),
-      approvalRequired: refundData.amount > 500,
-      originalPaymentMethod: refundData.originalPaymentMethod,
-      originalTransactionId: refundData.originalTransactionId
+  // Mark Notification as Read
+  markNotificationAsRead(notificationId: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/notifications/${notificationId}/read`, {}, {
+      headers: this.getHeaders()
     });
   }
 
-  // Get orthodontic payment plan
-  getOrthodonticPaymentPlan(caseId: string): Observable<any> {
-    return this.orthotistIntegration.getPaymentPlan(caseId);
-  }
-
-  // Update orthodontic payment plan
-  updateOrthodonticPaymentPlan(caseId: string, planUpdates: any): Observable<any> {
-    return this.orthotistIntegration.updatePaymentPlan(caseId, planUpdates);
-  }
-
-  // Get orthodontic outstanding payments
-  getOrthodonticOutstandingPayments(): Observable<any[]> {
-    return this.orthotistIntegration.getOutstandingPayments();
-  }
-
-  // Get orthodontic payment summary
-  getOrthodonticPaymentSummary(dateRange?: { start: Date; end: Date }): Observable<any> {
-    return this.orthotistIntegration.getPaymentSummary(dateRange);
-  }
-
-  // Subscribe to orthodontic payment updates
-  private subscribeToOrthotistUpdates(): void {
-    const cashierId = this.getCurrentCashierId();
-    this.orthotistIntegration.subscribeToPaymentUpdates(cashierId).subscribe(update => {
-      // Handle real-time orthodontic payment updates
-      console.log('Orthodontic payment update:', update);
-    });
-  }
-
-  // Confirm orthodontic case delivery
-  confirmOrthodonticCaseDelivery(caseId: string, deliveryDetails: any): Observable<any> {
-    return this.orthotistIntegration.confirmCaseDelivery(caseId, {
-      deliveredAt: new Date(),
-      deliveredBy: this.getCurrentCashierName(),
-      patientSignature: deliveryDetails.patientSignature,
-      notes: deliveryDetails.notes
-    });
-  }
-
-  // Utility methods
-  private getCurrentCashierId(): string {
-    return localStorage.getItem('userId') || '';
-  }
-
-  private getCurrentCashierName(): string {
-    return localStorage.getItem('userName') || 'Unknown Cashier';
-  }
-
-  private generateReceiptNumber(): string {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `RCP-${timestamp}-${random}`;
+  // Performance Metrics
+  getPerformanceMetrics(period: 'today' | 'week' | 'month' = 'today'): Observable<{
+    totalTransactions: number;
+    averageTransactionAmount: number;
+    successRate: number;
+    processingTime: number;
+    customerSatisfaction: number;
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/performance?period=${period}`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => response.data || response)
+    );
   }
 }

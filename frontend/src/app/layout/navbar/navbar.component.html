@@ -1,0 +1,35 @@
+<mat-toolbar color="primary" class="navbar">
+  <!-- App Name -->
+  <div class="app-name">
+    <mat-icon class="app-icon">local_hospital</mat-icon>
+    <span class="app-title">DentaMate</span>
+  </div>
+
+  <!-- Spacer -->
+  <span class="spacer"></span>
+
+  <!-- User Info -->
+  <div class="user-info" *ngIf="user">
+    <div class="user-details">
+      <span class="user-name">{{ getUserDisplayName() }}</span>
+      <span class="user-role">{{ getRoleDisplayName() }}</span>
+    </div>
+    
+    <!-- User Menu -->
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    
+    <mat-menu #userMenu="matMenu">
+      <div class="user-menu-header">
+        <div class="user-email">{{ user.email }}</div>
+        <div class="user-role-badge">{{ getRoleDisplayName() }}</div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>

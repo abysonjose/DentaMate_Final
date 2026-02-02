@@ -1,0 +1,79 @@
+.vitals-form {
+  .form-section {
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 12px 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .bp-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-form-field {
+        flex: 1;
+      }
+
+      .bp-separator {
+        font-size: 20px;
+        font-weight: bold;
+        color: #666;
+        margin: 0 8px;
+      }
+    }
+
+    .measurements-row {
+      display: flex;
+      gap: 16px;
+
+      mat-form-field {
+        flex: 1;
+      }
+    }
+  }
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  
+  button {
+    margin-left: 8px;
+  }
+
+  mat-spinner {
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .vitals-form {
+    .form-section {
+      .bp-row {
+        flex-direction: column;
+        align-items: stretch;
+
+        .bp-separator {
+          text-align: center;
+          margin: 8px 0;
+        }
+      }
+
+      .measurements-row {
+        flex-direction: column;
+      }
+    }
+  }
+}

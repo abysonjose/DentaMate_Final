@@ -1,0 +1,108 @@
+.dialog-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding: 0 24px;
+}
+
+.result-form {
+  .form-section {
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .full-width {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .parameter-field {
+      margin-bottom: 16px;
+    }
+
+    .default-results {
+      .result-details-row {
+        display: flex;
+        gap: 16px;
+
+        mat-form-field {
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  .qc-notice {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background-color: #e8f5e8;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+    margin-top: 16px;
+
+    mat-icon {
+      color: #4CAF50;
+      margin-top: 2px;
+    }
+
+    .notice-text {
+      flex: 1;
+
+      p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        line-height: 1.4;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        strong {
+          color: #333;
+        }
+      }
+    }
+  }
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  min-width: 600px;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  
+  button {
+    margin-left: 8px;
+  }
+
+  mat-spinner {
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  mat-dialog-content {
+    min-width: auto;
+  }
+
+  .result-form {
+    .form-section {
+      .default-results {
+        .result-details-row {
+          flex-direction: column;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,128 @@
+<h2 mat-dialog-title>Record Vitals - {{ data.patientName }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="vitalsForm" class="vitals-form">
+    <!-- Blood Pressure -->
+    <div class="form-section">
+      <h3>Blood Pressure</h3>
+      <div class="bp-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Systolic</mat-label>
+          <input matInput type="number" formControlName="bloodPressureSystolic" placeholder="120">
+          <span matSuffix>mmHg</span>
+          <mat-error>{{ getBloodPressureError() }}</mat-error>
+        </mat-form-field>
+        <span class="bp-separator">/</span>
+        <mat-form-field appearance="outline">
+          <mat-label>Diastolic</mat-label>
+          <input matInput type="number" formControlName="bloodPressureDiastolic" placeholder="80">
+          <span matSuffix>mmHg</span>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Heart Rate -->
+    <div class="form-section">
+      <h3>Heart Rate</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Heart Rate</mat-label>
+        <input matInput type="number" formControlName="heartRate" placeholder="72">
+        <span matSuffix>bpm</span>
+        <mat-error>{{ getHeartRateError() }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Temperature -->
+    <div class="form-section">
+      <h3>Temperature</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Temperature</mat-label>
+        <input matInput type="number" step="0.1" formControlName="temperature" placeholder="37.0">
+        <span matSuffix>°C</span>
+        <mat-error>{{ getTemperatureError() }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Respiratory Rate -->
+    <div class="form-section">
+      <h3>Respiratory Rate</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Respiratory Rate</mat-label>
+        <input matInput type="number" formControlName="respiratoryRate" placeholder="16">
+        <span matSuffix>breaths/min</span>
+        <mat-error *ngIf="vitalsForm.get('respiratoryRate')?.errors?.['min']">
+          Respiratory rate too low
+        </mat-error>
+        <mat-error *ngIf="vitalsForm.get('respiratoryRate')?.errors?.['max']">
+          Respiratory rate too high
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Oxygen Saturation -->
+    <div class="form-section">
+      <h3>Oxygen Saturation</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Oxygen Saturation</mat-label>
+        <input matInput type="number" formControlName="oxygenSaturation" placeholder="98">
+        <span matSuffix>%</span>
+        <mat-error *ngIf="vitalsForm.get('oxygenSaturation')?.errors?.['min']">
+          Oxygen saturation too low
+        </mat-error>
+        <mat-error *ngIf="vitalsForm.get('oxygenSaturation')?.errors?.['max']">
+          Invalid oxygen saturation
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Physical Measurements -->
+    <div class="form-section">
+      <h3>Physical Measurements</h3>
+      <div class="measurements-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Weight</mat-label>
+          <input matInput type="number" step="0.1" formControlName="weight" placeholder="70.0">
+          <span matSuffix>kg</span>
+          <mat-error *ngIf="vitalsForm.get('weight')?.errors?.['min']">
+            Weight too low
+          </mat-error>
+          <mat-error *ngIf="vitalsForm.get('weight')?.errors?.['max']">
+            Weight too high
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Height</mat-label>
+          <input matInput type="number" formControlName="height" placeholder="170">
+          <span matSuffix>cm</span>
+          <mat-error *ngIf="vitalsForm.get('height')?.errors?.['min']">
+            Height too low
+          </mat-error>
+          <mat-error *ngIf="vitalsForm.get('height')?.errors?.['max']">
+            Height too high
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-section">
+      <h3>Notes</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Additional Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="3" 
+                  placeholder="Any observations or notes about the vitals..."></textarea>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!vitalsForm.valid || isSubmitting">
+    <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+    <span *ngIf="!isSubmitting">Record Vitals</span>
+    <span *ngIf="isSubmitting">Recording...</span>
+  </button>
+</mat-dialog-actions>

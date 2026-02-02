@@ -1,0 +1,221 @@
+.patient-care {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .care-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 8px;
+
+    .patient-info {
+      h1 {
+        margin: 0 0 12px 0;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .patient-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+
+        .detail-item {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          color: #666;
+          font-size: 14px;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+    }
+
+    .care-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .care-tabs {
+    .tab-content {
+      padding: 16px 0;
+    }
+  }
+
+  .vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+
+    .vital-item {
+      padding: 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+
+      .vital-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .vital-name {
+          font-weight: 500;
+          color: #333;
+        }
+      }
+
+      .vital-value {
+        margin-bottom: 8px;
+
+        .value {
+          font-size: 24px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .unit {
+          font-size: 14px;
+          color: #666;
+          margin-left: 4px;
+        }
+      }
+
+      .vital-status {
+        mat-chip {
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  .table-container {
+    overflow-x: auto;
+
+    .vitals-table {
+      width: 100%;
+      
+      th {
+        font-weight: 600;
+        color: #333;
+      }
+
+      td {
+        padding: 12px 8px;
+      }
+    }
+  }
+
+  .care-notes-list {
+    .care-note-panel {
+      margin-bottom: 8px;
+
+      .care-note-content {
+        padding: 16px 0;
+
+        p {
+          margin: 8px 0;
+        }
+
+        .note-description {
+          background: #f9f9f9;
+          padding: 12px;
+          border-radius: 4px;
+          margin: 12px 0;
+          white-space: pre-wrap;
+        }
+
+        .note-metadata {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #e0e0e0;
+
+          small {
+            color: #666;
+          }
+        }
+      }
+    }
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+
+    mat-spinner {
+      margin-bottom: 20px;
+    }
+
+    p {
+      color: #666;
+      margin: 0;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .patient-care {
+    padding: 16px;
+
+    .care-header {
+      flex-direction: column;
+      gap: 16px;
+
+      .patient-details {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .care-actions {
+        width: 100%;
+        justify-content: stretch;
+
+        button {
+          flex: 1;
+        }
+      }
+    }
+
+    .vitals-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

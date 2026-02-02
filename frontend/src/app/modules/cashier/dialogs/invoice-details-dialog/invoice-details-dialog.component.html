@@ -1,0 +1,235 @@
+<div class="invoice-dialog-container">
+  <!-- Header -->
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon>receipt</mat-icon>
+      {{ getTitle() }}
+    </h2>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <mat-dialog-content class="dialog-content">
+    <form [formGroup]="invoiceForm" class="invoice-form">
+      
+      <!-- Patient & Treatment Info -->
+      <div class="info-section">
+        <h3>Patient & Treatment Information</h3>
+        <div class="info-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Patient Name</mat-label>
+            <input matInput formControlName="patientName">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone Number</mat-label>
+            <input matInput formControlName="patientPhone">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Doctor</mat-label>
+            <input matInput formControlName="doctorName">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Treatment Date</mat-label>
+            <input matInput formControlName="treatmentDate" 
+                   [value]="(invoiceForm.get('treatmentDate')?.value | date:'MMM dd, yyyy')">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Services Section -->
+      <div class="services-section">
+        <h3>Services</h3>
+        <div class="services-table">
+          <div class="table-header">
+            <div class="col-service">Service</div>
+            <div class="col-quantity">Qty</div>
+            <div class="col-price">Unit Price</div>
+            <div class="col-discount">Discount</div>
+            <div class="col-total">Total</div>
+          </div>
+
+          <div class="service-row" 
+               *ngFor="let service of servicesArray.controls; let i = index"
+               [formGroupName]="i">
+            
+            <div class="col-service">
+              <div class="service-info">
+                <div class="service-name">
+                  {{ service.get('serviceName')?.value }}
+                </div>
+                <div class="service-description" *ngIf="service.get('description')?.value">
+                  {{ service.get('description')?.value }}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-quantity">
+              <mat-form-field appearance="outline" *ngIf="mode === 'generate'">
+                <input matInput type="number" formControlName="quantity" 
+                       min="1" (change)="onServiceChange()">
+              </mat-form-field>
+              <span *ngIf="mode === 'view'">{{ service.get('quantity')?.value }}</span>
+            </div>
+
+            <div class="col-price">
+              ₹{{ service.get('unitPrice')?.value | number:'1.2-2' }}
+            </div>
+
+            <div class="col-discount">
+              <div class="discount-input" *ngIf="mode === 'generate'">
+                <mat-form-field appearance="outline">
+                  <input matInput type="number" formControlName="discount" 
+                         min="0" (change)="onServiceChange()">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-select formControlName="discountType" (selectionChange)="onServiceChange()">
+                    <mat-option value="fixed">₹</mat-option>
+                    <mat-option value="percentage">%</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <span *ngIf="mode === 'view'">
+                {{ service.get('discount')?.value }}
+                {{ service.get('discountType')?.value === 'percentage' ? '%' : '₹' }}
+              </span>
+            </div>
+
+            <div class="col-total">
+              ₹{{ service.get('totalPrice')?.value | number:'1.2-2' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bill Summary -->
+      <div class="summary-section" *ngIf="previewData || invoice">
+        <h3>Bill Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <span>₹{{ (previewData?.subtotal || invoice?.subtotal || 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Discount:</span>
+            <span>-₹{{ (previewData?.discountAmount || invoice?.discountAmount || 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row">
+            <span>Tax (18% GST):</span>
+            <span>₹{{ (previewData?.taxAmount || invoice?.taxAmount || 0) | number:'1.2-2' }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="summary-row total-row">
+            <span><strong>Total Amount:</strong></span>
+            <span><strong>₹{{ (previewData?.totalAmount || invoice?.totalAmount || 0) | number:'1.2-2' }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="additional-section">
+        <h3>Additional Information</h3>
+        <div class="additional-grid">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="3" 
+                      placeholder="Any additional notes or instructions..."></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="mode === 'generate'">
+            <mat-label>Due Date</mat-label>
+            <input matInput [matDatepicker]="duePicker" formControlName="dueDate">
+            <mat-datepicker-toggle matSuffix [for]="duePicker"></mat-datepicker-toggle>
+            <mat-datepicker #duePicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="mode === 'view'">
+            <mat-label>Due Date</mat-label>
+            <input matInput [value]="invoice?.dueDate | date:'MMM dd, yyyy'" readonly>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Invoice Information (View Mode) -->
+      <div class="invoice-info-section" *ngIf="mode === 'view' && invoice">
+        <h3>Invoice Information</h3>
+        <div class="invoice-info-grid">
+          <div class="info-item">
+            <label>Invoice Number:</label>
+            <span>{{ invoice.invoiceNumber }}</span>
+          </div>
+          <div class="info-item">
+            <label>Invoice Date:</label>
+            <span>{{ invoice.invoiceDate | date:'MMM dd, yyyy' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Payment Status:</label>
+            <mat-chip [color]="getPaymentStatusColor(invoice.paymentStatus)" selected>
+              {{ invoice.paymentStatus | titlecase }}
+            </mat-chip>
+          </div>
+          <div class="info-item">
+            <label>Status:</label>
+            <mat-chip [color]="getStatusColor(invoice.status)" selected>
+              {{ invoice.status | titlecase }}
+            </mat-chip>
+          </div>
+          <div class="info-item" *ngIf="invoice.paidAmount > 0">
+            <label>Paid Amount:</label>
+            <span class="paid-amount">₹{{ invoice.paidAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="info-item" *ngIf="invoice.balanceAmount > 0">
+            <label>Balance Amount:</label>
+            <span class="balance-amount">₹{{ invoice.balanceAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Display -->
+      <mat-card *ngIf="error" class="error-card">
+        <mat-card-content>
+          <div class="error-content">
+            <mat-icon color="warn">error</mat-icon>
+            <span>{{ error }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </form>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <div class="actions-left">
+      <button mat-stroked-button 
+              *ngIf="canDownloadInvoice()"
+              (click)="downloadInvoice()">
+        <mat-icon>download</mat-icon>
+        Download PDF
+      </button>
+    </div>
+    
+    <div class="actions-right">
+      <button mat-stroked-button (click)="close()">
+        Cancel
+      </button>
+      
+      <button mat-raised-button 
+              color="primary"
+              *ngIf="canGenerateBill()"
+              (click)="generateBill()"
+              [disabled]="isGenerating">
+        <mat-icon *ngIf="!isGenerating">receipt</mat-icon>
+        <mat-progress-spinner *ngIf="isGenerating" 
+                              diameter="20" 
+                              mode="indeterminate">
+        </mat-progress-spinner>
+        {{ isGenerating ? 'Generating...' : 'Generate Bill' }}
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>
