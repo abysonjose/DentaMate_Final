@@ -10,12 +10,12 @@ class RedisConfig {
   async connect() {
     try {
       const redisOptions = {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        retryDelayOnFailover: 100,
-        enableReadyCheck: true,
-        maxRetriesPerRequest: 3,
-        lazyConnect: true
+        socket: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: process.env.REDIS_PORT || 6379,
+          connectTimeout: 5000,
+          reconnectStrategy: false // Disable auto-reconnect
+        }
       };
 
       if (process.env.REDIS_PASSWORD) {
@@ -35,32 +35,37 @@ class RedisConfig {
       });
 
       this.client.on('error', (error) => {
-        logger.error('Redis client error:', error);
+        logger.debug('Redis client error (service will continue without cache):', error.message);
         this.isConnected = false;
       });
 
       this.client.on('end', () => {
-        logger.warn('Redis client connection ended');
+        logger.debug('Redis client connection ended');
         this.isConnected = false;
-      });
-
-      this.client.on('reconnecting', () => {
-        logger.info('Redis client reconnecting');
       });
 
       await this.client.connect();
       
       logger.info('Connected to Redis successfully', {
         service: 'accounting-finance-service',
-        host: redisOptions.host,
-        port: redisOptions.port
+        host: redisOptions.socket.host,
+        port: redisOptions.socket.port
       });
 
       return this.client;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
+      logger.warn('Failed to connect to Redis (service will continue without cache):', error.message);
       this.isConnected = false;
-      throw error;
+      // Clean up failed client
+      if (this.client) {
+        try {
+          await this.client.disconnect();
+        } catch (e) {
+          // Ignore disconnect errors
+        }
+        this.client = null;
+      }
+      return null;
     }
   }
 
@@ -79,7 +84,8 @@ class RedisConfig {
 
   getClient() {
     if (!this.client || !this.isConnected) {
-      throw new Error('Redis client not connected');
+      logger.warn('Redis client not connected - cache operations will be skipped');
+      return null;
     }
     return this.client;
   }
@@ -119,6 +125,8 @@ class RedisConfig {
   async set(key, value, expireInSeconds = 3600) {
     try {
       const client = this.getClient();
+      if (!client) return false;
+      
       const serializedValue = JSON.stringify(value);
       
       if (expireInSeconds) {
@@ -137,6 +145,8 @@ class RedisConfig {
   async get(key) {
     try {
       const client = this.getClient();
+      if (!client) return null;
+      
       const value = await client.get(key);
       
       if (value) {
@@ -153,6 +163,8 @@ class RedisConfig {
   async del(key) {
     try {
       const client = this.getClient();
+      if (!client) return false;
+      
       const result = await client.del(key);
       return result > 0;
     } catch (error) {
@@ -164,6 +176,8 @@ class RedisConfig {
   async exists(key) {
     try {
       const client = this.getClient();
+      if (!client) return false;
+      
       const result = await client.exists(key);
       return result === 1;
     } catch (error) {

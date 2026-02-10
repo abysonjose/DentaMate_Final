@@ -19,7 +19,7 @@ async function validateCentralAdmin() {
     console.log('🔍 Validating Central Admin Setup...\n');
     
     // Connect to MongoDB
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dentamate';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate?appName=Cluster0';
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB');
     

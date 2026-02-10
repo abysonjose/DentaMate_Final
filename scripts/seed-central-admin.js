@@ -105,7 +105,7 @@ class CentralAdminSeeder {
   async connect() {
     try {
       // Connect to MongoDB
-      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dentamate';
+      const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate?appName=Cluster0';
       await mongoose.connect(mongoUri);
       console.log('✅ Connected to MongoDB');
     } catch (error) {
@@ -278,7 +278,7 @@ async function resetCentralAdmin() {
   try {
     console.log('🔄 Resetting Central Admin...');
     
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dentamate';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate?appName=Cluster0';
     await mongoose.connect(mongoUri);
     
     // Remove existing central admin user

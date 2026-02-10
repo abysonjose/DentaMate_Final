@@ -58,9 +58,9 @@ class ValidationMiddleware {
   static get vitalsSchemas() {
     return {
       create: Joi.object({
-        patientId: this.commonSchemas.patientId,
-        appointmentId: this.commonSchemas.appointmentId,
-        branchId: this.commonSchemas.branchId,
+        patientId: Joi.string().uuid().required(),
+        appointmentId: Joi.string().uuid().required(),
+        branchId: Joi.string().uuid().required(),
         metrics: Joi.object({
           bloodPressure: Joi.object({
             systolic: Joi.number().integer().min(50).max(300),
@@ -93,7 +93,10 @@ class ValidationMiddleware {
         isAbnormal: Joi.boolean(),
         startDate: Joi.date().iso(),
         endDate: Joi.date().iso().min(Joi.ref('startDate')),
-        ...this.commonSchemas.pagination
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
+        sortBy: Joi.string().default('timestamp'),
+        sortOrder: Joi.string().valid('asc', 'desc').default('desc')
       })
     };
   }
@@ -102,9 +105,9 @@ class ValidationMiddleware {
   static get careNoteSchemas() {
     return {
       create: Joi.object({
-        appointmentId: this.commonSchemas.appointmentId,
-        patientId: this.commonSchemas.patientId,
-        branchId: this.commonSchemas.branchId,
+        appointmentId: Joi.string().uuid().required(),
+        patientId: Joi.string().uuid().required(),
+        branchId: Joi.string().uuid().required(),
         noteType: Joi.string().valid(
           'PATIENT_PREPARATION',
           'CHAIRSIDE_ASSISTANCE',
@@ -145,7 +148,10 @@ class ValidationMiddleware {
         includePrivate: Joi.boolean().default(false),
         startDate: Joi.date().iso(),
         endDate: Joi.date().iso().min(Joi.ref('startDate')),
-        ...this.commonSchemas.pagination
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
+        sortBy: Joi.string().default('timestamp'),
+        sortOrder: Joi.string().valid('asc', 'desc').default('desc')
       })
     };
   }
@@ -154,9 +160,9 @@ class ValidationMiddleware {
   static get escalationSchemas() {
     return {
       create: Joi.object({
-        appointmentId: this.commonSchemas.appointmentId,
-        patientId: this.commonSchemas.patientId,
-        branchId: this.commonSchemas.branchId,
+        appointmentId: Joi.string().uuid().required(),
+        patientId: Joi.string().uuid().required(),
+        branchId: Joi.string().uuid().required(),
         escalationType: Joi.string().valid(
           'ABNORMAL_VITALS',
           'PATIENT_DISCOMFORT',
@@ -225,7 +231,10 @@ class ValidationMiddleware {
         status: Joi.string().valid('RAISED', 'ACKNOWLEDGED', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED'),
         startDate: Joi.date().iso(),
         endDate: Joi.date().iso().min(Joi.ref('startDate')),
-        ...this.commonSchemas.pagination
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
+        sortBy: Joi.string().default('timestamp'),
+        sortOrder: Joi.string().valid('asc', 'desc').default('desc')
       })
     };
   }
@@ -234,9 +243,9 @@ class ValidationMiddleware {
   static get wardMonitoringSchemas() {
     return {
       create: Joi.object({
-        appointmentId: this.commonSchemas.appointmentId,
-        patientId: this.commonSchemas.patientId,
-        branchId: this.commonSchemas.branchId,
+        appointmentId: Joi.string().uuid().required(),
+        patientId: Joi.string().uuid().required(),
+        branchId: Joi.string().uuid().required(),
         roomId: Joi.string().uuid().required(),
         chairId: Joi.string().uuid(),
         assignedNurse: Joi.object({
@@ -298,7 +307,10 @@ class ValidationMiddleware {
         ),
         careLevel: Joi.string().valid('ROUTINE', 'ENHANCED', 'INTENSIVE', 'CRITICAL'),
         isActive: Joi.boolean().default(true),
-        ...this.commonSchemas.pagination
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
+        sortBy: Joi.string().default('timestamp'),
+        sortOrder: Joi.string().valid('asc', 'desc').default('desc')
       })
     };
   }
@@ -308,8 +320,8 @@ class ValidationMiddleware {
     return {
       create: Joi.object({
         appointmentId: Joi.string().uuid(),
-        patientId: this.commonSchemas.patientId,
-        branchId: this.commonSchemas.branchId,
+        patientId: Joi.string().uuid().required(),
+        branchId: Joi.string().uuid().required(),
         taskType: Joi.string().valid(
           'VITALS_RECORDING',
           'MEDICATION_ADMINISTRATION',
@@ -376,7 +388,10 @@ class ValidationMiddleware {
         overdue: Joi.boolean(),
         startDate: Joi.date().iso(),
         endDate: Joi.date().iso().min(Joi.ref('startDate')),
-        ...this.commonSchemas.pagination
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
+        sortBy: Joi.string().default('timestamp'),
+        sortOrder: Joi.string().valid('asc', 'desc').default('desc')
       })
     };
   }

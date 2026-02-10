@@ -24,9 +24,7 @@ class DatabaseConnection {
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
         bufferCommands: false,
-        bufferMaxEntries: 0,
-        useNewUrlParser: true,
-        useUnifiedTopology: true
+        bufferMaxEntries: 0
       };
 
       await mongoose.connect(mongoUri, options);
@@ -134,3 +132,4 @@ class DatabaseConnection {
 }
 
 module.exports = new DatabaseConnection();
+

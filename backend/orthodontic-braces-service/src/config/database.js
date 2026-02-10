@@ -20,8 +20,7 @@ class DatabaseConfig {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
-        bufferCommands: false,
-        bufferMaxEntries: 0
+        connectTimeoutMS: 5000
       };
 
       this.connection = await mongoose.connect(mongoUri, options);
@@ -70,3 +69,4 @@ class DatabaseConfig {
 }
 
 module.exports = new DatabaseConfig();
+

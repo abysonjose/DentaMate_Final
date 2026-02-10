@@ -162,8 +162,12 @@ const startServer = async () => {
     // Connect to database
     await database.connect();
     
-    // Connect to Redis
-    await redisClient.connect();
+    // Try to connect to Redis (non-blocking)
+    try {
+      await redisClient.connect();
+    } catch (redisError) {
+      logger.warn('Redis connection failed - service will run without caching:', redisError.message);
+    }
     
     // Start HTTP server
     const server = app.listen(PORT, () => {

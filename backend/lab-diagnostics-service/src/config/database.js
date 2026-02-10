@@ -18,7 +18,6 @@ class DatabaseConfig {
 
       const options = {
         useNewUrlParser: true,
-        useUnifiedTopology: true,
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
@@ -76,3 +75,4 @@ class DatabaseConfig {
 }
 
 module.exports = new DatabaseConfig();
+

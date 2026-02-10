@@ -107,3 +107,4 @@ class DatabaseConfig {
 }
 
 module.exports = new DatabaseConfig();
+

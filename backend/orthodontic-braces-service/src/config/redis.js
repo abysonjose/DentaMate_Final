@@ -9,11 +9,18 @@ class RedisConfig {
   async connect() {
     try {
       const redisConfig = {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        retryDelayOnFailover: 100,
-        maxRetriesPerRequest: 3,
-        lazyConnect: true
+        socket: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: process.env.REDIS_PORT || 6379,
+          connectTimeout: 5000,
+          reconnectStrategy: (retries) => {
+            if (retries > 3) {
+              logger.warn('Redis max connection retries exceeded, giving up');
+              return false;
+            }
+            return Math.min(retries * 100, 1000);
+          }
+        }
       };
 
       if (process.env.REDIS_PASSWORD) {
@@ -23,7 +30,7 @@ class RedisConfig {
       this.client = redis.createClient(redisConfig);
 
       this.client.on('error', (error) => {
-        logger.error('Redis connection error:', error);
+        logger.warn('Redis connection error (service will continue without cache):', error.message);
       });
 
       this.client.on('connect', () => {
@@ -38,11 +45,20 @@ class RedisConfig {
         logger.warn('Redis connection ended');
       });
 
-      await this.client.connect();
+      // Try to connect with timeout
+      await Promise.race([
+        this.client.connect(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Redis connection timeout')), 5000)
+        )
+      ]);
+      
       return this.client;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
-      throw error;
+      logger.warn('Failed to connect to Redis (service will continue without cache):', error.message);
+      this.client = null;
+      // Don't throw - allow service to start without Redis
+      return null;
     }
   }
 

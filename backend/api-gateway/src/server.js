@@ -68,8 +68,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler - use a catch-all without wildcard
+app.use((req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
     code: 'ENDPOINT_NOT_FOUND',

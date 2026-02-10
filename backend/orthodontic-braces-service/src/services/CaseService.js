@@ -100,7 +100,7 @@ class CaseService {
       const totalPages = Math.ceil(totalCount / limit);
 
       return {
-        cases: cases.map(case => this.applyRoleBasedFiltering(case, userRole, userId)),
+        cases: cases.map(caseItem => this.applyRoleBasedFiltering(caseItem, userRole, userId)),
         pagination: {
           currentPage: page,
           totalPages,

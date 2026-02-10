@@ -1,17 +1,25 @@
 const rateLimit = require('express-rate-limit');
-const RedisStore = require('rate-limit-redis');
-const Redis = require('redis');
 const logger = require('../utils/logger');
 
-// Redis client for rate limiting
-let redisClient;
+// Redis client for rate limiting (optional)
+let redisClient = null;
+let RedisStore = null;
+
 try {
+  const Redis = require('redis');
+  RedisStore = require('rate-limit-redis');
+  
   redisClient = Redis.createClient({
     url: process.env.REDIS_URL || 'redis://localhost:6379'
   });
-  redisClient.connect();
+  
+  redisClient.connect().catch(err => {
+    logger.warn('Redis connection failed, using memory store for rate limiting');
+    redisClient = null;
+  });
 } catch (error) {
   logger.warn('Redis not available for rate limiting, using memory store');
+  redisClient = null;
 }
 
 // Rate limiting configurations
@@ -84,10 +92,14 @@ function createRateLimiter(config, keyGenerator) {
   };
 
   // Use Redis store if available
-  if (redisClient) {
-    limiterConfig.store = new RedisStore({
-      sendCommand: (...args) => redisClient.sendCommand(args),
-    });
+  if (redisClient && RedisStore) {
+    try {
+      limiterConfig.store = new RedisStore({
+        sendCommand: (...args) => redisClient.sendCommand(args),
+      });
+    } catch (error) {
+      logger.warn('Failed to create Redis store for rate limiting, using memory store');
+    }
   }
 
   return rateLimit(limiterConfig);

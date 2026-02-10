@@ -28,9 +28,7 @@
     "node-cron": "^3.0.3",
     "bull": "^4.12.2",
     "pdf-lib": "^1.17.1",
-    "json2csv": "^6.1.0",
-    "chart.js": "^4.4.0",
-    "chartjs-node-canvas": "^4.1.6"
+    "json2csv": "^5.0.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

@@ -81,4 +81,28 @@ router.post('/ingest',
         dataType,
         recordCount: data.length,
         batchId: result.data.batchId,
-        recordsProcess
+        recordsProcessed: result.data.recordsProcessed,
+        category: 'data_ingestion'
+      });
+
+      res.status(201).json(result);
+
+    } catch (error) {
+      logger.error('Error ingesting data', {
+        error: error.message,
+        tenantId: req.tenantId,
+        sourceService: req.body.sourceService,
+        dataType: req.body.dataType,
+        category: 'data_ingestion'
+      });
+
+      res.status(500).json({
+        success: false,
+        message: 'Failed to ingest data',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+);
+
+module.exports = router;

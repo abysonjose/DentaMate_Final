@@ -9,32 +9,10 @@ class RedisConfig {
 
   async connect() {
     try {
-      this.client = redis.createClient({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        password: process.env.REDIS_PASSWORD || undefined,
-        retryDelayOnFailover: 100,
-        enableReadyCheck: true,
-        maxRetriesPerRequest: 3,
-      });
-
-      this.client.on('connect', () => {
-        logger.info('Redis client connected');
-        this.isConnected = true;
-      });
-
-      this.client.on('error', (error) => {
-        logger.error('Redis connection error:', error);
-        this.isConnected = false;
-      });
-
-      this.client.on('end', () => {
-        logger.warn('Redis connection ended');
-        this.isConnected = false;
-      });
-
-      await this.client.connect();
-      
+      // Redis is optional for local development
+      logger.info('Redis disabled for local development - running without cache');
+      this.isConnected = false;
+      this.client = null;
     } catch (error) {
       logger.error('Redis connection failed:', error);
       // Don't exit process - service can work without Redis

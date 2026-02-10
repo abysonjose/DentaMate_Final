@@ -103,7 +103,10 @@ const caseSchemas = {
     priority: Joi.string().valid('NORMAL', 'URGENT').optional(),
     fromDate: Joi.date().optional(),
     toDate: Joi.date().optional(),
-    ...commonSchemas.pagination
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
   })
 };
 
@@ -143,7 +146,10 @@ const measurementSchemas = {
     ).optional(),
     status: Joi.string().valid('PENDING', 'APPROVED', 'REJECTED', 'INCOMPLETE').optional(),
     latestOnly: Joi.boolean().default(true),
-    ...commonSchemas.pagination
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(20),
+    sortBy: Joi.string().optional(),
+    sortOrder: Joi.string().valid('asc', 'desc').default('desc')
   })
 };
 

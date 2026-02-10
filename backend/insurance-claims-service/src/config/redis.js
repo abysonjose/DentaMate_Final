@@ -10,11 +10,12 @@ class RedisConnection {
   async connect() {
     try {
       const redisConfig = {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        retryDelayOnFailover: 100,
-        enableReadyCheck: true,
-        maxRetriesPerRequest: 3,
+        socket: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: process.env.REDIS_PORT || 6379,
+          reconnectStrategy: false, // Don't retry on failure
+        },
+        lazyConnect: false,
       };
 
       if (process.env.REDIS_PASSWORD) {

@@ -17,13 +17,9 @@ class DatabaseConnection {
       }
 
       const options = {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
-        bufferMaxEntries: 0,
-        bufferCommands: false,
       };
 
       this.connection = await mongoose.connect(mongoUri, options);
@@ -72,3 +68,4 @@ class DatabaseConnection {
 }
 
 module.exports = new DatabaseConnection();
+

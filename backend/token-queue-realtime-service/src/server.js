@@ -89,26 +89,12 @@ app.use((err, req, res, next) => {
 async function connectDatabases() {
   try {
     // MongoDB connection
-    await mongoose.connect(config.mongodb.uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(config.mongodb.uri);
     logger.info('Connected to MongoDB');
 
-    // Redis connection
-    const redisClient = redis.createClient({
-      url: config.redis.uri
-    });
-    
-    redisClient.on('error', (err) => {
-      logger.error('Redis connection error:', err);
-    });
-    
-    await redisClient.connect();
-    logger.info('Connected to Redis');
-    
-    // Make Redis client available globally
-    app.locals.redis = redisClient;
+    // Redis connection (optional - disabled for local development)
+    logger.info('Redis disabled for local development - running without cache');
+    app.locals.redis = null;
     
   } catch (error) {
     logger.error('Database connection failed:', error);

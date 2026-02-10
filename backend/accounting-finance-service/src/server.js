@@ -195,9 +195,13 @@ const gracefulShutdown = async (signal) => {
     await databaseConfig.disconnect();
     logger.info('Database connection closed');
 
-    // Close Redis connection
-    await redisConfig.disconnect();
-    logger.info('Redis connection closed');
+    // Close Redis connection if connected
+    try {
+      await redisConfig.disconnect();
+      logger.info('Redis connection closed');
+    } catch (redisError) {
+      logger.debug('Redis disconnect skipped (not connected)');
+    }
 
     logger.info('Graceful shutdown completed');
     process.exit(0);
@@ -220,9 +224,13 @@ const startServer = async () => {
     await databaseConfig.connect();
     logger.info('Database connected successfully');
 
-    // Connect to Redis
-    await redisConfig.connect();
-    logger.info('Redis connected successfully');
+    // Try to connect to Redis (non-blocking)
+    try {
+      await redisConfig.connect();
+      logger.info('Redis connected successfully');
+    } catch (redisError) {
+      logger.warn('Redis connection failed - service will continue without cache:', redisError.message);
+    }
 
     // Start HTTP server
     server = app.listen(PORT, () => {

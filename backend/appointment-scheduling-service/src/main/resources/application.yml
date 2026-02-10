@@ -9,7 +9,7 @@ spring:
   
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/dentamate_appointments}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate_appointments?appName=Cluster0}
       auto-index-creation: true
   
   security:
