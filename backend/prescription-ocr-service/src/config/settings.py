@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database Configuration
-    MONGODB_URL: str = "mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/?appName=Cluster0"
+    MONGODB_URL: str = "mongodb+srv://username:password@cluster0.ozkxezh.mongodb.net/?appName=Cluster0"
     DATABASE_NAME: str = "prescription_ocr_db"
     
     # Redis Configuration
