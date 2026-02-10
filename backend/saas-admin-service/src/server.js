@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3021;
 // Database connection
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate_saas_admin?appName=Cluster0';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://username:password@cluster0.ozkxezh.mongodb.net/dentamate_saas_admin?appName=Cluster0';
     
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,

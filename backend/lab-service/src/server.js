@@ -91,7 +91,7 @@ app.get('/health', (req, res) => {
 app.use(errorHandler);
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://abyjp16:abyjp16@cluster0.ozkxezh.mongodb.net/dentamate?appName=Cluster0', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://username:password@cluster0.ozkxezh.mongodb.net/dentamate?appName=Cluster0', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
